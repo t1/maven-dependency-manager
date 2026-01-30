@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(java -jar:*)",
+      "Bash(java -version:*)",
+      "Bash(mvn clean package:*)",
+      "Bash(mvn clean test-compile:*)",
+      "Bash(mvn clean test:*)",
+      "Bash(mvn package:*)",
+      "Bash(mvn test-compile:*)",
+      "Bash(mvn test -Dtest:*)",
+      "Bash(mvn test:*)",
+      "Bash(tree:*)",
+      "Bash(mvn:*)",
+      "Bash(git mv:*)",
+      "Bash(grep:*)",
+      "Bash(find:*)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR\"/.claude/hooks/post-tool-call.py"
+          }
+        ]
+      }
+    ]
+  }
+}
