@@ -2,6 +2,7 @@ package com.github.t1.mavendep.domain;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
 
@@ -18,5 +19,26 @@ public record ProjectReport(
         requireNonNull(dependencyUpdates);
         requireNonNull(pluginUpdates);
         if (totalDependencies < 0) throw new IllegalArgumentException();
+    }
+
+    public Stream<DependencyUpdate> updates() {
+        return Stream.concat(parentUpdate.stream(),
+                Stream.concat(
+                                dependencyUpdates.stream(),
+                                pluginUpdates.stream())
+                        .filter(DependencyUpdate::isUpdate));
+    }
+
+    public boolean hasUpdates() {
+        return updates().findAny().isPresent();
+    }
+
+    public ProjectReport onlyUpdates() {
+        return new ProjectReport(
+                pom,
+                parentUpdate.filter(DependencyUpdate::isUpdate),
+                dependencyUpdates.stream().filter(DependencyUpdate::isUpdate).toList(),
+                pluginUpdates.stream().filter(DependencyUpdate::isUpdate).toList(),
+                totalDependencies);
     }
 }

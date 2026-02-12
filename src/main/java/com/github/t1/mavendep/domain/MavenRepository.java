@@ -42,15 +42,15 @@ public class MavenRepository {
     }
 
     public MavenRepository(Path localRepositoryDir) {
-        this(localRepositoryDir, DEFAULT_TTL);
-    }
-
-    public MavenRepository(Path localRepositoryDir, Duration ttl) {
-        this(localRepositoryDir, ttl, System.getProperty("maven.central.url", DEFAULT_MAVEN_CENTRAL_URL));
+        this(localRepositoryDir, DEFAULT_TTL, System.getProperty("maven.central.url", DEFAULT_MAVEN_CENTRAL_URL));
     }
 
     public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl) {
-        this.httpClient = HttpClient.newHttpClient();
+        this(localRepositoryDir, ttl, mavenCentralUrl, HttpClient.newHttpClient());
+    }
+
+    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl, HttpClient httpClient) {
+        this.httpClient = httpClient;
         this.localRepositoryDir = localRepositoryDir;
         this.ttl = ttl;
         this.mavenCentralUrl = mavenCentralUrl;

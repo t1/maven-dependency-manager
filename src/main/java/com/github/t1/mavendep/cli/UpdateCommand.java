@@ -1,8 +1,8 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.MavenRepository;
+import com.github.t1.mavendep.domain.ProjectReport;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -36,42 +36,20 @@ public class UpdateCommand implements Runnable {
 
             var reports = analyzer.analyze(commonOptions.pomFiles);
 
-            for (var report : reports) {
-                var parentUpdateNeedsApplying = report.parentUpdate()
-                        .filter(DependencyUpdate::isUpdate)
-                        .isPresent();
-                var dependencyUpdatesNeedApplying = report.dependencyUpdates().stream()
-                        .anyMatch(DependencyUpdate::isUpdate);
-                var pluginUpdatesNeedApplying = report.pluginUpdates().stream()
-                        .anyMatch(DependencyUpdate::isUpdate);
-
-                if (parentUpdateNeedsApplying || dependencyUpdatesNeedApplying || pluginUpdatesNeedApplying) {
-                    var pom = report.pom();
-
-                    if (dependencyUpdatesNeedApplying) {
-                        var updates = report.dependencyUpdates().stream()
-                                .filter(DependencyUpdate::isUpdate)
-                                .toList();
-                        pom.applyUpdates(updates);
-                    }
-
-                    if (pluginUpdatesNeedApplying) {
-                        var updates = report.pluginUpdates().stream()
-                                .filter(DependencyUpdate::isUpdate)
-                                .toList();
-                        pom.applyUpdates(updates);
-                    }
-
-                    if (parentUpdateNeedsApplying) {
-                        pom.updateParentVersion(report.parentUpdate().get());
-                    }
-
-                    pom.writeToDisk();
-                    System.out.println("Updated: " + report.pom().path());
-                }
-            }
+            reports.forEach(this::applyUpdates);
 
             writeReport(reports, commonOptions.format, commonOptions.outputFile, commonOptions.showAll);
         });
+    }
+
+    private void applyUpdates(ProjectReport report) {
+        if (!report.hasUpdates()) return;
+
+        var pom = report.pom();
+
+        pom.apply(report.updates());
+
+        pom.writeToDisk();
+        System.out.println("Updated: " + pom.path());
     }
 }

@@ -12,13 +12,13 @@ import static com.github.t1.mavendep.domain.DependencyType.dependency;
 public class TextReportWriter implements ReportWriter {
 
     @Override
-    public String write(List<ProjectReport> reports, boolean showAll) {
+    public String write(List<ProjectReport> reports) {
         var sb = new StringBuilder();
 
         appendHeader(sb);
 
         for (var report : reports) {
-            appendProjectReport(sb, report, showAll, reports.size() > 1);
+            appendProjectReport(sb, report, reports.size() > 1);
         }
 
         if (reports.size() > 1) {
@@ -35,7 +35,7 @@ public class TextReportWriter implements ReportWriter {
         sb.append(" ".repeat(40)).append("==============================\n\n");
     }
 
-    private void appendProjectReport(StringBuilder sb, ProjectReport report, boolean showAll, boolean isMultiProject) {
+    private void appendProjectReport(StringBuilder sb, ProjectReport report, boolean isMultiProject) {
         if (isMultiProject) sb.append("-".repeat(120)).append("\n");
         sb.append("  Project: ").append(report.pom().path().toAbsolutePath()).append("\n");
 
@@ -44,7 +44,6 @@ public class TextReportWriter implements ReportWriter {
                                 report.parentUpdate().stream(),
                                 report.dependencyUpdates().stream()),
                         report.pluginUpdates().stream())
-                .filter(update -> showAll || update.isUpdate())
                 .toList();
         if (!updates.isEmpty()) {
             appendReportWithUpdates(sb, updates);

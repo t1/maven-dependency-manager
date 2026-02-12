@@ -17,12 +17,12 @@ public class JsonReportWriter implements ReportWriter {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public String write(List<ProjectReport> reports, boolean showAll) {
+    public String write(List<ProjectReport> reports) {
         var root = objectMapper.createObjectNode();
 
         var projectsArray = objectMapper.createArrayNode();
         for (var report : reports) {
-            projectsArray.add(buildProjectNode(report, showAll));
+            projectsArray.add(buildProjectNode(report));
         }
         root.set("projects", projectsArray);
 
@@ -46,23 +46,20 @@ public class JsonReportWriter implements ReportWriter {
         return summaryNode;
     }
 
-    private ObjectNode buildProjectNode(ProjectReport report, boolean showAll) {
+    private ObjectNode buildProjectNode(ProjectReport report) {
         var projectNode = objectMapper.createObjectNode();
         projectNode.put("pomFile", report.pom().path().toAbsolutePath().toString());
 
         report.parentUpdate()
-                .filter(update -> showAll || update.isUpdate())
                 .ifPresent(parent -> projectNode.set("parent", buildDependencyNode(parent)));
 
         var depsArray = objectMapper.createArrayNode();
         report.dependencyUpdates().stream()
-                .filter(update -> showAll || update.isUpdate())
                 .map(this::buildDependencyNode).forEach(depsArray::add);
         projectNode.set("dependencies", depsArray);
 
         var pluginsArray = objectMapper.createArrayNode();
         report.pluginUpdates().stream()
-                .filter(update -> showAll || update.isUpdate())
                 .map(this::buildDependencyNode).forEach(pluginsArray::add);
         projectNode.set("plugins", pluginsArray);
 

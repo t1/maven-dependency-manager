@@ -6,8 +6,10 @@ import org.junit.jupiter.api.io.TempDir;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Stream;
 
 import static com.github.t1.mavendep.domain.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.DependencyType.parent;
 import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.none;
@@ -221,7 +223,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -255,7 +257,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var updates = List.of(
+        var updates = Stream.of(
                 new DependencyUpdate(
                         dependency,
                         "org.junit.jupiter",
@@ -278,7 +280,7 @@ class PomTest {
                 )
         );
 
-        pom.applyUpdates(updates);
+        pom.apply(updates);
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -324,7 +326,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -364,7 +366,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -396,7 +398,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
 
-        pom.applyUpdates(List.of());
+        pom.apply(Stream.of());
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -437,7 +439,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -480,7 +482,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -527,7 +529,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -574,7 +576,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -620,7 +622,7 @@ class PomTest {
                 none
         );
 
-        pom.applyUpdates(List.of(update));
+        pom.apply(Stream.of(update));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -662,7 +664,7 @@ class PomTest {
                 none
         );
 
-        pom.updateParentVersion(parentUpdate);
+        pom.apply(Stream.of(parentUpdate));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);
@@ -698,17 +700,17 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var parentUpdate = new DependencyUpdate(
-                dependency,
+                parent,
                 "org.springframework.boot",
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
-                compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 none
         );
 
-        pom.updateParentVersion(parentUpdate);
+        pom.apply(Stream.of(parentUpdate));
         pom.writeToDisk();
 
         var updatedContent = readString(pomFile);

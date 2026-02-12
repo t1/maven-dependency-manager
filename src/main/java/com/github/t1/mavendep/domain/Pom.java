@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Stream;
 
 import static com.github.t1.mavendep.report.Logger.log;
 import static java.nio.file.Files.readString;
@@ -68,6 +69,10 @@ public class Pom {
         }
     }
 
+    private static class PomParsingException extends RuntimeException {
+        public PomParsingException(String message, Exception cause) {super(message, cause);}
+    }
+
     private static Path resolvePath(Path raw) {
         if (!raw.startsWith("~")) return raw;
         var userHome = Path.of(System.getProperty("user.home"));
@@ -81,8 +86,8 @@ public class Pom {
                 content,
                 pomPath,
                 parseParentFromDocument(doc, properties),
-                parseDependenciesFromDocument(doc, properties),
-                parsePluginsFromDocument(doc, properties),
+                parseElementsFromDocument(doc, "dependency", properties),
+                parseElementsFromDocument(doc, "plugin", properties),
                 properties,
                 parseModulesFromDocument(doc));
     }
@@ -118,16 +123,15 @@ public class Pom {
         return properties;
     }
 
-    private static List<Dependency> parseDependenciesFromDocument(Document doc, Map<String, String> properties) {
-        var dependencies = new ArrayList<Dependency>();
-        var dependencyNodes = doc.getElementsByTagName("dependency");
+    private static List<Dependency> parseElementsFromDocument(Document doc, String tagName, Map<String, String> properties) {
+        var elements = new ArrayList<Dependency>();
+        var nodes = doc.getElementsByTagName(tagName);
 
-        for (var i = 0; i < dependencyNodes.getLength(); i++) {
-            var depNode = dependencyNodes.item(i);
-            dependencies.add(new DependencyParser(properties).parse(depNode));
+        for (var i = 0; i < nodes.getLength(); i++) {
+            elements.add(new DependencyParser(properties).parse(nodes.item(i)));
         }
 
-        return dependencies;
+        return elements;
     }
 
     private static Optional<Dependency> parseParentFromDocument(Document doc, Map<String, String> properties) {
@@ -135,18 +139,6 @@ public class Pom {
         if (parentNodes.getLength() == 0) return Optional.empty();
         var parentNode = parentNodes.item(0);
         return Optional.of(new DependencyParser(properties).parse(parentNode));
-    }
-
-    private static List<Dependency> parsePluginsFromDocument(Document doc, Map<String, String> properties) {
-        var plugins = new ArrayList<Dependency>();
-        var pluginNodes = doc.getElementsByTagName("plugin");
-
-        for (var i = 0; i < pluginNodes.getLength(); i++) {
-            var pluginNode = pluginNodes.item(i);
-            plugins.add(new DependencyParser(properties).parse(pluginNode));
-        }
-
-        return plugins;
     }
 
     private static List<String> parseModulesFromDocument(Document doc) {
@@ -168,12 +160,17 @@ public class Pom {
         return modules;
     }
 
-    private static String resolve(String value, Map<String, String> properties) {
-        if (value != null && value.startsWith("${") && value.endsWith("}")) {
-            var propertyName = value.substring(2, value.length() - 1);
-            return properties.get(propertyName);
+    private static Optional<String> extractPropertyName(String ref) {
+        if (ref != null && ref.startsWith("${") && ref.endsWith("}")) {
+            return Optional.of(ref.substring(2, ref.length() - 1));
         }
-        return value;
+        return Optional.empty();
+    }
+
+    private static String resolve(String value, Map<String, String> properties) {
+        return extractPropertyName(value)
+                .map(properties::get)
+                .orElse(value);
     }
 
     private record DependencyParser(Map<String, String> properties) {
@@ -246,45 +243,7 @@ public class Pom {
 
     public List<String> modules() {return modules;}
 
-    // Update methods
-
-    private static final String OPTIONAL_WHITESPACE = "\\s*";
-    private static final String OPTIONAL_COMMENTS = "(?:\\s*<!--.*?-->\\s*)*";
-    private static final String PROPERTY_REFERENCE = "\\$\\{[^}]+}";
-
-    public void applyUpdates(List<DependencyUpdate> updates) {
-        var propertyMap = buildPropertyMap();
-
-        for (var update : updates) {
-            var key = update.groupId() + ":" + update.artifactId();
-            var propertyName = propertyMap.get(key);
-
-            if (propertyName != null) {
-                updatePropertyValue(propertyName, update);
-            } else {
-                updateDirectVersion(update);
-            }
-        }
-    }
-
-    public void updateParentVersion(DependencyUpdate parentUpdate) {
-        // Check if parent version uses a property
-        var parentPattern = Pattern.compile(
-                "<parent>.*?<version>" + OPTIONAL_WHITESPACE + "(" + PROPERTY_REFERENCE + "|[^<]+)" +
-                OPTIONAL_WHITESPACE + "</version>.*?</parent>",
-                DOTALL
-        );
-        var matcher = parentPattern.matcher(content);
-        if (matcher.find()) {
-            var versionRef = matcher.group(1).trim();
-            if (versionRef.startsWith("${") && versionRef.endsWith("}")) {
-                var propertyName = versionRef.substring(2, versionRef.length() - 1);
-                updatePropertyValue(propertyName, parentUpdate);
-            } else {
-                updateParentDirectVersion(parentUpdate);
-            }
-        }
-    }
+    public void apply(Stream<DependencyUpdate> updates) {updates.forEach(new Updater()::apply);}
 
     public void writeToDisk() {
         try {
@@ -294,148 +253,93 @@ public class Pom {
         }
     }
 
-    private Map<String, String> buildPropertyMap() {
-        var propertyMap = new HashMap<String, String>();
+    private class Updater {
+        private static final String OPTIONAL_WHITESPACE = "\\s*";
+        private static final String OPTIONAL_COMMENTS = "(?:\\s*<!--.*?-->\\s*)*";
+        private static final String PROPERTY_REFERENCE = "\\$\\{[^}]+}";
 
-        for (var dep : dependencies) {
-            findPropertyForDependency(dep)
-                    .ifPresent(propertyName ->
-                            propertyMap.put(dep.groupId() + ":" + dep.artifactId(), propertyName)
-                    );
+        private void apply(DependencyUpdate update) {
+            var property = property(update.currentVersion().toString());
+
+            if (property.isPresent()) updatePropertyValue(property.get(), update);
+            else if (update.type() == DependencyType.parent) applyParentUpdate(update);
+            else updateDirectVersion(update);
         }
 
-        for (var plugin : plugins) {
-            findPropertyForPlugin(plugin)
-                    .ifPresent(propertyName ->
-                            propertyMap.put(plugin.groupId() + ":" + plugin.artifactId(), propertyName)
-                    );
+        private Optional<String> property(String value) {
+            return properties.entrySet().stream()
+                    .filter(entry -> entry.getValue().equals(value))
+                    .findFirst()
+                    .map(Map.Entry::getKey);
         }
 
-        return propertyMap;
-    }
-
-    private Optional<String> findPropertyForDependency(Dependency dep) {
-        var dependencyBlock = findDependencyBlock(dep);
-        if (dependencyBlock.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return extractPropertyReference(dependencyBlock.get());
-    }
-
-    private Optional<String> findDependencyBlock(Dependency dep) {
-        var depPattern = Pattern.compile("<dependency>.*?<version>" + OPTIONAL_WHITESPACE + "(" + PROPERTY_REFERENCE + ")" + OPTIONAL_WHITESPACE + "</version>.*?</dependency>", DOTALL);
-        var matcher = depPattern.matcher(content);
-
-        while (matcher.find()) {
-            var depBlock = matcher.group();
-            var versionRef = matcher.group(1);
-            if (matches(depBlock, dep.groupId(), dep.artifactId())) {
-                return Optional.of(versionRef);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private boolean matches(String depBlock, String groupId, String artifactId) {
-        var groupIdPattern = Pattern.compile("<groupId>" + OPTIONAL_WHITESPACE + "(?:" + PROPERTY_REFERENCE + "|" + quote(groupId) + ")" + OPTIONAL_WHITESPACE + "</groupId>");
-        var artifactIdPattern = Pattern.compile("<artifactId>" + OPTIONAL_WHITESPACE + "(?:" + PROPERTY_REFERENCE + "|" + quote(artifactId) + ")" + OPTIONAL_WHITESPACE + "</artifactId>");
-
-        return groupIdPattern.matcher(depBlock).find() && artifactIdPattern.matcher(depBlock).find();
-    }
-
-    private Optional<String> findPropertyForPlugin(Dependency plugin) {
-        var pluginBlock = findPluginBlock(plugin);
-        if (pluginBlock.isEmpty()) {
-            return Optional.empty();
-        }
-
-        return extractPropertyReference(pluginBlock.get());
-    }
-
-    private Optional<String> findPluginBlock(Dependency plugin) {
-        var pluginPattern = Pattern.compile("<plugin>.*?<version>" + OPTIONAL_WHITESPACE + "(" + PROPERTY_REFERENCE + ")" + OPTIONAL_WHITESPACE + "</version>.*?</plugin>", DOTALL);
-        var matcher = pluginPattern.matcher(content);
-
-        while (matcher.find()) {
-            var pluginBlock = matcher.group();
-            var versionRef = matcher.group(1);
-            if (matchesPlugin(pluginBlock, plugin)) {
-                return Optional.of(versionRef);
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    private boolean matchesPlugin(String pluginBlock, Dependency plugin) {
-        return matches(pluginBlock, plugin.groupId(), plugin.artifactId());
-    }
-
-    private Optional<String> extractPropertyReference(String versionRef) {
-        if (versionRef.startsWith("${") && versionRef.endsWith("}")) {
-            var propertyName = versionRef.substring(2, versionRef.length() - 1);
-            return Optional.of(propertyName);
-        }
-
-        return Optional.empty();
-    }
-
-    private void updatePropertyValue(String propertyName, DependencyUpdate update) {
-        content = updateVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
-    }
-
-    private void updateDirectVersion(DependencyUpdate update) {
-        content = updateVersionInTag("<version>", "</version>", update);
-    }
-
-    private void updateParentDirectVersion(DependencyUpdate update) {
-        var pattern = Pattern.compile(
-                "<parent>.*?<version>" +
-                OPTIONAL_COMMENTS +           // optional comments with whitespace
-                OPTIONAL_WHITESPACE +         // optional whitespace before version
-                quote(update.currentVersion().toString()) +
-                OPTIONAL_WHITESPACE +         // optional whitespace after version
-                OPTIONAL_COMMENTS +           // optional comments with whitespace
-                "</version>.*?</parent>",
-                DOTALL
-        );
-
-        content = replaceVersion(pattern, update);
-    }
-
-    private String updateVersionInTag(String openingTag, String closingTag, DependencyUpdate update) {
-        var pattern = Pattern.compile(
-                quote(openingTag) +
-                OPTIONAL_COMMENTS +           // optional comments with whitespace
-                OPTIONAL_WHITESPACE +         // optional whitespace before version
-                quote(update.currentVersion().toString()) +
-                OPTIONAL_WHITESPACE +         // optional whitespace after version
-                OPTIONAL_COMMENTS +           // optional comments with whitespace
-                quote(closingTag),
-                DOTALL
-        );
-
-        return replaceVersion(pattern, update);
-    }
-
-    private String replaceVersion(Pattern pattern, DependencyUpdate update) {
-        var matcher = pattern.matcher(content);
-        if (matcher.find()) {
-            var matched = matcher.group();
-            // Replace only the version number, preserving all whitespace and comments
-            var replacement = matched.replaceFirst(
-                    quote(update.currentVersion().toString()),
-                    update.latestVersion().toString()
+        private void applyParentUpdate(DependencyUpdate parentUpdate) {
+            var parentPattern = Pattern.compile(
+                    "<parent>.*?<version>" + OPTIONAL_WHITESPACE + "(" + PROPERTY_REFERENCE + "|[^<]+)" +
+                    OPTIONAL_WHITESPACE + "</version>.*?</parent>",
+                    DOTALL
             );
-            return content.replace(matched, replacement);
+            var matcher = parentPattern.matcher(content);
+            if (matcher.find()) {
+                var versionRef = matcher.group(1).trim();
+                extractPropertyName(versionRef)
+                        .ifPresentOrElse(
+                                propertyName -> updatePropertyValue(propertyName, parentUpdate),
+                                () -> updateParentDirectVersion(parentUpdate)
+                        );
+            }
         }
 
-        return content;
-    }
+        private void updatePropertyValue(String propertyName, DependencyUpdate update) {
+            content = updateVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
+        }
 
-    private static class PomParsingException extends RuntimeException {
-        public PomParsingException(String message, Exception cause) {super(message, cause);}
+        private void updateDirectVersion(DependencyUpdate update) {
+            content = updateVersionInTag("<version>", "</version>", update);
+        }
+
+        private void updateParentDirectVersion(DependencyUpdate update) {
+            var pattern = Pattern.compile(
+                    "<parent>.*?<version>" +
+                    OPTIONAL_COMMENTS +
+                    OPTIONAL_WHITESPACE +
+                    quote(update.currentVersion().toString()) +
+                    OPTIONAL_WHITESPACE +
+                    OPTIONAL_COMMENTS +
+                    "</version>.*?</parent>",
+                    DOTALL
+            );
+
+            content = replaceVersion(pattern, update);
+        }
+
+        private String updateVersionInTag(String openingTag, String closingTag, DependencyUpdate update) {
+            var pattern = Pattern.compile(
+                    quote(openingTag) +
+                    OPTIONAL_COMMENTS +
+                    OPTIONAL_WHITESPACE +
+                    quote(update.currentVersion().toString()) +
+                    OPTIONAL_WHITESPACE +
+                    OPTIONAL_COMMENTS +
+                    quote(closingTag),
+                    DOTALL
+            );
+
+            return replaceVersion(pattern, update);
+        }
+
+        private String replaceVersion(Pattern pattern, DependencyUpdate update) {
+            var matcher = pattern.matcher(content);
+            if (matcher.find()) {
+                var matched = matcher.group();
+                var replacement = matched.replaceFirst(
+                        quote(update.currentVersion().toString()),
+                        update.latestVersion().toString()
+                );
+                return content.replace(matched, replacement);
+            }
+
+            return content;
+        }
     }
 }

@@ -17,9 +17,9 @@ class ReportWriterTest {
 
     @Test
     void shouldDefineWriteMethodThatAcceptsListOfProjectReports() {
-        ReportWriter writer = (_, _) -> "";
+        ReportWriter writer = (_) -> "";
 
-        var result = writer.write(List.of(), false);
+        var result = writer.write(List.of());
 
         then(result).isNotNull();
     }
@@ -29,7 +29,7 @@ class ReportWriterTest {
         ReportWriter writer = new JsonReportWriter();
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 0);
 
-        var result = writer.write(List.of(report), false);
+        var result = writer.write(List.of(report));
 
         then(result).contains("projects");
     }
@@ -39,7 +39,7 @@ class ReportWriterTest {
         ReportWriter writer = new TextReportWriter();
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 0);
 
-        var result = writer.write(List.of(report), false);
+        var result = writer.write(List.of(report));
 
         then(result).contains("Maven Dependency Update Report");
     }

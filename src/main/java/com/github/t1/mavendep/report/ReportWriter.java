@@ -5,5 +5,5 @@ import com.github.t1.mavendep.domain.ProjectReport;
 import java.util.List;
 
 public interface ReportWriter {
-    String write(List<ProjectReport> reports, boolean showAll);
+    String write(List<ProjectReport> reports);
 }

@@ -17,9 +17,10 @@ public class ReportOutputHandler {
     }
 
     public static void writeReport(List<ProjectReport> reports, OutputFormat format, String outputFile, boolean showAll) {
+        var filteredReports = showAll ? reports : reports.stream().map(ProjectReport::onlyUpdates).toList();
         var output = switch (format) {
-            case json -> new JsonReportWriter().write(reports, showAll);
-            case text -> new TextReportWriter().write(reports, showAll);
+            case json -> new JsonReportWriter().write(filteredReports);
+            case text -> new TextReportWriter().write(filteredReports);
         };
 
         if (outputFile != null) {

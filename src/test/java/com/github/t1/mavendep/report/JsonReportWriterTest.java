@@ -42,7 +42,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), false);
+        var json = writer.write(List.of(report.onlyUpdates()));
 
         var root = objectMapper.readTree(json);
         then(root.get("projects")).hasSize(1);
@@ -84,7 +84,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update1, update2), List.of(), 2);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), false);
+        var json = writer.write(List.of(report.onlyUpdates()));
 
         var root = objectMapper.readTree(json);
         then(root.get("summary")).isNotNull();
@@ -120,7 +120,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(outdated, upToDate), List.of(), 2);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), false);
+        var json = writer.write(List.of(report.onlyUpdates()));
 
         var root = objectMapper.readTree(json);
         then(root.get("summary")).isNotNull();
@@ -143,7 +143,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), false);
+        var json = writer.write(List.of(report.onlyUpdates()));
 
         var root = objectMapper.readTree(json);
         var dep = root.get("projects").get(0).get("dependencies").get(0);
@@ -165,7 +165,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), true);
+        var json = writer.write(List.of(report));
 
         var root = objectMapper.readTree(json);
         var dep = root.get("projects").get(0).get("dependencies").get(0);
@@ -190,7 +190,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), false);
+        var json = writer.write(List.of(report.onlyUpdates()));
 
         var root = objectMapper.readTree(json);
         var dep = root.get("projects").get(0).get("dependencies").get(0);
@@ -212,7 +212,7 @@ class JsonReportWriterTest {
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(), List.of(), 0);
 
         var writer = new JsonReportWriter();
-        var json = writer.write(List.of(report), false);
+        var json = writer.write(List.of(report.onlyUpdates()));
 
         var root = objectMapper.readTree(json);
         var parent = root.get("projects").get(0).get("parent");
