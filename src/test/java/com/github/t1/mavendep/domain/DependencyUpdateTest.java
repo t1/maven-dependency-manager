@@ -22,12 +22,7 @@ class DependencyUpdateTest {
         var availableVersions = List.of(currentVersion, latestVersion);
 
         var update = new DependencyUpdate(
-                dependency,
-                "com.example",
-                "lib",
-                currentVersion,
-                compile,
-                null,
+                new Dependency(dependency, "com.example", "lib", currentVersion, compile, null),
                 latestVersion,
                 availableVersions,
                 major
@@ -49,12 +44,7 @@ class DependencyUpdateTest {
         var availableVersions = List.of(currentVersion, latestVersion);
 
         var update = new DependencyUpdate(
-                dependency,
-                "org.test",
-                "lib",
-                currentVersion,
-                test,
-                null,
+                new Dependency(dependency, "org.test", "lib", currentVersion, test, null),
                 latestVersion,
                 availableVersions,
                 minor
@@ -71,12 +61,7 @@ class DependencyUpdateTest {
         var availableVersions = List.of(currentVersion, latestVersion);
 
         var update = new DependencyUpdate(
-                dependency,
-                "org.test",
-                "lib",
-                currentVersion,
-                runtime,
-                null,
+                new Dependency(dependency, "org.test", "lib", currentVersion, runtime, null),
                 latestVersion,
                 availableVersions,
                 patch
@@ -92,12 +77,7 @@ class DependencyUpdateTest {
         var latestVersion = Version.fromString("2.0.0");
 
         var update = new DependencyUpdate(
-                dependency,
-                "com.example",
-                "lib",
-                currentVersion,
-                compile,
-                "lib.version",
+                new Dependency(dependency, "com.example", "lib", currentVersion, compile, "lib.version"),
                 latestVersion,
                 List.of(),
                 major

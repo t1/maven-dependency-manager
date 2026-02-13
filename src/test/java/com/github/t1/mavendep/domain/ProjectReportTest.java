@@ -10,6 +10,7 @@ import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency
 import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.UpdateType.major;
 import static com.github.t1.mavendep.domain.UpdateType.minor;
+
 import static org.assertj.core.api.BDDAssertions.then;
 
 class ProjectReportTest {
@@ -18,23 +19,13 @@ class ProjectReportTest {
     @Test
     void shouldCreateRecord_whenAllFieldsProvided() {
         var parentUpdate = new DependencyUpdate(
-                dependency,
-                "org.parent",
-                "parent",
-                Version.fromString("1.0.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.parent", "parent", Version.fromString("1.0.0"), compile, null),
                 Version.fromString("2.0.0"),
                 List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")),
                 major
         );
         var update = new DependencyUpdate(
-                dependency,
-                "com.example",
-                "lib",
-                Version.fromString("1.0.0"),
-                compile,
-                null,
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
                 Version.fromString("1.1.0"),
                 List.of(Version.fromString("1.0.0"), Version.fromString("1.1.0")),
                 minor

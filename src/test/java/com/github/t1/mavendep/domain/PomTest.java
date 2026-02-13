@@ -324,12 +324,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                test,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -352,7 +347,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-                
+
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -371,23 +366,13 @@ class PomTest {
         var pom = Pom.parse(pomFile).orElseThrow();
         var updates = Stream.of(
                 new DependencyUpdate(
-                        dependency,
-                        "org.junit.jupiter",
-                        "junit-jupiter",
-                        Version.fromString("5.10.0"),
-                        test,
-                        null,
+                        new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                         Version.fromString("5.11.0"),
                         List.of(),
                         none
                 ),
                 new DependencyUpdate(
-                        dependency,
-                        "info.picocli",
-                        "picocli",
-                        Version.fromString("4.7.0"),
-                        compile,
-                        null,
+                        new Dependency(dependency, "info.picocli", "picocli", Version.fromString("4.7.0"), compile, null),
                         Version.fromString("4.7.7"),
                         List.of(),
                         none
@@ -430,12 +415,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "com.fasterxml.jackson.core",
-                "jackson-databind",
-                Version.fromString("2.20.0"),
-                compile,
-                "jackson.version",
+                new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind", Version.fromString("2.20.0"), compile, "jackson.version"),
                 Version.fromString("2.21.0"),
                 List.of(),
                 none
@@ -471,12 +451,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                test,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -545,12 +520,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                test,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -589,12 +559,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "org.apache.sshd",
-                "sshd-common",
-                Version.fromString("2.12.1"),
-                compile,
-                null,
+                new Dependency(dependency, "org.apache.sshd", "sshd-common", Version.fromString("2.12.1"), compile, null),
                 Version.fromString("2.13.0"),
                 List.of(),
                 none
@@ -637,12 +602,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "com.fasterxml.jackson.core",
-                "jackson-databind",
-                Version.fromString("2.20.0"),
-                compile,
-                "jackson.version",
+                new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind", Version.fromString("2.20.0"), compile, "jackson.version"),
                 Version.fromString("2.21.0"),
                 List.of(),
                 none
@@ -685,12 +645,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "org.apache.sshd",
-                "sshd-common",
-                Version.fromString("2.12.1"),
-                compile,
-                "sshd.version",
+                new Dependency(dependency, "org.apache.sshd", "sshd-common", Version.fromString("2.12.1"), compile, "sshd.version"),
                 Version.fromString("2.13.0"),
                 List.of(),
                 none
@@ -732,12 +687,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                test,
-                "junit.version",
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, "junit.version"),
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -775,12 +725,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var parentUpdate = new DependencyUpdate(
-                dependency,
-                "org.springframework.boot",
-                "spring-boot-starter-parent",
-                Version.fromString("3.1.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
                 none
@@ -822,12 +767,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var parentUpdate = new DependencyUpdate(
-                parent,
-                "org.springframework.boot",
-                "spring-boot-starter-parent",
-                Version.fromString("3.1.0"),
-                null,
-                "spring-boot.version",
+                new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), null, "spring-boot.version"),
                 Version.fromString("3.2.0"),
                 List.of(),
                 none
@@ -873,12 +813,7 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var update = new DependencyUpdate(
-                dependency,
-                "com.example",
-                "alpha",
-                Version.fromString("2.0.0"),
-                compile,
-                "alpha.version",
+                new Dependency(dependency, "com.example", "alpha", Version.fromString("2.0.0"), compile, "alpha.version"),
                 Version.fromString("3.0.0"),
                 List.of(),
                 none

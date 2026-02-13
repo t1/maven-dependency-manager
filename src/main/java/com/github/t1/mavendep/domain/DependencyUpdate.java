@@ -6,20 +6,27 @@ import static com.github.t1.mavendep.domain.Dependency.DependencyType;
 import static java.util.Objects.requireNonNull;
 
 public record DependencyUpdate(
-        DependencyType type,
-        String groupId,
-        String artifactId,
-        Version currentVersion,
-        Scope scope,
-        String versionProperty,
+        Dependency dependency,
         Version latestVersion,
         List<Version> availableVersions,
         UpdateType updateType
 ) {
     public DependencyUpdate {
-        requireNonNull(type);
+        requireNonNull(dependency);
         requireNonNull(updateType);
     }
+
+    public DependencyType type() {return dependency.type();}
+
+    public String groupId() {return dependency.groupId();}
+
+    public String artifactId() {return dependency.artifactId();}
+
+    public Version currentVersion() {return dependency.version();}
+
+    public Scope scope() {return dependency.scope();}
+
+    public String versionProperty() {return dependency.versionProperty();}
 
     public boolean isUpdate() {
         return currentVersion() != null && latestVersion() != null && latestVersion().compareTo(currentVersion()) > 0;

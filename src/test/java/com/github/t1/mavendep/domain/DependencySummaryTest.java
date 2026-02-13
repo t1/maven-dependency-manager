@@ -252,12 +252,7 @@ class DependencySummaryTest {
             String latestVersion,
             UpdateType updateType) {
         return new DependencyUpdate(
-                dependency,
-                groupId,
-                artifactId,
-                Version.fromString(currentVersion),
-                compile,
-                null,
+                new Dependency(dependency, groupId, artifactId, Version.fromString(currentVersion), compile, null),
                 Version.fromString(latestVersion),
                 List.of(Version.fromString(currentVersion), Version.fromString(latestVersion)),
                 updateType
@@ -266,12 +261,7 @@ class DependencySummaryTest {
 
     private DependencyUpdate createUpdateWithNullCurrent() {
         return new DependencyUpdate(
-                dependency,
-                "com.example",
-                "lib",
-                null,
-                compile,
-                null,
+                new Dependency(dependency, "com.example", "lib", null, compile, null),
                 Version.fromString("1.0.0"),
                 List.of(Version.fromString("1.0.0")),
                 major
@@ -280,12 +270,7 @@ class DependencySummaryTest {
 
     private DependencyUpdate createUpdateWithNullLatest() {
         return new DependencyUpdate(
-                dependency,
-                "com.example",
-                "lib",
-                Version.fromString("1.0.0"),
-                compile,
-                null,
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
                 null,
                 List.of(Version.fromString("1.0.0")),
                 none

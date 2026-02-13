@@ -38,16 +38,13 @@ public record Dependency(DependencyType type,
             Version latestVersion,
             List<Version> availableVersions,
             UpdateType updateType) {
-        return new DependencyUpdate(
+        var normalized = new Dependency(
                 type(),
                 groupId() != null ? groupId() : "",
                 artifactId() != null ? artifactId() : "",
                 version(),
                 scope(),
-                versionProperty(),
-                latestVersion,
-                availableVersions,
-                updateType
-        );
+                versionProperty());
+        return new DependencyUpdate(normalized, latestVersion, availableVersions, updateType);
     }
 }

@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.report;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
@@ -30,12 +31,7 @@ class JsonReportWriterTest {
     @Test
     void shouldGenerateJsonForSingleUpdate() throws IOException {
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")),
                 patch
@@ -63,23 +59,13 @@ class JsonReportWriterTest {
     @Test
     void shouldGenerateSummary() throws IOException {
         var update1 = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
         var update2 = new DependencyUpdate(
-                dependency,
-                "org.springframework",
-                "spring-core",
-                Version.fromString("5.3.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("5.3.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
                 major
@@ -101,23 +87,13 @@ class JsonReportWriterTest {
     @Test
     void shouldIncludeSummaryInOutput() throws IOException {
         var outdated = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
         var upToDate = new DependencyUpdate(
-                dependency,
-                "org.springframework",
-                "spring-core",
-                Version.fromString("6.0.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("6.0.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -136,12 +112,7 @@ class JsonReportWriterTest {
     @Test
     void shouldIncludeScopeInJsonOutput() throws IOException {
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                test,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -159,12 +130,7 @@ class JsonReportWriterTest {
     @Test
     void shouldOutputNullWhenLatestVersionIsNull() throws IOException {
         var update = new DependencyUpdate(
-                dependency,
-                "com.example",
-                "unknown-artifact",
-                Version.fromString("1.0.0"),
-                compile,
-                null,
+                new Dependency(dependency, "com.example", "unknown-artifact", Version.fromString("1.0.0"), compile, null),
                 null,
                 List.of(),
                 none
@@ -185,12 +151,7 @@ class JsonReportWriterTest {
     @Test
     void shouldIncludeTypeFieldWithDependencyValue() throws IOException {
         var update = new DependencyUpdate(
-                dependency,
-                "org.junit.jupiter",
-                "junit-jupiter",
-                Version.fromString("5.10.0"),
-                compile,
-                null,
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -208,12 +169,7 @@ class JsonReportWriterTest {
     @Test
     void shouldIncludeTypeFieldWithParentValueAndEmptyScope() throws IOException {
         var parentUpdate = new DependencyUpdate(
-                parent,
-                "org.springframework.boot",
-                "spring-boot-starter-parent",
-                Version.fromString("3.1.0"),
-                compile,
-                null,
+                new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
