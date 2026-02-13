@@ -28,7 +28,7 @@ import static java.util.regex.Pattern.quote;
 ///
 /// ## Features
 /// - Parses dependencies with groupId, artifactId, version, scope
-/// - Parses plugins with groupId, artifactId, version
+/// - Parses plugins with groupId, artifactId, version (defaults groupId to `org.apache.maven.plugins` if missing)
 /// - Resolves property references (${property.name})
 /// - Extracts parent POM information
 /// - Extracts module definitions for multi-module projects
@@ -128,7 +128,7 @@ public class Pom {
         var nodes = doc.getElementsByTagName(tagName);
 
         for (var i = 0; i < nodes.getLength(); i++) {
-            elements.add(new DependencyParser(properties).parse(nodes.item(i)));
+            elements.add(new DependencyParser(properties, tagName).parse(nodes.item(i)));
         }
 
         return elements;
@@ -138,7 +138,7 @@ public class Pom {
         var parentNodes = doc.getElementsByTagName("parent");
         if (parentNodes.getLength() == 0) return Optional.empty();
         var parentNode = parentNodes.item(0);
-        return Optional.of(new DependencyParser(properties).parse(parentNode));
+        return Optional.of(new DependencyParser(properties, "parent").parse(parentNode));
     }
 
     private static List<String> parseModulesFromDocument(Document doc) {
@@ -175,7 +175,9 @@ public class Pom {
         return value;
     }
 
-    private record DependencyParser(Map<String, String> properties) {
+    private record DependencyParser(Map<String, String> properties, String tagName) {
+        private static final String DEFAULT_PLUGIN_GROUP_ID = "org.apache.maven.plugins";
+
         private Dependency parse(Node depNode) {
             var children = depNode.getChildNodes();
 
@@ -199,10 +201,20 @@ public class Pom {
                 }
             }
 
+            groupId = defaultGroupIdIfPlugin(groupId, artifactId);
+
             var dependency = new Dependency(groupId, artifactId, version, scope, versionProperty);
             if (groupId == null) log("Warning: missing groupId in dependency " + dependency);
             if (artifactId == null) log("Warning: missing artifactId in dependency " + dependency);
             return dependency;
+        }
+
+        private String defaultGroupIdIfPlugin(String groupId, String artifactId) {
+            if (groupId == null && "plugin".equals(tagName)) {
+                log("Warning: missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
+                return DEFAULT_PLUGIN_GROUP_ID;
+            }
+            return groupId;
         }
 
         private String resolve(String value) {

@@ -233,6 +233,34 @@ class PomTest {
         then(pom.plugins().getFirst().version().toString()).isEqualTo("3.8.1");
     }
 
+    @Test
+    void shouldDefaultPluginGroupIdToApacheMavenPlugins() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <build>
+                        <plugins>
+                            <plugin>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>3.8.1</version>
+                            </plugin>
+                        </plugins>
+                    </build>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.plugins().getFirst().groupId()).isEqualTo("org.apache.maven.plugins");
+        then(pom.plugins().getFirst().artifactId()).isEqualTo("maven-compiler-plugin");
+        then(pom.plugins().getFirst().version().toString()).isEqualTo("3.8.1");
+    }
+
     private Path writePom(String pomContent) {
         var pomFile = tempDir.resolve("pom.xml");
         try {
