@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.domain;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -31,16 +32,18 @@ import static com.github.t1.mavendep.report.Logger.log;
 public record Version(List<Part> parts, String original) implements Comparable<Version> {
 
     public sealed interface Part extends Comparable<Part> {
-        Part ZERO = new NumericPart(0);
+        Part ZERO = new NumericPart(BigInteger.ZERO);
     }
 
-    public record NumericPart(int value) implements Part {
+    public record NumericPart(BigInteger value) implements Part {
+        public NumericPart(long value) {this(BigInteger.valueOf(value));}
+
         @Override public int compareTo(Part other) {
-            if (other instanceof NumericPart(var v)) return Integer.compare(value, v);
+            if (other instanceof NumericPart(var v)) return value.compareTo(v);
             return 1; // numeric after string (release > pre-release)
         }
 
-        @Override public String toString() {return Integer.toString(value);}
+        @Override public String toString() {return value.toString();}
     }
 
     public record StringPart(String value) implements Part {
@@ -80,13 +83,13 @@ public record Version(List<Part> parts, String original) implements Comparable<V
 
     private static Part parsePart(String token) {
         return Character.isDigit(token.charAt(0))
-                ? new NumericPart(Integer.parseInt(token))
+                ? new NumericPart(new BigInteger(token))
                 : new StringPart(token);
     }
 
     /// Returns the numeric value at the given index, or `0` if the index is out of bounds or the part is not numeric.
     public int numericPart(int index) {
-        return part(index) instanceof NumericPart(var v) ? v : 0;
+        return part(index) instanceof NumericPart(var v) ? v.intValueExact() : 0;
     }
 
     /// Returns the part at the given index, or a {@link NumericPart} of `0` if out of bounds.

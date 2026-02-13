@@ -4,6 +4,7 @@ import com.github.t1.mavendep.domain.Version.NumericPart;
 import com.github.t1.mavendep.domain.Version.StringPart;
 import org.junit.jupiter.api.Test;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -345,6 +346,15 @@ class VersionTest {
         var a10 = Version.fromString("1.0-a10");
 
         then(a9).isLessThan(a10);
+    }
+
+    @Test
+    void shouldParseLargeNumericVersionPart() {
+        var version = Version.fromString("0.7.7.201606060606");
+
+        then(version.parts()).containsExactly(
+                new NumericPart(0), new NumericPart(7),
+                new NumericPart(7), new NumericPart(new BigInteger("201606060606")));
     }
 
     @Test
