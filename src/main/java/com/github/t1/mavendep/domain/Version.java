@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import static com.github.t1.mavendep.report.Logger.log;
 
@@ -23,6 +24,7 @@ import static com.github.t1.mavendep.report.Logger.log;
 /// "1.2.3"          → parts [1, 2, 3]
 /// "5.1.5.Final"    → parts [5, 1, 5, "Final"]
 /// "1.2.3-SNAPSHOT"  → parts [1, 2, 3, "SNAPSHOT"]
+/// "1.0-a9"          → parts [1, 0, "a", 9]  (mixed segments are split)
 /// "1.0" equals "1.0.0" (zero-padding)
 /// "1.2.3-Final" equals "1.2.3.Final" (separators interchangeable)
 /// ```
@@ -54,20 +56,32 @@ public record Version(List<Part> parts, String original) implements Comparable<V
     private static final Set<String> PRE_RELEASE_QUALIFIERS = Set.of(
             "snapshot", "alpha", "beta", "rc", "m", "cr", "pr", "preview", "dev", "incubating");
 
+    private static final Pattern SEGMENT_TOKEN = Pattern.compile("[a-zA-Z]+|\\d+");
+
     public static Version fromString(String version) {
         if (version == null) return null;
         var segments = version.split("[.\\-]");
-        var parts = new ArrayList<Part>(segments.length);
+        var parts = new ArrayList<Part>();
         for (var segment : segments) {
-            parts.add(parseSegment(segment));
+            parts.addAll(parseSegment(segment));
         }
         return new Version(List.copyOf(parts), version);
     }
 
-    private static Part parseSegment(String segment) {
+    private static List<Part> parseSegment(String segment) {
         if (segment.isEmpty()) throw new IllegalArgumentException("Invalid version segment: empty");
-        if (segment.chars().allMatch(Character::isDigit)) return new NumericPart(Integer.parseInt(segment));
-        return new StringPart(segment);
+        var parts = new ArrayList<Part>();
+        var matcher = SEGMENT_TOKEN.matcher(segment);
+        while (matcher.find()) {
+            parts.add(parsePart(matcher.group()));
+        }
+        return parts;
+    }
+
+    private static Part parsePart(String token) {
+        return Character.isDigit(token.charAt(0))
+                ? new NumericPart(Integer.parseInt(token))
+                : new StringPart(token);
     }
 
     /// Returns the numeric value at the given index, or `0` if the index is out of bounds or the part is not numeric.

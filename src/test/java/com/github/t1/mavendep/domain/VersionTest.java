@@ -156,7 +156,8 @@ class VersionTest {
         then(version.major()).isEqualTo(2);
         then(version.minor()).isEqualTo(2);
         then(version.patch()).isEqualTo(0);
-        then(version.part(2)).isEqualTo(new StringPart("RC1"));
+        then(version.part(2)).isEqualTo(new StringPart("RC"));
+        then(version.part(3)).isEqualTo(new NumericPart(1));
     }
 
     @Test
@@ -339,11 +340,20 @@ class VersionTest {
     }
 
     @Test
+    void shouldCompareA9AsLessThanA10() {
+        var a9 = Version.fromString("1.0-a9");
+        var a10 = Version.fromString("1.0-a10");
+
+        then(a9).isLessThan(a10);
+    }
+
+    @Test
     void shouldParseMixedHyphenAndDotVersionIntoParts() {
         var version = Version.fromString("16.0.SP02-1xxx2");
 
         then(version.parts()).containsExactly(
                 new NumericPart(16), new NumericPart(0),
-                new StringPart("SP02"), new StringPart("1xxx2"));
+                new StringPart("SP"), new NumericPart(2),
+                new NumericPart(1), new StringPart("xxx"), new NumericPart(2));
     }
 }
