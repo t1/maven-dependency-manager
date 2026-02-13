@@ -1,4 +1,3 @@
-* Add a LICENSE.md file with the Apache License and remove the section in the README.
 * Sort the pre-release qualifiers of a Version in a semantic way and use that for ordering, e.g. `snapshot` is newer
   than `alpha1`.
   Maybe an enum is a good solution?

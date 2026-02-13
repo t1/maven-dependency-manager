@@ -180,7 +180,7 @@ we follow these Coding Conventions at all times:
 
 ## License
 
-MIT License
+[Apache License 2.0](LICENSE.md)
 
 ## Contributing
 
