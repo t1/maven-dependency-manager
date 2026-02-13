@@ -55,7 +55,7 @@ import static java.util.regex.Pattern.quote;
 /// ```
 ///
 /// ## Mutability
-/// The content field is mutable to support efficient chaining of updates.
+/// The content and dirty flag are mutable to support efficient chaining of updates.
 /// Dependencies and plugins may be updated when resolving version properties from parent POMs.
 /// Properties remain immutable and reflect the initial parsed state.
 public class Pom {
@@ -222,7 +222,7 @@ public class Pom {
     }
 
 
-    private final String originalContent;
+    private boolean dirty;
     private String content;
     private final Path path;
     private final Optional<Dependency> parent;
@@ -240,7 +240,6 @@ public class Pom {
             List<Dependency> plugins,
             Map<String, String> properties,
             List<String> modules) {
-        this.originalContent = content;
         this.content = content;
         this.path = path;
         this.parent = parent;
@@ -278,7 +277,7 @@ public class Pom {
         });
     }
 
-    public boolean isDirty() {return !content.equals(originalContent);}
+    public boolean isDirty() {return dirty;}
 
     public void apply(Stream<DependencyUpdate> updates) {updates.forEach(new Updater()::apply);}
 
@@ -302,14 +301,14 @@ public class Pom {
 
         private void updatePropertyValue(String propertyName, DependencyUpdate update) {
             if (properties.containsKey(propertyName)) {
-                content = updateVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
+                replaceVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
             } else if (parentPom != null) {
                 parentPom.apply(Stream.of(update));
             }
         }
 
         private void updateDirectVersion(DependencyUpdate update) {
-            content = updateVersionInTag("<version>", "</version>", update);
+            replaceVersionInTag("<version>", "</version>", update);
         }
 
         private void updateParentDirectVersion(DependencyUpdate update) {
@@ -324,10 +323,10 @@ public class Pom {
                     DOTALL
             );
 
-            content = replaceVersion(pattern, update);
+            replaceVersion(pattern, update);
         }
 
-        private String updateVersionInTag(String openingTag, String closingTag, DependencyUpdate update) {
+        private void replaceVersionInTag(String openingTag, String closingTag, DependencyUpdate update) {
             var pattern = Pattern.compile(
                     quote(openingTag) +
                     OPTIONAL_COMMENTS +
@@ -339,10 +338,10 @@ public class Pom {
                     DOTALL
             );
 
-            return replaceVersion(pattern, update);
+            replaceVersion(pattern, update);
         }
 
-        private String replaceVersion(Pattern pattern, DependencyUpdate update) {
+        private void replaceVersion(Pattern pattern, DependencyUpdate update) {
             var matcher = pattern.matcher(content);
             if (matcher.find()) {
                 var matched = matcher.group();
@@ -350,10 +349,9 @@ public class Pom {
                         quote(update.currentVersion().toString()),
                         update.latestVersion().toString()
                 );
-                return content.replace(matched, replacement);
+                content = content.replace(matched, replacement);
+                dirty = true;
             }
-
-            return content;
         }
     }
 }
