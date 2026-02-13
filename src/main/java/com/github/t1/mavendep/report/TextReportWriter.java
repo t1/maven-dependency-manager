@@ -7,7 +7,7 @@ import com.github.t1.mavendep.domain.ProjectReport;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.github.t1.mavendep.domain.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 
 public class TextReportWriter implements ReportWriter {
 

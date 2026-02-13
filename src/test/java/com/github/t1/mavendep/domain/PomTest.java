@@ -8,8 +8,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.github.t1.mavendep.domain.DependencyType.dependency;
-import static com.github.t1.mavendep.domain.DependencyType.parent;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.parent;
 import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.none;
@@ -118,11 +118,11 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <properties>
                         <jackson.version>2.20.0</jackson.version>
                     </properties>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>com.fasterxml.jackson.core</groupId>
@@ -147,7 +147,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -242,7 +242,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <build>
                         <plugins>
                             <plugin>
@@ -280,7 +280,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.projectlombok</groupId>
@@ -850,12 +850,12 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <properties>
                         <alpha.version>2.0.0</alpha.version>
                         <beta.version>2.0.0</beta.version>
                     </properties>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>com.example</groupId>

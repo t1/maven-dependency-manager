@@ -18,6 +18,9 @@ import java.util.Optional;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static com.github.t1.mavendep.domain.Dependency.DependencyType;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
 import static com.github.t1.mavendep.report.Logger.log;
 import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
@@ -86,8 +89,8 @@ public class Pom {
                 content,
                 pomPath,
                 parseParentFromDocument(doc, properties),
-                parseElementsFromDocument(doc, "dependency", properties),
-                parseElementsFromDocument(doc, "plugin", properties),
+                parseElementsFromDocument(doc, dependency, properties),
+                parseElementsFromDocument(doc, plugin, properties),
                 properties,
                 parseModulesFromDocument(doc));
     }
@@ -123,12 +126,12 @@ public class Pom {
         return properties;
     }
 
-    private static List<Dependency> parseElementsFromDocument(Document doc, String tagName, Map<String, String> properties) {
+    private static List<Dependency> parseElementsFromDocument(Document doc, DependencyType type, Map<String, String> properties) {
         var elements = new ArrayList<Dependency>();
-        var nodes = doc.getElementsByTagName(tagName);
+        var nodes = doc.getElementsByTagName(type.name());
 
         for (var i = 0; i < nodes.getLength(); i++) {
-            elements.add(new DependencyParser(properties, tagName).parse(nodes.item(i)));
+            elements.add(new DependencyParser(properties, type).parse(nodes.item(i)));
         }
 
         return elements;
@@ -138,7 +141,7 @@ public class Pom {
         var parentNodes = doc.getElementsByTagName("parent");
         if (parentNodes.getLength() == 0) return Optional.empty();
         var parentNode = parentNodes.item(0);
-        return Optional.of(new DependencyParser(properties, "parent").parse(parentNode));
+        return Optional.of(new DependencyParser(properties, DependencyType.parent).parse(parentNode));
     }
 
     private static List<String> parseModulesFromDocument(Document doc) {
@@ -175,7 +178,7 @@ public class Pom {
         return value;
     }
 
-    private record DependencyParser(Map<String, String> properties, String tagName) {
+    private record DependencyParser(Map<String, String> properties, DependencyType type) {
         private static final String DEFAULT_PLUGIN_GROUP_ID = "org.apache.maven.plugins";
 
         private Dependency parse(Node depNode) {
@@ -201,20 +204,15 @@ public class Pom {
                 }
             }
 
-            groupId = defaultGroupIdIfPlugin(groupId, artifactId);
-
-            var dependency = new Dependency(groupId, artifactId, version, scope, versionProperty);
-            if (groupId == null) log("Warning: missing groupId in dependency " + dependency);
-            if (artifactId == null) log("Warning: missing artifactId in dependency " + dependency);
-            return dependency;
-        }
-
-        private String defaultGroupIdIfPlugin(String groupId, String artifactId) {
-            if (groupId == null && "plugin".equals(tagName)) {
+            if (groupId == null && type == plugin) {
                 log("Warning: missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
-                return DEFAULT_PLUGIN_GROUP_ID;
+                groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
-            return groupId;
+
+            var dependency = new Dependency(type, groupId, artifactId, version, scope, versionProperty);
+            if (groupId == null) log("Warning: missing groupId in " + dependency);
+            if (artifactId == null) log("Warning: missing artifactId in " + dependency);
+            return dependency;
         }
 
         private String resolve(String value) {

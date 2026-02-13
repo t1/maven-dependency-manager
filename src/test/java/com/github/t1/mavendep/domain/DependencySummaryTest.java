@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
-import static com.github.t1.mavendep.domain.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.UpdateType.major;
 import static com.github.t1.mavendep.domain.UpdateType.minor;

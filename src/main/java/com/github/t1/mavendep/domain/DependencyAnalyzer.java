@@ -7,9 +7,6 @@ import java.util.concurrent.StructuredTaskScope;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static com.github.t1.mavendep.domain.DependencyType.dependency;
-import static com.github.t1.mavendep.domain.DependencyType.parent;
-import static com.github.t1.mavendep.domain.DependencyType.plugin;
 import static java.util.concurrent.StructuredTaskScope.Subtask;
 
 /// Service for analyzing Maven project dependencies, plugins, and identifying available updates.
@@ -68,9 +65,9 @@ public class DependencyAnalyzer {
 
     private ProjectReport analyze(Pom pom) {
         try (var scope = StructuredTaskScope.<DependencyUpdate>open()) {
-            var dependencyUpdatesTasks = submitAnalysis(scope, pom.dependencies(), dependency);
-            var pluginUpdateTasks = submitAnalysis(scope, pom.plugins(), plugin);
-            var parentUpdateTask = submitAnalysis(scope, pom.parent().stream().toList(), parent);
+            var dependencyUpdatesTasks = submitAnalysis(scope, pom.dependencies());
+            var pluginUpdateTasks = submitAnalysis(scope, pom.plugins());
+            var parentUpdateTask = submitAnalysis(scope, pom.parent().stream().toList());
 
             scope.join();
 
@@ -89,10 +86,9 @@ public class DependencyAnalyzer {
 
     private List<Subtask<DependencyUpdate>> submitAnalysis(
             StructuredTaskScope<DependencyUpdate, Void> scope,
-            List<Dependency> dependencies,
-            DependencyType dependencyType) {
+            List<Dependency> dependencies) {
         return dependencies.stream()
-                .map(dep -> scope.fork(() -> analyze(dep, dependencyType)))
+                .map(dependency -> scope.fork(() -> analyze(dependency)))
                 .toList();
     }
 
@@ -103,12 +99,12 @@ public class DependencyAnalyzer {
                 .toList();
     }
 
-    private DependencyUpdate analyze(Dependency dependency, DependencyType dependencyType) {
+    private DependencyUpdate analyze(Dependency dependency) {
         var availableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<Version>of()
                 : repository.getAvailableVersions(dependency.groupId(), dependency.artifactId());
         var releasedVersions = availableVersions.stream().filter(Version::isReleased).toList();
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
         var updateType = UpdateType.between(dependency.version(), latestVersion);
-        return dependency.toUpdate(dependencyType, latestVersion, availableVersions, updateType);
+        return dependency.toUpdate(latestVersion, availableVersions, updateType);
     }
 }

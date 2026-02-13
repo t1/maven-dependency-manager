@@ -9,8 +9,8 @@ import com.github.t1.mavendep.domain.ProjectReport;
 
 import java.util.List;
 
-import static com.github.t1.mavendep.domain.DependencyType.parent;
-import static com.github.t1.mavendep.domain.DependencyType.plugin;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.parent;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
 
 public class JsonReportWriter implements ReportWriter {
 

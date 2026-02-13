@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static com.github.t1.mavendep.domain.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.Scope.runtime;
 import static com.github.t1.mavendep.domain.Scope.test;

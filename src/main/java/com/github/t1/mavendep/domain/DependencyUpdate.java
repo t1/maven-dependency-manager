@@ -2,6 +2,7 @@ package com.github.t1.mavendep.domain;
 
 import java.util.List;
 
+import static com.github.t1.mavendep.domain.Dependency.DependencyType;
 import static java.util.Objects.requireNonNull;
 
 public record DependencyUpdate(
