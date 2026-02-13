@@ -1,166 +1,146 @@
 package com.github.t1.mavendep.domain;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public record Version(int major, int minor, int patch, String qualifier, String qualifierSeparator) implements Comparable<Version> {
+import static com.github.t1.mavendep.report.Logger.log;
 
-    public Version(int major, int minor, int patch, String qualifier) {
-        this(major, minor, patch, qualifier, qualifier.isEmpty() ? "" : "-");
+/// Represents a parsed version string as a list of parts (integers and strings).
+///
+/// ## Parsing
+/// Version strings are split on dots and hyphens. Each segment becomes a `NumericPart`
+/// (if all digits) or a `StringPart`. The original string is preserved for `toString()`.
+///
+/// ## Comparison
+/// - Parts are compared pairwise; missing parts are padded with `NumericPart(0)`
+/// - Numeric parts compare by value; string parts compare lexicographically
+/// - At the same position, string parts sort before numeric parts (pre-release < release)
+///
+/// ## Examples
+/// ```
+/// "1.2.3"          → parts [1, 2, 3]
+/// "5.1.5.Final"    → parts [5, 1, 5, "Final"]
+/// "1.2.3-SNAPSHOT"  → parts [1, 2, 3, "SNAPSHOT"]
+/// "1.0" equals "1.0.0" (zero-padding)
+/// "1.2.3-Final" equals "1.2.3.Final" (separators interchangeable)
+/// ```
+public record Version(List<Part> parts, String original) implements Comparable<Version> {
+
+    public sealed interface Part extends Comparable<Part> {
+        Part ZERO = new NumericPart(0);
     }
+
+    public record NumericPart(int value) implements Part {
+        @Override public int compareTo(Part other) {
+            if (other instanceof NumericPart(var v)) return Integer.compare(value, v);
+            return 1; // numeric after string (release > pre-release)
+        }
+
+        @Override public String toString() {return Integer.toString(value);}
+    }
+
+    public record StringPart(String value) implements Part {
+        @Override public int compareTo(Part other) {
+            if (other instanceof StringPart(var v)) return value.compareTo(v);
+            return -1; // string before numeric (pre-release < release)
+        }
+
+        @Override public String toString() {return value;}
+    }
+
+    private static final Set<String> RELEASE_QUALIFIERS = Set.of("Final", "RELEASE", "GA");
+    private static final Set<String> PRE_RELEASE_QUALIFIERS = Set.of(
+            "snapshot", "alpha", "beta", "rc", "m", "cr", "pr", "preview", "dev", "incubating");
+
+    public static Version fromString(String version) {
+        if (version == null) return null;
+        var segments = version.split("[.\\-]");
+        var parts = new ArrayList<Part>(segments.length);
+        for (var segment : segments) {
+            parts.add(parseSegment(segment));
+        }
+        return new Version(List.copyOf(parts), version);
+    }
+
+    private static Part parseSegment(String segment) {
+        if (segment.isEmpty()) throw new IllegalArgumentException("Invalid version segment: empty");
+        if (segment.chars().allMatch(Character::isDigit)) return new NumericPart(Integer.parseInt(segment));
+        return new StringPart(segment);
+    }
+
+    /// Returns the numeric value at the given index, or `0` if the index is out of bounds or the part is not numeric.
+    public int numericPart(int index) {
+        return part(index) instanceof NumericPart(var v) ? v : 0;
+    }
+
+    /// Returns the part at the given index, or a {@link NumericPart} of `0` if out of bounds.
+    public Part part(int index) {
+        return index >= parts.size() ? Part.ZERO : parts.get(index);
+    }
+
+    public int major() {return numericPart(0);}
+
+    public int minor() {return numericPart(1);}
+
+    public int patch() {return numericPart(2);}
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof Version v)) return false;
-        return major == v.major && minor == v.minor && patch == v.patch && qualifier.equals(v.qualifier);
+        return compareTo(v) == 0;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(major, minor, patch, qualifier);
-    }
-
-    private static final int MIN_QUALIFIER_LENGTH = 2;
-
-    private record NumberAndQualifier(int number, String qualifier) {}
-
-    private static NumberAndQualifier parseNumberWithQualifier(String part) {
-        if (part.contains("-")) {
-            var split = part.split("-", 2);
-            return new NumberAndQualifier(Integer.parseInt(split[0]), split[1]);
-        }
-        return new NumberAndQualifier(Integer.parseInt(part), "");
-    }
-
-    public static Version fromString(String version) {
-        if (version == null) return null;
-        try {
-            var parts = version.split("\\.");
-            return parseVersionParts(parts);
-        } catch (NumberFormatException e) {
-            throw new IllegalArgumentException("Invalid version string: '" + version + "'", e);
-        }
-    }
-
-    private static Version parseVersionParts(String[] parts) {
-        var major = parseMajor(parts);
-        var minorAndQualifier = parseMinorAndQualifier(parts);
-        var patchAndQualifier = parsePatchAndQualifier(parts, minorAndQualifier.qualifier());
-        var qualifierSeparator = determineQualifierSeparator(parts, patchAndQualifier.qualifier());
-
-        return new Version(major, minorAndQualifier.number(),
-                patchAndQualifier.number(),
-                patchAndQualifier.qualifier(),
-                qualifierSeparator);
-    }
-
-    private static String determineQualifierSeparator(String[] parts, String qualifier) {
-        if (qualifier.isEmpty()) return "";
-        if (parts.length > 3) return ".";
-        return "-";
-    }
-
-    private static int parseMajor(String[] parts) {
-        return Integer.parseInt(parts[0]);
-    }
-
-    private static NumberAndQualifier parseMinorAndQualifier(String[] parts) {
-        if (parts.length < 2) {
-            return new NumberAndQualifier(0, "");
-        }
-        return parseNumberWithQualifier(parts[1]);
-    }
-
-    private static NumberAndQualifier parsePatchAndQualifier(String[] parts, String inheritedQualifier) {
-        if (parts.length < 3) {
-            return new NumberAndQualifier(0, inheritedQualifier);
-        }
-
-        if (isQualifierOnly(parts[2])) {
-            var combinedQualifier = combineQualifiers(inheritedQualifier, parts[2]);
-            return new NumberAndQualifier(0, combinedQualifier);
-        }
-
-        var result = parseNumberWithQualifier(parts[2]);
-        if (parts.length > 3) {
-            var remaining = String.join(".", Arrays.copyOfRange(parts, 3, parts.length));
-            return new NumberAndQualifier(result.number(), combineQualifiers(result.qualifier(), remaining));
-        }
-        return result;
-    }
-
-    private static boolean isQualifierOnly(String part) {
-        if (Character.isDigit(part.charAt(0))) {
-            return false;
-        }
-        if (part.length() < MIN_QUALIFIER_LENGTH) {
-            throw new NumberFormatException("For input string: \"" + part + "\"");
-        }
-        return true;
-    }
-
-    private static String combineQualifiers(String first, String second) {
-        return first.isEmpty() ? second : first + "." + second;
+        var end = parts.size();
+        while (end > 0 && Part.ZERO.equals(parts.get(end - 1))) end--;
+        return Objects.hash(parts.subList(0, end));
     }
 
     /// Compares versions semantically.
     ///
-    /// ## Semantic Version Behavior
-    /// - Versions are compared by major.minor.patch first
-    /// - Released versions (no qualifier) are **greater than** unreleased versions (with qualifier)
-    /// - Qualifiers are compared lexicographically (e.g., `rc1` > `beta1` > `alpha1` > `SNAPSHOT`)
-    ///
-    /// ## Examples
-    /// ```
-    /// 2.0.0 > 1.0.0                    // higher version > lower version
-    /// 1.10.0 > 1.9.9                   // higher version > lower version
-    /// 1.0.0 > 1.0.0-SNAPSHOT           // released > unreleased
-    /// 3.0.0-rc1 > 3.0.0-beta1          // rc > beta
-    /// 3.0.0-beta1 > 3.0.0-alpha1       // beta > alpha
-    /// 3.0.0-alpha1 > 3.0.0-SNAPSHOT    // alpha > SNAPSHOT
-    /// ```
+    /// Parts are compared pairwise. Missing parts are padded with `NumericPart(0)`.
+    /// At the same position, string parts sort before numeric parts (pre-release < release).
     @Override
     public int compareTo(Version other) {
-        if (other == null) return 1;
-        if (this.major != other.major) {
-            return this.major - other.major;
+        var maxLen = Math.max(this.parts.size(), other.parts.size());
+        for (var i = 0; i < maxLen; i++) {
+            var result = part(i).compareTo(other.part(i));
+            if (result != 0) return result;
         }
-        if (this.minor != other.minor) {
-            return this.minor - other.minor;
-        }
-        if (this.patch != other.patch) {
-            return this.patch - other.patch;
-        }
-
-        // Release versions (no qualifier) are newer than pre-release versions (with qualifier)
-        if (this.qualifier.isEmpty() && !other.qualifier.isEmpty()) {
-            return 1;
-        }
-        if (!this.qualifier.isEmpty() && other.qualifier.isEmpty()) {
-            return -1;
-        }
-
-        // Compare qualifiers lexicographically
-        return this.qualifier.compareTo(other.qualifier);
+        return 0;
     }
 
-    private static final Set<String> RELEASE_QUALIFIERS = Set.of("Final", "RELEASE", "GA");
-
-    /// Most qualifiers like `-alpha1`, `-RC3` or `-SNAPSHOT` are considered pre-release versions.
-    /// Exceptions: `Final`, `RELEASE`, and `GA` are considered release indicators.
+    /// Determines if this version represents a release (not a pre-release).
+    ///
+    /// - No string parts → released
+    /// - Known release qualifiers (`Final`, `GA`, `RELEASE`) → released
+    /// - Known pre-release qualifiers (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) → not released
+    /// - Unknown string qualifiers → warning logged, assumed pre-release
     public boolean isReleased() {
-        return qualifier.isEmpty() || RELEASE_QUALIFIERS.contains(qualifier);
+        var qualifier = lastQualifier();
+        if (qualifier == null) return true;
+        if (RELEASE_QUALIFIERS.contains(qualifier)) return true;
+        if (isKnownPreRelease(qualifier)) return false;
+        log("Warning: unknown version qualifier '" + qualifier + "' in " + original + "; assuming pre-release");
+        return false;
     }
 
+    private String lastQualifier() {
+        for (var i = parts.size() - 1; i >= 0; i--) {
+            if (parts.get(i) instanceof StringPart(var v)) return v;
+        }
+        return null;
+    }
+
+    private static boolean isKnownPreRelease(String qualifier) {
+        var lower = qualifier.toLowerCase();
+        return PRE_RELEASE_QUALIFIERS.stream().anyMatch(lower::startsWith);
+    }
 
     @Override
-    public String toString() {
-        var base = "%d.%d.%d".formatted(major, minor, patch);
-        if (qualifier.isEmpty()) {
-            return base;
-        }
-        return base + qualifierSeparator + qualifier;
-    }
+    public String toString() {return original;}
 }

@@ -1,5 +1,7 @@
 package com.github.t1.mavendep.domain;
 
+import com.github.t1.mavendep.domain.Version.NumericPart;
+import com.github.t1.mavendep.domain.Version.StringPart;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -7,7 +9,6 @@ import java.util.List;
 
 import static java.util.Collections.sort;
 import static org.assertj.core.api.BDDAssertions.then;
-import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
 class VersionTest {
 
@@ -155,7 +156,7 @@ class VersionTest {
         then(version.major()).isEqualTo(2);
         then(version.minor()).isEqualTo(2);
         then(version.patch()).isEqualTo(0);
-        then(version.qualifier()).isEqualTo("RC1");
+        then(version.part(2)).isEqualTo(new StringPart("RC1"));
     }
 
     @Test
@@ -277,27 +278,6 @@ class VersionTest {
         then(alpha.compareTo(snapshot)).isPositive();
     }
 
-    // Test list for version parsing robustness
-    @Test
-    void shouldThrowExceptionForInvalidVersionString() {
-        thenThrownBy(() -> Version.fromString("invalid"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("invalid");
-    }
-
-    @Test
-    void shouldThrowExceptionForNonNumericMinor() {
-        thenThrownBy(() -> Version.fromString("1.x.3"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("1.x.3");
-    }
-
-    @Test
-    void shouldThrowExceptionForNonNumericPatch() {
-        thenThrownBy(() -> Version.fromString("1.2.x"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("1.2.x");
-    }
 
     @Test
     void shouldParseFourPartVersionWithDotQualifier() {
@@ -306,7 +286,7 @@ class VersionTest {
         then(version.major()).isEqualTo(5);
         then(version.minor()).isEqualTo(1);
         then(version.patch()).isEqualTo(5);
-        then(version.qualifier()).isEqualTo("Final");
+        then(version.part(3)).isEqualTo(new StringPart("Final"));
     }
 
     @Test
@@ -326,12 +306,44 @@ class VersionTest {
     }
 
     @Test
-    void shouldParseTwoPartVersionWithComplexQualifier() {
+    void shouldTreatVersionsWithTrailingZerosAsEqual() {
+        thenEqual("1.0", "1.0.0");
+    }
+
+    @Test
+    void shouldTreatSeparatorsAsInterchangeable() {
+        thenEqual("1.2.3-Final", "1.2.3.Final");
+    }
+
+    static void thenEqual(String version, String version1) {
+        var v1 = Version.fromString(version);
+        var v2 = Version.fromString(version1);
+        then(v1).isEqualTo(v2).hasSameHashCodeAs(v2);
+    }
+
+    @Test
+    void shouldCompareStringPartsBeforeNumericParts() {
+        var preRelease = Version.fromString("1.0.0.Final");
+        var numeric = Version.fromString("1.0.1");
+
+        then(preRelease).isLessThan(numeric);
+    }
+
+    @Test
+    void shouldParseVersionIntoParts() {
+        var version = Version.fromString("5.1.5.Final");
+
+        then(version.parts()).containsExactly(
+                new NumericPart(5), new NumericPart(1),
+                new NumericPart(5), new StringPart("Final"));
+    }
+
+    @Test
+    void shouldParseMixedHyphenAndDotVersionIntoParts() {
         var version = Version.fromString("16.0.SP02-1xxx2");
 
-        then(version.major()).isEqualTo(16);
-        then(version.minor()).isEqualTo(0);
-        then(version.patch()).isEqualTo(0);
-        then(version.qualifier()).isEqualTo("SP02-1xxx2");
+        then(version.parts()).containsExactly(
+                new NumericPart(16), new NumericPart(0),
+                new StringPart("SP02"), new StringPart("1xxx2"));
     }
 }

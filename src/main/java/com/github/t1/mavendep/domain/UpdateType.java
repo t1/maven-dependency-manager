@@ -7,11 +7,9 @@ public enum UpdateType {
     major;
 
     public static UpdateType between(Version current, Version newer) {
-        if (current != null && newer != null && newer.compareTo(current) > 0) {
-            if (current.major() != newer.major()) return major;
-            if (current.minor() != newer.minor()) return minor;
-            if (current.patch() != newer.patch() || !current.qualifier().equals(newer.qualifier())) return patch;
-        }
-        return none;
+        if (current == null || newer == null || newer.compareTo(current) <= 0) return none;
+        if (current.major() != newer.major()) return major;
+        if (current.minor() != newer.minor()) return minor;
+        return patch;
     }
 }
