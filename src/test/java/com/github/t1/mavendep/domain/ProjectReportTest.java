@@ -23,6 +23,7 @@ class ProjectReportTest {
                 "parent",
                 Version.fromString("1.0.0"),
                 compile,
+                null,
                 Version.fromString("2.0.0"),
                 List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")),
                 major
@@ -33,6 +34,7 @@ class ProjectReportTest {
                 "lib",
                 Version.fromString("1.0.0"),
                 compile,
+                null,
                 Version.fromString("1.1.0"),
                 List.of(Version.fromString("1.0.0"), Version.fromString("1.1.0")),
                 minor

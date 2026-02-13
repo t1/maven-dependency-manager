@@ -110,6 +110,60 @@ class PomTest {
     }
 
     @Test
+    void shouldParseVersionPropertyFromPropertyReference() {
+        var pomContent = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <properties>
+                        <jackson.version>2.20.0</jackson.version>
+                    </properties>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-databind</artifactId>
+                            <version>${jackson.version}</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomContent).orElseThrow();
+
+        then(pom.dependencies().getFirst().versionProperty()).isEqualTo("jackson.version");
+    }
+
+    @Test
+    void shouldNotSetVersionPropertyWhenVersionIsDirect() {
+        var pomContent = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomContent).orElseThrow();
+
+        then(pom.dependencies().getFirst().versionProperty()).isNull();
+    }
+
+    @Test
     void shouldParseModules() {
         var pomContent = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -189,6 +243,35 @@ class PomTest {
         return pomFile;
     }
 
+    @Test
+    void shouldParseUnresolvablePropertyVersionAsNull() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                            <version>${lombok.version}</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        var dep = pom.dependencies().getFirst();
+        then(dep.groupId()).isEqualTo("org.projectlombok");
+        then(dep.artifactId()).isEqualTo("lombok");
+        then(dep.version()).isNull();
+        then(dep.versionProperty()).isEqualTo("lombok.version");
+    }
+
     // Update tests
 
     @Test
@@ -218,6 +301,7 @@ class PomTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -264,6 +348,7 @@ class PomTest {
                         "junit-jupiter",
                         Version.fromString("5.10.0"),
                         test,
+                        null,
                         Version.fromString("5.11.0"),
                         List.of(),
                         none
@@ -274,6 +359,7 @@ class PomTest {
                         "picocli",
                         Version.fromString("4.7.0"),
                         compile,
+                        null,
                         Version.fromString("4.7.7"),
                         List.of(),
                         none
@@ -321,6 +407,7 @@ class PomTest {
                 "jackson-databind",
                 Version.fromString("2.20.0"),
                 compile,
+                "jackson.version",
                 Version.fromString("2.21.0"),
                 List.of(),
                 none
@@ -361,6 +448,7 @@ class PomTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -434,6 +522,7 @@ class PomTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -477,6 +566,7 @@ class PomTest {
                 "sshd-common",
                 Version.fromString("2.12.1"),
                 compile,
+                null,
                 Version.fromString("2.13.0"),
                 List.of(),
                 none
@@ -524,6 +614,7 @@ class PomTest {
                 "jackson-databind",
                 Version.fromString("2.20.0"),
                 compile,
+                "jackson.version",
                 Version.fromString("2.21.0"),
                 List.of(),
                 none
@@ -571,6 +662,7 @@ class PomTest {
                 "sshd-common",
                 Version.fromString("2.12.1"),
                 compile,
+                "sshd.version",
                 Version.fromString("2.13.0"),
                 List.of(),
                 none
@@ -617,6 +709,7 @@ class PomTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                "junit.version",
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
@@ -659,6 +752,7 @@ class PomTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 none
@@ -705,6 +799,7 @@ class PomTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 null,
+                "spring-boot.version",
                 Version.fromString("3.2.0"),
                 List.of(),
                 none
@@ -716,5 +811,56 @@ class PomTest {
         var updatedContent = readString(pomFile);
         then(updatedContent).contains("<spring-boot.version>3.2.0</spring-boot.version>");
         then(updatedContent).doesNotContain("<spring-boot.version>3.1.0</spring-boot.version>");
+    }
+
+    @Test
+    void shouldUpdateCorrectPropertyWhenMultiplePropertiesHaveSameVersion() throws IOException {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <properties>
+                        <alpha.version>2.0.0</alpha.version>
+                        <beta.version>2.0.0</beta.version>
+                    </properties>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.example</groupId>
+                            <artifactId>alpha</artifactId>
+                            <version>${alpha.version}</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.example</groupId>
+                            <artifactId>beta</artifactId>
+                            <version>${beta.version}</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+        var update = new DependencyUpdate(
+                dependency,
+                "com.example",
+                "alpha",
+                Version.fromString("2.0.0"),
+                compile,
+                "alpha.version",
+                Version.fromString("3.0.0"),
+                List.of(),
+                none
+        );
+
+        pom.apply(Stream.of(update));
+        pom.writeToDisk();
+
+        var updatedContent = readString(pomFile);
+        then(updatedContent).contains("<alpha.version>3.0.0</alpha.version>");
+        then(updatedContent).contains("<beta.version>2.0.0</beta.version>");
     }
 }

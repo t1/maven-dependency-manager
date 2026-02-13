@@ -168,9 +168,11 @@ public class Pom {
     }
 
     private static String resolve(String value, Map<String, String> properties) {
-        return extractPropertyName(value)
-                .map(properties::get)
-                .orElse(value);
+        var propertyName = extractPropertyName(value);
+        if (propertyName.isPresent()) {
+            return properties.get(propertyName.get());
+        }
+        return value;
     }
 
     private record DependencyParser(Map<String, String> properties) {
@@ -181,18 +183,23 @@ public class Pom {
             String artifactId = null;
             Version version = null;
             Scope scope = Scope.DEFAULT;
+            String versionProperty = null;
 
             for (var i = 0; i < children.getLength(); i++) {
                 var child = children.item(i);
                 switch (child.getNodeName()) {
                     case "groupId" -> groupId = resolve(child.getTextContent().trim());
                     case "artifactId" -> artifactId = resolve(child.getTextContent().trim());
-                    case "version" -> version = Version.fromString(resolve(child.getTextContent().trim()));
+                    case "version" -> {
+                        var raw = child.getTextContent().trim();
+                        versionProperty = extractPropertyName(raw).orElse(null);
+                        version = Version.fromString(resolve(raw));
+                    }
                     case "scope" -> scope = Scope.of(child.getTextContent().trim());
                 }
             }
 
-            var dependency = new Dependency(groupId, artifactId, version, scope);
+            var dependency = new Dependency(groupId, artifactId, version, scope, versionProperty);
             if (groupId == null) log("Warning: missing groupId in dependency " + dependency);
             if (artifactId == null) log("Warning: missing artifactId in dependency " + dependency);
             return dependency;
@@ -256,38 +263,11 @@ public class Pom {
     private class Updater {
         private static final String OPTIONAL_WHITESPACE = "\\s*";
         private static final String OPTIONAL_COMMENTS = "(?:\\s*<!--.*?-->\\s*)*";
-        private static final String PROPERTY_REFERENCE = "\\$\\{[^}]+}";
 
         private void apply(DependencyUpdate update) {
-            var property = property(update.currentVersion().toString());
-
-            if (property.isPresent()) updatePropertyValue(property.get(), update);
-            else if (update.type() == DependencyType.parent) applyParentUpdate(update);
+            if (update.versionProperty() != null) updatePropertyValue(update.versionProperty(), update);
+            else if (update.type() == DependencyType.parent) updateParentDirectVersion(update);
             else updateDirectVersion(update);
-        }
-
-        private Optional<String> property(String value) {
-            return properties.entrySet().stream()
-                    .filter(entry -> entry.getValue().equals(value))
-                    .findFirst()
-                    .map(Map.Entry::getKey);
-        }
-
-        private void applyParentUpdate(DependencyUpdate parentUpdate) {
-            var parentPattern = Pattern.compile(
-                    "<parent>.*?<version>" + OPTIONAL_WHITESPACE + "(" + PROPERTY_REFERENCE + "|[^<]+)" +
-                    OPTIONAL_WHITESPACE + "</version>.*?</parent>",
-                    DOTALL
-            );
-            var matcher = parentPattern.matcher(content);
-            if (matcher.find()) {
-                var versionRef = matcher.group(1).trim();
-                extractPropertyName(versionRef)
-                        .ifPresentOrElse(
-                                propertyName -> updatePropertyValue(propertyName, parentUpdate),
-                                () -> updateParentDirectVersion(parentUpdate)
-                        );
-            }
         }
 
         private void updatePropertyValue(String propertyName, DependencyUpdate update) {

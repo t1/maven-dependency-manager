@@ -27,6 +27,7 @@ class DependencyUpdateTest {
                 "lib",
                 currentVersion,
                 compile,
+                null,
                 latestVersion,
                 availableVersions,
                 major
@@ -53,6 +54,7 @@ class DependencyUpdateTest {
                 "lib",
                 currentVersion,
                 test,
+                null,
                 latestVersion,
                 availableVersions,
                 minor
@@ -74,6 +76,7 @@ class DependencyUpdateTest {
                 "lib",
                 currentVersion,
                 runtime,
+                null,
                 latestVersion,
                 availableVersions,
                 patch
@@ -81,5 +84,25 @@ class DependencyUpdateTest {
 
         then(update.updateType()).isEqualTo(patch);
         then(update.scope()).isEqualTo(runtime);
+    }
+
+    @Test
+    void shouldStoreVersionProperty() {
+        var currentVersion = Version.fromString("1.0.0");
+        var latestVersion = Version.fromString("2.0.0");
+
+        var update = new DependencyUpdate(
+                dependency,
+                "com.example",
+                "lib",
+                currentVersion,
+                compile,
+                "lib.version",
+                latestVersion,
+                List.of(),
+                major
+        );
+
+        then(update.versionProperty()).isEqualTo("lib.version");
     }
 }

@@ -35,6 +35,7 @@ class JsonReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")),
                 patch
@@ -67,6 +68,7 @@ class JsonReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -77,6 +79,7 @@ class JsonReportWriterTest {
                 "spring-core",
                 Version.fromString("5.3.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 major
@@ -103,6 +106,7 @@ class JsonReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -113,6 +117,7 @@ class JsonReportWriterTest {
                 "spring-core",
                 Version.fromString("6.0.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -136,6 +141,7 @@ class JsonReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -158,6 +164,7 @@ class JsonReportWriterTest {
                 "unknown-artifact",
                 Version.fromString("1.0.0"),
                 compile,
+                null,
                 null,
                 List.of(),
                 none
@@ -183,6 +190,7 @@ class JsonReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -205,6 +213,7 @@ class JsonReportWriterTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor

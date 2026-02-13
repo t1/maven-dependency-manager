@@ -10,6 +10,7 @@ public record DependencyUpdate(
         String artifactId,
         Version currentVersion,
         Scope scope,
+        String versionProperty,
         Version latestVersion,
         List<Version> availableVersions,
         UpdateType updateType

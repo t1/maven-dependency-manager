@@ -50,6 +50,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -81,6 +82,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -91,6 +93,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("5.3.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 major
@@ -124,6 +127,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -145,6 +149,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -155,6 +160,7 @@ class TextReportWriterTest {
                 "spring-boot-starter-web",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.1"),
                 List.of(),
                 minor
@@ -165,6 +171,7 @@ class TextReportWriterTest {
                 "jackson-databind",
                 Version.fromString("2.15.0"),
                 compile,
+                null,
                 Version.fromString("2.16.1"),
                 List.of(),
                 minor
@@ -185,6 +192,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -206,6 +214,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -226,6 +235,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -236,6 +246,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("6.0.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -259,6 +270,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -269,6 +281,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("6.0.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -292,6 +305,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -313,6 +327,7 @@ class TextReportWriterTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
@@ -323,6 +338,7 @@ class TextReportWriterTest {
                 "maven-compiler-plugin",
                 Version.fromString("3.11.0"),
                 compile,
+                null,
                 Version.fromString("3.12.0"),
                 List.of(),
                 minor
@@ -333,6 +349,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -365,6 +382,7 @@ class TextReportWriterTest {
                 Version.fromString("1.0.0"),
                 compile,
                 null,
+                null,
                 List.of(),
                 none
         );
@@ -386,6 +404,7 @@ class TextReportWriterTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
@@ -396,6 +415,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -421,6 +441,7 @@ class TextReportWriterTest {
                 Version.fromString("1.0.0"),
                 compile,
                 null,
+                null,
                 List.of(),
                 none
         );
@@ -430,6 +451,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -453,6 +475,7 @@ class TextReportWriterTest {
                 "managed-artifact",
                 null,
                 compile,
+                null,
                 Version.fromString("2.0.0"),
                 List.of(),
                 none
@@ -475,6 +498,7 @@ class TextReportWriterTest {
                 "managed-parent",
                 null,
                 compile,
+                null,
                 Version.fromString("2.0.0"),
                 List.of(),
                 none
@@ -485,6 +509,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -508,6 +533,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -518,6 +544,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("5.3.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 major
@@ -547,6 +574,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -557,6 +585,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("5.3.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 major
@@ -567,6 +596,7 @@ class TextReportWriterTest {
                 "jackson-databind",
                 Version.fromString("2.15.0"),
                 compile,
+                null,
                 Version.fromString("2.16.0"),
                 List.of(),
                 minor
@@ -588,6 +618,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -608,6 +639,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("6.0.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -628,6 +660,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -638,6 +671,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("6.0.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -669,6 +703,7 @@ class TextReportWriterTest {
                 "spring-core",
                 Version.fromString("6.0.0"),
                 compile,
+                null,
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
@@ -679,6 +714,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.1"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 none
@@ -700,6 +736,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -720,6 +757,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 compile,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -741,6 +779,7 @@ class TextReportWriterTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
@@ -751,6 +790,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
@@ -775,6 +815,7 @@ class TextReportWriterTest {
                 "spring-boot-starter-parent",
                 Version.fromString("3.1.0"),
                 compile,
+                null,
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
@@ -785,6 +826,7 @@ class TextReportWriterTest {
                 "junit-jupiter",
                 Version.fromString("5.10.0"),
                 test,
+                null,
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch

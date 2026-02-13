@@ -5,7 +5,7 @@ import java.util.List;
 
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 
-public record Dependency(String groupId, String artifactId, Version version, Scope scope) {
+public record Dependency(String groupId, String artifactId, Version version, Scope scope, String versionProperty) {
     public boolean isValid() {
         return groupId != null && artifactId != null && version != null;
     }
@@ -32,6 +32,7 @@ public record Dependency(String groupId, String artifactId, Version version, Sco
                 artifactId() != null ? artifactId() : "",
                 version(),
                 scope(),
+                versionProperty(),
                 latestVersion,
                 availableVersions,
                 updateType

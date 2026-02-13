@@ -257,6 +257,7 @@ class DependencySummaryTest {
                 artifactId,
                 Version.fromString(currentVersion),
                 compile,
+                null,
                 Version.fromString(latestVersion),
                 List.of(Version.fromString(currentVersion), Version.fromString(latestVersion)),
                 updateType
@@ -270,6 +271,7 @@ class DependencySummaryTest {
                 "lib",
                 null,
                 compile,
+                null,
                 Version.fromString("1.0.0"),
                 List.of(Version.fromString("1.0.0")),
                 major
@@ -283,6 +285,7 @@ class DependencySummaryTest {
                 "lib",
                 Version.fromString("1.0.0"),
                 compile,
+                null,
                 null,
                 List.of(Version.fromString("1.0.0")),
                 none
