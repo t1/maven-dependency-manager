@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.StructuredTaskScope.Subtask;
@@ -24,8 +26,10 @@ public class DependencyAnalyzer {
     }
 
     public List<ProjectReport> analyze(List<Path> pomFiles) {
+        var allPoms = pomsAndModules(pomFiles).toList();
+        resolveParentProperties(allPoms);
         try (var scope = StructuredTaskScope.<ProjectReport>open()) {
-            var tasks = pomsAndModules(pomFiles)
+            var tasks = allPoms.stream()
                     .map(pom -> scope.fork(() -> analyze(pom)))
                     .toList();
             scope.join();
@@ -36,6 +40,22 @@ public class DependencyAnalyzer {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Analysis was interrupted", e);
+        }
+    }
+
+    private void resolveParentProperties(List<Pom> allPoms) {
+        var pomByPath = allPoms.stream()
+                .collect(Collectors.toMap(Pom::path, Function.identity()));
+
+        for (var pom : allPoms) {
+            if (pom.parent().isEmpty()) continue;
+            var pomDir = getParentDir(pom.path());
+            var parentDir = pomDir.getParent();
+            if (parentDir == null) continue;
+            var parentPom = pomByPath.get(parentDir.resolve("pom.xml"));
+            if (parentPom != null) {
+                pom.resolveUnresolvedVersionsFrom(parentPom);
+            }
         }
     }
 

@@ -55,8 +55,9 @@ import static java.util.regex.Pattern.quote;
 /// ```
 ///
 /// ## Mutability
-/// The content field is mutable to support efficient chaining of updates. Dependencies, plugins,
-/// and properties remain immutable and reflect the initial parsed state.
+/// The content field is mutable to support efficient chaining of updates.
+/// Dependencies and plugins may be updated when resolving version properties from parent POMs.
+/// Properties remain immutable and reflect the initial parsed state.
 public class Pom {
     public static Optional<Pom> parse(Path pomPath) {
         var resolvedPomPath = resolvePath(pomPath);
@@ -221,6 +222,7 @@ public class Pom {
     }
 
 
+    private final String originalContent;
     private String content;
     private final Path path;
     private final Optional<Dependency> parent;
@@ -228,6 +230,7 @@ public class Pom {
     private final List<Dependency> dependencies;
     private final List<Dependency> plugins;
     private final List<String> modules;
+    private Pom parentPom;
 
     private Pom(
             String content,
@@ -237,6 +240,7 @@ public class Pom {
             List<Dependency> plugins,
             Map<String, String> properties,
             List<String> modules) {
+        this.originalContent = content;
         this.content = content;
         this.path = path;
         this.parent = parent;
@@ -260,6 +264,22 @@ public class Pom {
 
     public List<String> modules() {return modules;}
 
+    public void resolveUnresolvedVersionsFrom(Pom parentPom) {
+        this.parentPom = parentPom;
+        resolveVersionsInList(dependencies, parentPom.properties());
+        resolveVersionsInList(plugins, parentPom.properties());
+    }
+
+    private static void resolveVersionsInList(List<Dependency> list, Map<String, String> parentProperties) {
+        list.replaceAll(dependency -> {
+            if (dependency.version() != null || dependency.versionProperty() == null) return dependency;
+            var resolved = parentProperties.get(dependency.versionProperty());
+            return resolved != null ? dependency.with(Version.fromString(resolved)) : dependency;
+        });
+    }
+
+    public boolean isDirty() {return !content.equals(originalContent);}
+
     public void apply(Stream<DependencyUpdate> updates) {updates.forEach(new Updater()::apply);}
 
     public void writeToDisk() {
@@ -281,7 +301,11 @@ public class Pom {
         }
 
         private void updatePropertyValue(String propertyName, DependencyUpdate update) {
-            content = updateVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
+            if (properties.containsKey(propertyName)) {
+                content = updateVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
+            } else if (parentPom != null) {
+                parentPom.apply(Stream.of(update));
+            }
         }
 
         private void updateDirectVersion(DependencyUpdate update) {

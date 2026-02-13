@@ -13,6 +13,8 @@ import java.util.List;
 
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.none;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
@@ -799,13 +801,100 @@ class DependencyAnalyzerTest {
         then(parent.updateType()).isEqualTo(none);
     }
 
+    private record MultiModuleFixture(Path parentPomPath, Path modulePomPath) {}
+
+    private MultiModuleFixture createMultiModuleProjectWithParentProperty() throws IOException {
+        var parentDir = tempDir.resolve("parent");
+        var moduleDir = parentDir.resolve("module-a");
+        createDirectories(moduleDir);
+        var parentPomPath = parentDir.resolve("pom.xml");
+        writeString(parentPomPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>parent-project</artifactId>
+                    <version>1.0.0</version>
+                    <packaging>pom</packaging>
+
+                    <properties>
+                        <junit.version>5.10.0</junit.version>
+                    </properties>
+
+                    <modules>
+                        <module>module-a</module>
+                    </modules>
+                </project>
+                """);
+        writeString(moduleDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+
+                    <parent>
+                        <groupId>com.example</groupId>
+                        <artifactId>parent-project</artifactId>
+                        <version>1.0.0</version>
+                    </parent>
+
+                    <artifactId>module-a</artifactId>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>${junit.version}</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        given(mockRepository.getAvailableVersions("com.example", "parent-project"))
+                .willReturn(List.of(Version.fromString("1.0.0")));
+        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+                .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.11.0")));
+        return new MultiModuleFixture(parentPomPath, moduleDir.resolve("pom.xml"));
+    }
+
+    @Test
+    void shouldResolveVersionPropertyFromParentPom() throws IOException {
+        var fixture = createMultiModuleProjectWithParentProperty();
+
+        var reports = analyzer.analyze(List.of(fixture.parentPomPath()));
+
+        var moduleReport = reports.stream()
+                .filter(r -> r.pom().path().equals(fixture.modulePomPath()))
+                .findFirst()
+                .orElseThrow();
+        then(moduleReport.dependencyUpdates()).hasSize(1);
+        var update = moduleReport.dependencyUpdates().getFirst();
+        then(update.currentVersion()).isEqualTo(Version.fromString("5.10.0"));
+        then(update.latestVersion()).isEqualTo(Version.fromString("5.11.0"));
+        then(update.updateType()).isEqualTo(UpdateType.minor);
+    }
+
+    @Test
+    void shouldApplyPropertyUpdateToParentPom() throws IOException {
+        var fixture = createMultiModuleProjectWithParentProperty();
+
+        var reports = analyzer.analyze(List.of(fixture.parentPomPath()));
+        reports.stream()
+                .filter(ProjectReport::hasUpdates)
+                .forEach(report -> report.pom().apply(report.updates()));
+        reports.stream()
+                .map(ProjectReport::pom)
+                .filter(Pom::isDirty)
+                .forEach(Pom::writeToDisk);
+
+        then(readString(fixture.parentPomPath())).contains("<junit.version>5.11.0</junit.version>");
+    }
+
     @Test
     void shouldAnalyzeMultiModuleProject() throws IOException {
         var parentDir = tempDir.resolve("parent");
         var moduleADir = parentDir.resolve("module-a");
         var moduleBDir = parentDir.resolve("module-b");
-        java.nio.file.Files.createDirectories(moduleADir);
-        java.nio.file.Files.createDirectories(moduleBDir);
+        createDirectories(moduleADir);
+        createDirectories(moduleBDir);
         var parentPomContent = """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project xmlns="http://maven.apache.org/POM/4.0.0">

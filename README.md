@@ -12,6 +12,8 @@ caching using the local Maven repository.
 - **Multiple Output Formats**: JSON, YAML, and human-readable text reports
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
   versions and property-based versions, including parent POMs)
+- **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent
+  when the parent is within the working set of POMs (via parameter or module resolution)
 - **Robust Error Handling**: Network failures and malformed metadata are logged but don't halt execution
 - **CI/CD Ready**: Perfect for automated pipeline integration
 

@@ -34,6 +34,10 @@ public record Dependency(DependencyType type,
                ((scope == DEFAULT) ? "" : ":" + scope);
     }
 
+    public Dependency with(Version version) {
+        return new Dependency(type, groupId, artifactId, version, scope, versionProperty);
+    }
+
     public DependencyUpdate toUpdate(
             Version latestVersion,
             List<Version> availableVersions,

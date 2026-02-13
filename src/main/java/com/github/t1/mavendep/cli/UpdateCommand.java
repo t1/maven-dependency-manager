@@ -2,6 +2,7 @@ package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
 import com.github.t1.mavendep.domain.MavenRepository;
+import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
@@ -36,20 +37,19 @@ public class UpdateCommand implements Runnable {
 
             var reports = analyzer.analyze(commonOptions.pomFiles);
 
-            reports.forEach(this::applyUpdates);
+            reports.stream()
+                    .filter(ProjectReport::hasUpdates)
+                    .forEach(report -> report.pom().apply(report.updates()));
+
+            reports.stream()
+                    .map(ProjectReport::pom)
+                    .filter(Pom::isDirty)
+                    .forEach(pom -> {
+                        pom.writeToDisk();
+                        System.out.println("Updated: " + pom.path());
+                    });
 
             writeReport(reports, commonOptions.format, commonOptions.outputFile, commonOptions.showAll);
         });
-    }
-
-    private void applyUpdates(ProjectReport report) {
-        if (!report.hasUpdates()) return;
-
-        var pom = report.pom();
-
-        pom.apply(report.updates());
-
-        pom.writeToDisk();
-        System.out.println("Updated: " + pom.path());
     }
 }

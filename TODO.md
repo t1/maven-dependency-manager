@@ -1,4 +1,5 @@
-* if a version property is not resolvable within a pom, but a parent pom is within the list of poms being worked on (
-  either via parameter or maven module resolution), then update that property in the parent
+* instead of keeping the original Pom content, use a simple dirty flag
+* Add a LICENSE.md file with the Apache License and remove the section in the README.
 * the `update` command takes a list of arguments with `groupId:artifactId` or `groupId` or `artifactId`, so it only
   updates those; fail without updating anything, if this can't be found.
+* the `update` command takes a `--patch` or `--minor` parameter to update only path or minor (and patch) updates  
