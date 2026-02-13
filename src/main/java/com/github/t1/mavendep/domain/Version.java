@@ -1,6 +1,26 @@
 package com.github.t1.mavendep.domain;
 
-public record Version(int major, int minor, int patch, String qualifier) implements Comparable<Version> {
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.Set;
+
+public record Version(int major, int minor, int patch, String qualifier, String qualifierSeparator) implements Comparable<Version> {
+
+    public Version(int major, int minor, int patch, String qualifier) {
+        this(major, minor, patch, qualifier, qualifier.isEmpty() ? "" : "-");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Version v)) return false;
+        return major == v.major && minor == v.minor && patch == v.patch && qualifier.equals(v.qualifier);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(major, minor, patch, qualifier);
+    }
 
     private static final int MIN_QUALIFIER_LENGTH = 2;
 
@@ -28,10 +48,18 @@ public record Version(int major, int minor, int patch, String qualifier) impleme
         var major = parseMajor(parts);
         var minorAndQualifier = parseMinorAndQualifier(parts);
         var patchAndQualifier = parsePatchAndQualifier(parts, minorAndQualifier.qualifier());
+        var qualifierSeparator = determineQualifierSeparator(parts, patchAndQualifier.qualifier());
 
         return new Version(major, minorAndQualifier.number(),
                 patchAndQualifier.number(),
-                patchAndQualifier.qualifier());
+                patchAndQualifier.qualifier(),
+                qualifierSeparator);
+    }
+
+    private static String determineQualifierSeparator(String[] parts, String qualifier) {
+        if (qualifier.isEmpty()) return "";
+        if (parts.length > 3) return ".";
+        return "-";
     }
 
     private static int parseMajor(String[] parts) {
@@ -55,7 +83,12 @@ public record Version(int major, int minor, int patch, String qualifier) impleme
             return new NumberAndQualifier(0, combinedQualifier);
         }
 
-        return parseNumberWithQualifier(parts[2]);
+        var result = parseNumberWithQualifier(parts[2]);
+        if (parts.length > 3) {
+            var remaining = String.join(".", Arrays.copyOfRange(parts, 3, parts.length));
+            return new NumberAndQualifier(result.number(), combineQualifiers(result.qualifier(), remaining));
+        }
+        return result;
     }
 
     private static boolean isQualifierOnly(String part) {
@@ -113,10 +146,12 @@ public record Version(int major, int minor, int patch, String qualifier) impleme
         return this.qualifier.compareTo(other.qualifier);
     }
 
+    private static final Set<String> RELEASE_QUALIFIERS = Set.of("Final", "RELEASE", "GA");
+
     /// Most qualifiers like `-alpha1`, `-RC3` or `-SNAPSHOT` are considered pre-release versions.
-    /// If we find exceptions, we may have to change this.
+    /// Exceptions: `Final`, `RELEASE`, and `GA` are considered release indicators.
     public boolean isReleased() {
-        return qualifier.isEmpty();
+        return qualifier.isEmpty() || RELEASE_QUALIFIERS.contains(qualifier);
     }
 
 
@@ -126,6 +161,6 @@ public record Version(int major, int minor, int patch, String qualifier) impleme
         if (qualifier.isEmpty()) {
             return base;
         }
-        return base + "-" + qualifier;
+        return base + qualifierSeparator + qualifier;
     }
 }

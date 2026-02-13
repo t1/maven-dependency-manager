@@ -300,6 +300,32 @@ class VersionTest {
     }
 
     @Test
+    void shouldParseFourPartVersionWithDotQualifier() {
+        var version = Version.fromString("5.1.5.Final");
+
+        then(version.major()).isEqualTo(5);
+        then(version.minor()).isEqualTo(1);
+        then(version.patch()).isEqualTo(5);
+        then(version.qualifier()).isEqualTo("Final");
+    }
+
+    @Test
+    void shouldIdentifyFinalQualifierAsReleased() {
+        var version = Version.fromString("5.1.5.Final");
+
+        then(version.isReleased()).isTrue();
+    }
+
+    @Test
+    void shouldRoundTripFourPartVersionWithDotQualifier() {
+        var original = "5.1.5.Final";
+
+        var version = Version.fromString(original);
+
+        then(version.toString()).isEqualTo(original);
+    }
+
+    @Test
     void shouldParseTwoPartVersionWithComplexQualifier() {
         var version = Version.fromString("16.0.SP02-1xxx2");
 

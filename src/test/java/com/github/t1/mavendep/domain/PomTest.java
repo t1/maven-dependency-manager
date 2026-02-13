@@ -10,6 +10,7 @@ import java.util.stream.Stream;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.parent;
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
 import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.none;
@@ -779,6 +780,44 @@ class PomTest {
         var updatedContent = readString(pomFile);
         then(updatedContent).contains("<spring-boot.version>3.2.0</spring-boot.version>");
         then(updatedContent).doesNotContain("<spring-boot.version>3.1.0</spring-boot.version>");
+    }
+
+    @Test
+    void shouldUpdatePluginVersion() throws IOException {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <build>
+                        <plugins>
+                            <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>3.8.1</version>
+                            </plugin>
+                        </plugins>
+                    </build>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+        var update = new DependencyUpdate(
+                new Dependency(plugin, "org.apache.maven.plugins", "maven-compiler-plugin", Version.fromString("3.8.1"), compile, null),
+                Version.fromString("3.13.0"),
+                List.of(),
+                none
+        );
+
+        pom.apply(Stream.of(update));
+        pom.writeToDisk();
+
+        var updatedContent = readString(pomFile);
+        then(updatedContent).contains("<version>3.13.0</version>");
+        then(updatedContent).doesNotContain("<version>3.8.1</version>");
     }
 
     @Test

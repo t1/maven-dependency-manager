@@ -205,6 +205,40 @@ class UpdateCommandIT extends BaseCliIT {
     }
 
     @Test
+    void shouldUpdatePluginVersion() throws IOException, InterruptedException {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <build>
+                        <plugins>
+                            <plugin>
+                                <groupId>org.apache.maven.plugins</groupId>
+                                <artifactId>maven-compiler-plugin</artifactId>
+                                <version>3.8.1</version>
+                            </plugin>
+                        </plugins>
+                    </build>
+                </project>
+                """);
+        givenMavenRepoVersions("org.apache.maven.plugins", "maven-compiler-plugin", List.of(
+                Version.fromString("3.8.1"),
+                Version.fromString("3.13.0")
+        ));
+
+        var output = runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+
+        then(output).contains("Updated: " + pomFile);
+        then(contentOf(pomFile.toFile()))
+                .contains("<version>3.13.0</version>")
+                .doesNotContain("<version>3.8.1</version>");
+    }
+
+    @Test
     void shouldUpdatePropertyVersionWithWhitespaceAndComment() throws IOException, InterruptedException {
         var pomFile = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>
