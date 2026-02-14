@@ -11,7 +11,7 @@ import static com.github.t1.mavendep.report.Logger.log;
 /// Leading numeric segments (separated by `.` or `-`) form the version number (major, minor, patch).
 /// The qualifier starts at the first segment containing non-digits, or the first numeric segment > 10000
 /// (which typically indicates a timestamp or build number).
-/// Provides [#isReleased()] semantics based on known qualifier classifications.
+/// Provides [#isReleased(String)] semantics based on known qualifier classifications.
 public final class Version implements Comparable<Version> {
     private static final int NUMERIC_QUALIFIER_THRESHOLD = 10000;
     private static final Set<String> RELEASE_QUALIFIERS = Set.of("final", "release", "ga", "sp");
@@ -57,15 +57,23 @@ public final class Version implements Comparable<Version> {
     /// - Known release qualifiers (`Final`, `GA`, `RELEASE`, `SP`) → released
     /// - Known pre-release qualifiers (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) → not released
     /// - Unknown string qualifiers → warning logged, assumed pre-release
-    public boolean isReleased() {
+    ///
+    /// @param context A String added to the warning, so the user knows where this happens
+    public boolean isReleased(String context) {
         return qualifier().map(q -> {
-            var label = q.replaceFirst("[^a-zA-Z].*", "").toLowerCase();
-            if (label.isEmpty()) return true; // purely numeric qualifier
-            if (RELEASE_QUALIFIERS.contains(label)) return true;
-            if (PRE_RELEASE_QUALIFIERS.contains(label)) return false;
-            log("Warning: unknown version qualifier '" + q + "' in " + this + "; assuming pre-release");
+            var qualifierPrefix = q.replaceFirst("[^a-zA-Z].*", "").toLowerCase();
+            if (qualifierPrefix.isEmpty()) return true; // purely numeric qualifier
+            if (RELEASE_QUALIFIERS.contains(qualifierPrefix)) return true;
+            if (PRE_RELEASE_QUALIFIERS.contains(qualifierPrefix)) return false;
+            logUnknownQualifierWarning(q, context);
             return false;
         }).orElse(true);
+    }
+
+    private void logUnknownQualifierWarning(String qualifier, String context) {
+        log("Warning: unknown version qualifier '" + qualifier + "' in " + this +
+            ((context == null) ? "" : " [" + context + "]") +
+            "; assuming pre-release");
     }
 
     public Optional<String> qualifier() {

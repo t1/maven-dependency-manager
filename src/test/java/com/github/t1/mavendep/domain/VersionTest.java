@@ -2,6 +2,8 @@ package com.github.t1.mavendep.domain;
 
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -112,30 +114,30 @@ class VersionTest {
         var m2 = Version.fromString("3.0.0-M2");
         var lowercase = Version.fromString("3.0.0-m3");
 
-        then(m1.isReleased()).isFalse();
-        then(m2.isReleased()).isFalse();
-        then(lowercase.isReleased()).isFalse();
+        then(m1.isReleased("test")).isFalse();
+        then(m2.isReleased("test")).isFalse();
+        then(lowercase.isReleased("test")).isFalse();
     }
 
     @Test
     void shouldIdentifySnapshotVersionsAsNotReleased() {
         var snapshot = Version.fromString("3.0.0-SNAPSHOT");
 
-        then(snapshot.isReleased()).isFalse();
+        then(snapshot.isReleased("test")).isFalse();
     }
 
     @Test
     void shouldIdentifyRcVersionsAsNotReleased() {
         var rc = Version.fromString("3.0.0-RC1");
 
-        then(rc.isReleased()).isFalse();
+        then(rc.isReleased("test")).isFalse();
     }
 
     @Test
     void shouldIdentifyReleaseVersionsAsReleased() {
         var release = Version.fromString("3.0.0");
 
-        then(release.isReleased()).isTrue();
+        then(release.isReleased("test")).isTrue();
     }
 
     @Test
@@ -155,7 +157,7 @@ class VersionTest {
         then(version.minor()).isEqualTo(2);
         then(version.patch()).isEqualTo(0);
         then(version.qualifier().orElseThrow()).isEqualTo("RC1");
-        then(version.isReleased()).isFalse();
+        then(version.isReleased("test")).isFalse();
     }
 
     @Test
@@ -171,14 +173,14 @@ class VersionTest {
     void shouldIdentifyAlphaVersionsAsNotReleased() {
         var alpha = Version.fromString("2.0.0-alpha0");
 
-        then(alpha.isReleased()).isFalse();
+        then(alpha.isReleased("test")).isFalse();
     }
 
     @Test
     void shouldIdentifyBetaVersionsAsNotReleased() {
         var beta = Version.fromString("2.0.0-beta1");
 
-        then(beta.isReleased()).isFalse();
+        then(beta.isReleased("test")).isFalse();
     }
 
     @Test
@@ -292,7 +294,7 @@ class VersionTest {
     void shouldIdentifyFinalQualifierAsReleased() {
         var version = Version.fromString("5.1.5.Final");
 
-        then(version.isReleased()).isTrue();
+        then(version.isReleased("test")).isTrue();
     }
 
     @Test
@@ -344,6 +346,23 @@ class VersionTest {
         then(version.minor()).isEqualTo(7);
         then(version.patch()).isEqualTo(7);
         then(version.qualifier().orElseThrow()).isEqualTo("201606060606");
+    }
+
+    @Test
+    void shouldIncludeCoordinateInUnknownQualifierWarning() {
+        var version = Version.fromString("1.0.0-unknownQualifier");
+        var stderr = new ByteArrayOutputStream();
+        var originalErr = System.err;
+        System.setErr(new PrintStream(stderr));
+        try {
+
+            var released = version.isReleased("com.example:my-artifact");
+
+            then(released).isFalse();
+            then(stderr.toString()).contains("com.example:my-artifact");
+        } finally {
+            System.setErr(originalErr);
+        }
     }
 
     @Test

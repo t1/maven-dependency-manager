@@ -122,7 +122,10 @@ public class DependencyAnalyzer {
     private DependencyUpdate analyze(Dependency dependency) {
         var availableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<Version>of()
                 : repository.getAvailableVersions(dependency.groupId(), dependency.artifactId());
-        var releasedVersions = availableVersions.stream().filter(Version::isReleased).toList();
+        var context = "scanning available versions of " + dependency.groupId() + ":" + dependency.artifactId();
+        var releasedVersions = availableVersions.stream()
+                .filter(version -> version.isReleased(context))
+                .toList();
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
         var updateType = UpdateType.between(dependency.version(), latestVersion);
         return dependency.toUpdate(latestVersion, availableVersions, updateType);

@@ -1,6 +1,3 @@
-* Sort the pre-release qualifiers of a Version in a semantic way and use that for ordering, e.g. `snapshot` is newer
-  than `alpha1`.
-  Maybe an enum is a good solution?
 * Let the maven-shade-plugin do some tree shaking; we don't need all the classes, e.g. from the maven-artifact
   dependency
 * If a file parameter is a directory, look for a `pom.xml` within.
