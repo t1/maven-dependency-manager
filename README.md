@@ -46,6 +46,9 @@ java -jar maven-dep-manager.jar check
 # Check a single project
 java -jar maven-dep-manager.jar check pom.xml
 
+# Check a project directory (looks for pom.xml within)
+java -jar maven-dep-manager.jar check my-project/
+
 # Check multiple projects
 java -jar maven-dep-manager.jar check project1/pom.xml project2/pom.xml
 

@@ -11,7 +11,7 @@ import java.util.List;
 class CommonOptions {
 
     @Parameters(
-            description = "POM file(s) to analyze (default: pom.xml)",
+            description = "POM file(s) or directory(ies) to analyze (default: pom.xml)",
             arity = "0..*",
             defaultValue = "pom.xml"
     )

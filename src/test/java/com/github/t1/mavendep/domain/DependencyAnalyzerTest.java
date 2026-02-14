@@ -889,6 +889,37 @@ class DependencyAnalyzerTest {
     }
 
     @Test
+    void shouldResolveDirectoryToPomXml() throws IOException {
+        var subDir = tempDir.resolve("my-project");
+        createDirectories(subDir);
+        writeString(subDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+                .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
+
+        var reports = analyzer.analyze(List.of(subDir));
+
+        then(reports).hasSize(1);
+        then(reports.getFirst().dependencyUpdates()).hasSize(1);
+        then(reports.getFirst().dependencyUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
+    }
+
+    @Test
     void shouldAnalyzeMultiModuleProject() throws IOException {
         var parentDir = tempDir.resolve("parent");
         var moduleADir = parentDir.resolve("module-a");

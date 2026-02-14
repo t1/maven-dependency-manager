@@ -1,4 +1,3 @@
-* If a file parameter is a directory, look for a `pom.xml` within.
 * Document the fact that you must pass `--enable-preview` when calling
   `java -jar --enable-preview target/maven-dep-manager.jar`
 * Document that it's a good idea to add a shell alias for the `java -jar --enable-preview`; give examples for `bash` as

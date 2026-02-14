@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.domain;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
@@ -19,6 +20,8 @@ import static java.util.concurrent.StructuredTaskScope.Subtask;
 /// Automatically discovers and processes modules in multi-module Maven projects.
 public class DependencyAnalyzer {
 
+    private static final String POM_FILENAME = "pom.xml";
+
     private final MavenRepository repository;
 
     public DependencyAnalyzer(MavenRepository repository) {
@@ -26,7 +29,8 @@ public class DependencyAnalyzer {
     }
 
     public List<ProjectReport> analyze(List<Path> pomFiles) {
-        var allPoms = pomsAndModules(pomFiles).toList();
+        var resolvedFiles = pomFiles.stream().map(DependencyAnalyzer::resolveToPomFile).toList();
+        var allPoms = pomsAndModules(resolvedFiles).toList();
         resolveParentProperties(allPoms);
         try (var scope = StructuredTaskScope.<ProjectReport>open()) {
             var tasks = allPoms.stream()
@@ -43,6 +47,10 @@ public class DependencyAnalyzer {
         }
     }
 
+    private static Path resolveToPomFile(Path path) {
+        return Files.isDirectory(path) ? path.resolve(POM_FILENAME) : path;
+    }
+
     private void resolveParentProperties(List<Pom> allPoms) {
         var pomByPath = allPoms.stream()
                 .collect(Collectors.toMap(Pom::path, Function.identity()));
@@ -52,7 +60,7 @@ public class DependencyAnalyzer {
             var pomDir = getParentDir(pom.path());
             var parentDir = pomDir.getParent();
             if (parentDir == null) continue;
-            var parentPom = pomByPath.get(parentDir.resolve("pom.xml"));
+            var parentPom = pomByPath.get(parentDir.resolve(POM_FILENAME));
             if (parentPom != null) {
                 pom.resolveUnresolvedVersionsFrom(parentPom);
             }
@@ -69,7 +77,7 @@ public class DependencyAnalyzer {
         if (!pom.modules().isEmpty()) {
             var parentDir = getParentDir(pom.path());
             pom.modules().forEach(module -> {
-                var modulePomFile = parentDir.resolve(module).resolve("pom.xml");
+                var modulePomFile = parentDir.resolve(module).resolve(POM_FILENAME);
                 pomsAndModules(List.of(modulePomFile)).forEach(collect);
             });
         }
