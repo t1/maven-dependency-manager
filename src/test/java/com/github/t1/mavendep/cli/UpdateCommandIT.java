@@ -278,6 +278,103 @@ class UpdateCommandIT extends BaseCliIT {
         then(content).contains("<!-- Don't upgrade beyond 2.12.x due to Quarkus compatibility -->");
     }
 
+    // --- Update Type Filter Tests ---
+
+    private Path createPomWithPatchAndMinorUpdates() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.assertj</groupId>
+                            <artifactId>assertj-core</artifactId>
+                            <version>3.25.1</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.25.3") // patch update
+        ));
+        givenMavenRepoVersions("org.junit.jupiter", "junit-jupiter", List.of(
+                Version.fromString("5.10.0"),
+                Version.fromString("5.11.0") // minor update
+        ));
+        return pomFile;
+    }
+
+    @Test
+    void shouldOnlyApplyPatchUpdatesWithPatchFlag() throws IOException, InterruptedException {
+        var pomFile = createPomWithPatchAndMinorUpdates();
+
+        runCli(null, new String[]{"update", pomFile.toString(), "--patch", "-f", "text"});
+
+        var content = contentOf(pomFile.toFile());
+        then(content).contains("<version>3.25.3</version>"); // patch update applied
+        then(content).contains("<version>5.10.0</version>"); // minor update NOT applied
+    }
+
+    @Test
+    void shouldApplyMinorAndPatchUpdatesWithMinorFlag() throws IOException, InterruptedException {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.assertj</groupId>
+                            <artifactId>assertj-core</artifactId>
+                            <version>3.25.1</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>com.fasterxml.jackson.core</groupId>
+                            <artifactId>jackson-databind</artifactId>
+                            <version>2.15.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.25.3") // patch update
+        ));
+        givenMavenRepoVersions("org.junit.jupiter", "junit-jupiter", List.of(
+                Version.fromString("5.10.0"),
+                Version.fromString("5.11.0") // minor update
+        ));
+        givenMavenRepoVersions("com.fasterxml.jackson.core", "jackson-databind", List.of(
+                Version.fromString("2.15.0"),
+                Version.fromString("3.0.0") // major update
+        ));
+
+        runCli(null, new String[]{"update", pomFile.toString(), "--minor", "-f", "text"});
+
+        var content = contentOf(pomFile.toFile());
+        then(content).contains("<version>3.25.3</version>"); // patch update applied
+        then(content).contains("<version>5.11.0</version>"); // minor update applied
+        then(content).contains("<version>2.15.0</version>"); // major update NOT applied
+    }
+
     // --- Dependency Filter Tests ---
 
     private Path createPomWithTwoDependencies() {

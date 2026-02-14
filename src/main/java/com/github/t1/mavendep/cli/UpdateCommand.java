@@ -5,6 +5,8 @@ import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.UpdateType;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -30,6 +32,24 @@ public class UpdateCommand implements Runnable {
     )
     private List<String> dependencyFilters;
 
+    @ArgGroup
+    @SuppressWarnings("unused") // set by Picocli
+    private UpdateScope updateScope;
+
+    static class UpdateScope {
+        @Option(names = "--patch", description = "Only apply patch updates")
+        boolean patch;
+
+        @Option(names = "--minor", description = "Only apply patch and minor updates")
+        boolean minor;
+
+        UpdateType maxUpdateType() {
+            if (patch) return UpdateType.patch;
+            if (minor) return UpdateType.minor;
+            return null;
+        }
+    }
+
     private final MavenRepository repository;
 
     @SuppressWarnings("unused") // Used by Picocli
@@ -52,6 +72,8 @@ public class UpdateCommand implements Runnable {
                 reports = filterAndValidate(reports);
             }
 
+            reports = filterByUpdateType(reports);
+
             reports.stream()
                     .filter(ProjectReport::hasUpdates)
                     .forEach(report -> report.pom().apply(report.updates()));
@@ -66,6 +88,15 @@ public class UpdateCommand implements Runnable {
 
             writeReport(reports, commonOptions.format, commonOptions.outputFile, commonOptions.showAll);
         });
+    }
+
+    private List<ProjectReport> filterByUpdateType(List<ProjectReport> reports) {
+        if (updateScope == null) return reports;
+        var maxType = updateScope.maxUpdateType();
+        if (maxType == null) return reports;
+        return reports.stream()
+                .map(report -> report.filterUpdates(update -> update.updateType().ordinal() <= maxType.ordinal()))
+                .toList();
     }
 
     private List<ProjectReport> filterAndValidate(List<ProjectReport> reports) {

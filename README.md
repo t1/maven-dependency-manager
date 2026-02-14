@@ -116,6 +116,12 @@ mdm update --only org.assertj
 mdm update --only assertj-core
 mdm update --only org.assertj:assertj-core org.junit.jupiter
 
+# Only apply patch updates
+mdm update --patch
+
+# Only apply patch and minor updates (no major)
+mdm update --minor
+
 # Update with JSON output
 mdm update pom.xml --format json
 
