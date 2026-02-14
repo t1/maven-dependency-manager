@@ -3,7 +3,7 @@ package com.github.t1.mavendep.domain;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.function.BiPredicate;
 
 import static com.github.t1.mavendep.report.Logger.log;
 
@@ -14,9 +14,6 @@ import static com.github.t1.mavendep.report.Logger.log;
 /// Provides [#isReleased(String)] semantics based on known qualifier classifications.
 public final class Version implements Comparable<Version> {
     private static final int NUMERIC_QUALIFIER_THRESHOLD = 10000;
-    private static final Set<String> RELEASE_QUALIFIERS = Set.of("final", "release", "ga", "sp");
-    private static final Set<String> PRE_RELEASE_QUALIFIERS = Set.of(
-            "snapshot", "alpha", "a", "beta", "b", "rc", "m", "milestone", "cr", "pr", "preview", "dev", "incubating");
 
     private final String original;
     private final List<String> parts; // fine-grained parts for comparison
@@ -25,8 +22,8 @@ public final class Version implements Comparable<Version> {
 
     private Version(String version) {
         this.original = version;
-        this.parts = splitParts(version);
-        this.segments = splitSegments(version);
+        this.parts = split(version, Version::isDigitTransition);
+        this.segments = split(version, (_, _) -> false);
         this.qualifierSegment = findQualifierSegment();
     }
 
@@ -51,29 +48,11 @@ public final class Version implements Comparable<Version> {
     }
 
     /// Determines if this version represents a release (not a pre-release).
-    ///
-    /// - No qualifier → released
-    /// - Purely numeric qualifier (e.g. timestamp `201606060606`) → released
-    /// - Known release qualifiers (`Final`, `GA`, `RELEASE`, `SP`) → released
-    /// - Known pre-release qualifiers (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) → not released
-    /// - Unknown string qualifiers → warning logged, assumed pre-release
+    /// See [ReleaseClassifier] for the classification rules.
     ///
     /// @param context A String added to the warning, so the user knows where this happens
     public boolean isReleased(String context) {
-        return qualifier().map(q -> {
-            var qualifierPrefix = q.replaceFirst("[^a-zA-Z].*", "").toLowerCase();
-            if (qualifierPrefix.isEmpty()) return true; // purely numeric qualifier
-            if (RELEASE_QUALIFIERS.contains(qualifierPrefix)) return true;
-            if (PRE_RELEASE_QUALIFIERS.contains(qualifierPrefix)) return false;
-            logUnknownQualifierWarning(q, context);
-            return false;
-        }).orElse(true);
-    }
-
-    private void logUnknownQualifierWarning(String qualifier, String context) {
-        log("Warning: unknown version qualifier '" + qualifier + "' in " + this +
-            ((context == null) ? "" : " [" + context + "]") +
-            "; assuming pre-release");
+        return new ReleaseClassifier(context).isReleased();
     }
 
     public Optional<String> qualifier() {
@@ -94,25 +73,12 @@ public final class Version implements Comparable<Version> {
             } else if (isNumeric(right)) {
                 cmp = -1;
             } else {
-                cmp = qualifierRank(left) - qualifierRank(right);
+                cmp = QualifierType.of(left).compareTo(QualifierType.of(right));
                 if (cmp == 0) cmp = left.compareToIgnoreCase(right);
             }
             if (cmp != 0) return cmp;
         }
         return 0;
-    }
-
-    private static int qualifierRank(String qualifier) {
-        return switch (qualifier.toLowerCase()) {
-            case "alpha", "a" -> 0;
-            case "beta", "b" -> 1;
-            case "milestone", "m" -> 2;
-            case "rc", "cr" -> 3;
-            case "snapshot" -> 4;
-            case "final", "ga", "release", "" -> 5;
-            case "sp" -> 6;
-            default -> 7;
-        };
     }
 
     @Override public boolean equals(Object o) {
@@ -123,11 +89,12 @@ public final class Version implements Comparable<Version> {
 
     @Override public int hashCode() {return normalizedParts().hashCode();}
 
-    /// Returns parts with trailing "0" elements removed, so that e.g. `1.0` and `1.0.0` have the same hash.
+    /// Returns parts normalized for hashing: trailing "0" elements removed (so `1.0` and `1.0.0` match)
+    /// and lowercased (so `RC1` and `rc1` match), consistent with case-insensitive [#compareTo].
     private List<String> normalizedParts() {
         int end = parts.size();
         while (end > 0 && parts.get(end - 1).equals("0")) end--;
-        return parts.subList(0, end);
+        return parts.subList(0, end).stream().map(String::toLowerCase).toList();
     }
 
     @Override public String toString() {return original;}
@@ -149,37 +116,89 @@ public final class Version implements Comparable<Version> {
         return -1;
     }
 
-    /// Splits on `.` and `-` only, preserving mixed alphanumeric segments like `RC1` or `SP02`.
-    private static List<String> splitSegments(String version) {
-        var segments = new ArrayList<String>();
+    /// Splits a version string into tokens, always splitting on `.` and `-` separators (which are dropped).
+    /// The `extraSplit` predicate can trigger additional splits (e.g. on digit/letter transitions)
+    /// where the character starts a new token rather than being dropped.
+    private static List<String> split(String version, BiPredicate<Character, StringBuilder> extraSplit) {
+        var tokens = new ArrayList<String>();
         var current = new StringBuilder();
         for (int i = 0; i < version.length(); i++) {
-            char c = version.charAt(i);
-            if (c == '.' || c == '-') {
-                if (!current.isEmpty()) segments.add(current.toString());
-                current = new StringBuilder();
-            } else {
-                current.append(c);
-            }
-        }
-        if (!current.isEmpty()) segments.add(current.toString());
-        return segments;
-    }
-
-    /// Splits on `.`, `-`, and transitions between digits and non-digits for fine-grained comparison.
-    private static List<String> splitParts(String version) {
-        var parts = new ArrayList<String>();
-        var current = new StringBuilder();
-        for (int i = 0; i < version.length(); i++) {
-            char c = version.charAt(i);
-            boolean separator = c == '.' || c == '-'; // these must not become their own part
-            if (separator || !(current.isEmpty() || Character.isDigit(c) == Character.isDigit(current.charAt(0)))) {
-                if (!current.isEmpty()) parts.add(current.toString());
+            var c = version.charAt(i);
+            var separator = c == '.' || c == '-';
+            if (separator || extraSplit.test(c, current)) {
+                if (!current.isEmpty()) tokens.add(current.toString());
                 current = new StringBuilder();
             }
             if (!separator) current.append(c);
         }
-        if (!current.isEmpty()) parts.add(current.toString());
-        return parts;
+        if (!current.isEmpty()) tokens.add(current.toString());
+        return tokens;
+    }
+
+    private static boolean isDigitTransition(char c, StringBuilder current) {
+        return !current.isEmpty() && Character.isDigit(c) != Character.isDigit(current.charAt(0));
+    }
+
+    /// Enumerates known qualifier types in comparison order, each with its release status.
+    /// The enum ordinal determines the comparison rank.
+    private enum QualifierType {
+        ALPHA(false, "alpha", "a"),
+        BETA(false, "beta", "b"),
+        MILESTONE(false, "milestone", "m"),
+        RC(false, "rc", "cr"),
+        SNAPSHOT(false, "snapshot"),
+        OTHER_PRE_RELEASE(false, "pr", "preview", "dev", "incubating"),
+        UNKNOWN(false),
+        RELEASE(true, "final", "ga", "release", ""),
+        SERVICE_PACK(true, "sp");
+
+        final boolean released;
+        private final List<String> aliases;
+
+        QualifierType(boolean released, String... aliases) {
+            this.released = released;
+            this.aliases = List.of(aliases);
+        }
+
+        static QualifierType of(String name) {
+            var lower = name.toLowerCase();
+            for (var type : values())
+                if (type.aliases.contains(lower)) return type;
+            return UNKNOWN;
+        }
+    }
+
+    /// Classifies version qualifiers as released or pre-release.
+    ///
+    /// - Purely numeric qualifier (e.g. timestamp `201606060606`) → released
+    /// - Known release qualifiers (`Final`, `GA`, `RELEASE`, `SP`) → released
+    /// - Known pre-release qualifiers (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) → not released
+    /// - Unknown string qualifiers → warning logged, assumed pre-release
+    private class ReleaseClassifier {
+        private final String context;
+
+        private ReleaseClassifier(String context) {this.context = context;}
+
+        boolean isReleased() {
+            return qualifier()
+                    .map(this::classify)
+                    .orElse(true);
+        }
+
+        private boolean classify(String qualifier) {
+            var type = QualifierType.of(alphabeticPrefix(qualifier));
+            if (type == QualifierType.UNKNOWN) logUnknownQualifier(qualifier);
+            return type.released;
+        }
+
+        private static String alphabeticPrefix(String qualifier) {
+            return qualifier.replaceFirst("[^a-zA-Z].*", "").toLowerCase();
+        }
+
+        private void logUnknownQualifier(String qualifier) {
+            log("Warning: unknown version qualifier '" + qualifier + "' in " + Version.this +
+                ((context == null) ? "" : " [" + context + "]") +
+                "; assuming pre-release");
+        }
     }
 }
