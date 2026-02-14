@@ -9,7 +9,7 @@ caching using the local Maven repository.
 - **Parent POM Version Checking**: Also checks and updates parent POM versions
 - **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
-- **Multiple Output Formats**: JSON, YAML, and human-readable text reports
+- **Multiple Output Formats**: JSON and human-readable text reports
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
   versions and property-based versions, including parent POMs)
 - **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent
@@ -58,9 +58,6 @@ java -jar maven-dep-manager.jar check --recursive ./projects
 ```bash
 # JSON output
 java -jar maven-dep-manager.jar check pom.xml --format json
-
-# YAML output
-java -jar maven-dep-manager.jar check pom.xml --format yaml
 
 # Text output (default)
 java -jar maven-dep-manager.jar check pom.xml --format text

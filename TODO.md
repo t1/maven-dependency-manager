@@ -1,5 +1,3 @@
-* Let the maven-shade-plugin do some tree shaking; we don't need all the classes, e.g. from the maven-artifact
-  dependency
 * If a file parameter is a directory, look for a `pom.xml` within.
 * Document the fact that you must pass `--enable-preview` when calling
   `java -jar --enable-preview target/maven-dep-manager.jar`
