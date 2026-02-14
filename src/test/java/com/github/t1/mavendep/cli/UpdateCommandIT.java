@@ -10,6 +10,7 @@ import java.util.List;
 import static java.nio.file.Files.writeString;
 import static org.assertj.core.api.Assertions.contentOf;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.assertj.core.api.BDDAssertions.thenThrownBy;
 
 class UpdateCommandIT extends BaseCliIT {
 
@@ -275,5 +276,90 @@ class UpdateCommandIT extends BaseCliIT {
         then(content).contains("2.13.0");
         then(content).doesNotContain("2.12.1");
         then(content).contains("<!-- Don't upgrade beyond 2.12.x due to Quarkus compatibility -->");
+    }
+
+    // --- Dependency Filter Tests ---
+
+    private Path createPomWithTwoDependencies() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.assertj</groupId>
+                            <artifactId>assertj-core</artifactId>
+                            <version>3.25.1</version>
+                        </dependency>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.27.7")
+        ));
+        givenMavenRepoVersions("org.junit.jupiter", "junit-jupiter", List.of(
+                Version.fromString("5.10.0"),
+                Version.fromString("5.11.0")
+        ));
+        return pomFile;
+    }
+
+    @Test
+    void shouldFilterByGroupIdAndArtifactId() throws IOException, InterruptedException {
+        var pomFile = createPomWithTwoDependencies();
+
+        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj:assertj-core", "-f", "text"});
+
+        var content = contentOf(pomFile.toFile());
+        then(content).contains("<version>3.27.7</version>");
+        then(content).contains("<version>5.10.0</version>");
+    }
+
+    @Test
+    void shouldFilterByGroupId() throws IOException, InterruptedException {
+        var pomFile = createPomWithTwoDependencies();
+
+        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj", "-f", "text"});
+
+        var content = contentOf(pomFile.toFile());
+        then(content).contains("<version>3.27.7</version>");
+        then(content).contains("<version>5.10.0</version>");
+    }
+
+    @Test
+    void shouldFilterByArtifactId() throws IOException, InterruptedException {
+        var pomFile = createPomWithTwoDependencies();
+
+        runCli(null, new String[]{"update", pomFile.toString(), "--only", "assertj-core", "-f", "text"});
+
+        var content = contentOf(pomFile.toFile());
+        then(content).contains("<version>3.27.7</version>");
+        then(content).contains("<version>5.10.0</version>");
+    }
+
+    @Test
+    void shouldFailWhenFilterMatchesNoDependency() {
+        var pomFile = createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
+        var originalContent = contentOf(pomFile.toFile());
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.27.7")
+        ));
+
+        thenThrownBy(() -> runCli(null, new String[]{"update", pomFile.toString(), "--only", "nonexistent:artifact", "-f", "text"}))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("exit code");
+
+        then(contentOf(pomFile.toFile())).isEqualTo(originalContent);
     }
 }

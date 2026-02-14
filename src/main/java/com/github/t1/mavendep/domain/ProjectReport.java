@@ -2,6 +2,7 @@ package com.github.t1.mavendep.domain;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static java.util.Objects.requireNonNull;
@@ -33,12 +34,16 @@ public record ProjectReport(
         return updates().findAny().isPresent();
     }
 
-    public ProjectReport onlyUpdates() {
+    public ProjectReport filterUpdates(Predicate<DependencyUpdate> predicate) {
         return new ProjectReport(
                 pom,
-                parentUpdate.filter(DependencyUpdate::isUpdate),
-                dependencyUpdates.stream().filter(DependencyUpdate::isUpdate).toList(),
-                pluginUpdates.stream().filter(DependencyUpdate::isUpdate).toList(),
+                parentUpdate.filter(predicate),
+                dependencyUpdates.stream().filter(predicate).toList(),
+                pluginUpdates.stream().filter(predicate).toList(),
                 totalDependencies);
+    }
+
+    public ProjectReport onlyUpdates() {
+        return filterUpdates(DependencyUpdate::isUpdate);
     }
 }

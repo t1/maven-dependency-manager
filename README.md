@@ -110,6 +110,12 @@ mdm update pom.xml
 # Update multiple projects
 mdm update project1/pom.xml project2/pom.xml
 
+# Update only specific dependencies (by groupId:artifactId, groupId, or artifactId)
+mdm update --only org.assertj:assertj-core
+mdm update --only org.assertj
+mdm update --only assertj-core
+mdm update --only org.assertj:assertj-core org.junit.jupiter
+
 # Update with JSON output
 mdm update pom.xml --format json
 
