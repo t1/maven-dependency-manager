@@ -75,7 +75,8 @@ public class UpdateCommand implements Runnable {
 
         var hasMatchingUpdates = filtered.stream().anyMatch(ProjectReport::hasUpdates);
         if (!hasMatchingUpdates) {
-            throw new RuntimeException("No dependencies match the filter: " + String.join(", ", dependencyFilters));
+            System.err.println("No dependencies match the filter: " + String.join(", ", dependencyFilters));
+            System.exit(1);
         }
 
         return filtered;

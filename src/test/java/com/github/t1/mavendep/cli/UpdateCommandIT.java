@@ -356,9 +356,12 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        thenThrownBy(() -> runCli(null, new String[]{"update", pomFile.toString(), "--only", "nonexistent:artifact", "-f", "text"}))
+        thenThrownBy(() -> runCli(null, true, new String[]{"update", pomFile.toString(), "--only", "nonexistent:artifact", "-f", "text"}))
                 .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("exit code");
+                .hasMessageContaining("exit code")
+                .hasMessageContaining("No dependencies match the filter")
+                .hasMessageNotContaining("Exception")
+                .hasMessageNotContaining("at com.");
 
         then(contentOf(pomFile.toFile())).isEqualTo(originalContent);
     }
