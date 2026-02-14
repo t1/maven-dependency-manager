@@ -20,8 +20,8 @@ a clean code review subagent. The subagent's prompt must instruct it to:
 4. Return a prioritized list of specific, actionable refactoring suggestions
    Apply the returned suggestions, then ensure all tests continue to pass after each change.
 
-Always check that there are no unused imports left and all qualified names are replaced by imports
-(if possible). **VERY IMPORTANT**
+Always check with the IDE MCP for warnings (make sure that you don't see just errors, but also warnings)
+and all qualified names are replaced by imports (if possible). **VERY IMPORTANT**
 
 Don't forget to update the documentation when you change the code. **VERY IMPORTANT**
 

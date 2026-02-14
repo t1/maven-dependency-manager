@@ -51,3 +51,5 @@ nbdist/
 
 # Test output
 test-output/
+
+/.links/

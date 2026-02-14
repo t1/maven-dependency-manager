@@ -14,12 +14,17 @@ caching using the local Maven repository.
   versions and property-based versions, including parent POMs)
 - **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent
   when the parent is within the working set of POMs (via parameter or module resolution)
+- **Flexible Version Parsing**: Handles standard semantic versions (`1.2.3`), multi-segment versions (`2.13.4.2`),
+  qualifier suffixes (`1.0-RC1`, `5.1.5.Final`), and timestamp-based build numbers (`0.7.7.201606060606`).
+  Qualifiers are classified as pre-release (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) or
+  release (`Final`, `GA`, `RELEASE`, `SP`) to filter out unstable versions.
+  Note that this is not 100% compatible to Maven's version handling.
 - **Robust Error Handling**: Network failures and malformed metadata are logged but don't halt execution
 - **CI/CD Ready**: Perfect for automated pipeline integration
 
 ## Requirements
 
-- Java 17 or higher
+- Java 25 or higher (with preview features enabled)
 - Maven 3.6+ (for building from source)
 
 ## Building

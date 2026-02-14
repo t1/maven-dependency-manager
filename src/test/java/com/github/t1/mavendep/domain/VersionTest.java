@@ -1,10 +1,7 @@
 package com.github.t1.mavendep.domain;
 
-import com.github.t1.mavendep.domain.Version.NumericPart;
-import com.github.t1.mavendep.domain.Version.StringPart;
 import org.junit.jupiter.api.Test;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -157,8 +154,8 @@ class VersionTest {
         then(version.major()).isEqualTo(2);
         then(version.minor()).isEqualTo(2);
         then(version.patch()).isEqualTo(0);
-        then(version.part(2)).isEqualTo(new StringPart("RC"));
-        then(version.part(3)).isEqualTo(new NumericPart(1));
+        then(version.qualifier().orElseThrow()).isEqualTo("RC1");
+        then(version.isReleased()).isFalse();
     }
 
     @Test
@@ -273,11 +270,11 @@ class VersionTest {
     }
 
     @Test
-    void shouldCompareAlphaAsGreaterThanSnapshot() {
+    void shouldCompareSnapshotAsNewerThanAlpha() {
         var snapshot = Version.fromString("3.0.0-SNAPSHOT");
         var alpha = Version.fromString("3.0.0-alpha1");
 
-        then(alpha.compareTo(snapshot)).isPositive();
+        then(snapshot.compareTo(alpha)).isPositive();
     }
 
 
@@ -288,7 +285,7 @@ class VersionTest {
         then(version.major()).isEqualTo(5);
         then(version.minor()).isEqualTo(1);
         then(version.patch()).isEqualTo(5);
-        then(version.part(3)).isEqualTo(new StringPart("Final"));
+        then(version.qualifier().orElseThrow()).isEqualTo("Final");
     }
 
     @Test
@@ -332,15 +329,6 @@ class VersionTest {
     }
 
     @Test
-    void shouldParseVersionIntoParts() {
-        var version = Version.fromString("5.1.5.Final");
-
-        then(version.parts()).containsExactly(
-                new NumericPart(5), new NumericPart(1),
-                new NumericPart(5), new StringPart("Final"));
-    }
-
-    @Test
     void shouldCompareA9AsLessThanA10() {
         var a9 = Version.fromString("1.0-a9");
         var a10 = Version.fromString("1.0-a10");
@@ -352,18 +340,19 @@ class VersionTest {
     void shouldParseLargeNumericVersionPart() {
         var version = Version.fromString("0.7.7.201606060606");
 
-        then(version.parts()).containsExactly(
-                new NumericPart(0), new NumericPart(7),
-                new NumericPart(7), new NumericPart(new BigInteger("201606060606")));
+        then(version.major()).isEqualTo(0);
+        then(version.minor()).isEqualTo(7);
+        then(version.patch()).isEqualTo(7);
+        then(version.qualifier().orElseThrow()).isEqualTo("201606060606");
     }
 
     @Test
     void shouldParseMixedHyphenAndDotVersionIntoParts() {
         var version = Version.fromString("16.0.SP02-1xxx2");
 
-        then(version.parts()).containsExactly(
-                new NumericPart(16), new NumericPart(0),
-                new StringPart("SP"), new NumericPart(2),
-                new NumericPart(1), new StringPart("xxx"), new NumericPart(2));
+        then(version.major()).isEqualTo(16);
+        then(version.minor()).isEqualTo(0);
+        then(version.patch()).isEqualTo(0);
+        then(version.qualifier().orElseThrow()).isEqualTo("SP02-1xxx2");
     }
 }
