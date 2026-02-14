@@ -139,26 +139,25 @@ public final class Version implements Comparable<Version> {
         return !current.isEmpty() && Character.isDigit(c) != Character.isDigit(current.charAt(0));
     }
 
-    /// Enumerates known qualifier types in comparison order, each with its release status.
-    /// The enum ordinal determines the comparison rank.
+    /// Enumerates known qualifier types in comparison order.
+    /// The enum ordinal determines the comparison rank;
+    /// types ordered at or after [#RELEASE] are considered released.
     private enum QualifierType {
-        ALPHA(false, "alpha", "a"),
-        BETA(false, "beta", "b"),
-        MILESTONE(false, "milestone", "m"),
-        RC(false, "rc", "cr"),
-        SNAPSHOT(false, "snapshot"),
-        OTHER_PRE_RELEASE(false, "pr", "preview", "dev", "incubating"),
-        UNKNOWN(false),
-        RELEASE(true, "final", "ga", "release", ""),
-        SERVICE_PACK(true, "sp");
+        ALPHA("alpha", "a"),
+        BETA("beta", "b"),
+        MILESTONE("milestone", "m"),
+        RC("rc", "cr"),
+        SNAPSHOT("snapshot"),
+        OTHER_PRE_RELEASE("pr", "preview", "dev", "incubating"),
+        UNKNOWN,
+        RELEASE("final", "ga", "release", ""),
+        SERVICE_PACK("sp");
 
-        final boolean released;
         private final List<String> aliases;
 
-        QualifierType(boolean released, String... aliases) {
-            this.released = released;
-            this.aliases = List.of(aliases);
-        }
+        QualifierType(String... aliases) {this.aliases = List.of(aliases);}
+
+        boolean isReleased() {return ordinal() >= RELEASE.ordinal();}
 
         static QualifierType of(String name) {
             var lower = name.toLowerCase();
@@ -188,7 +187,7 @@ public final class Version implements Comparable<Version> {
         private boolean classify(String qualifier) {
             var type = QualifierType.of(alphabeticPrefix(qualifier));
             if (type == QualifierType.UNKNOWN) logUnknownQualifier(qualifier);
-            return type.released;
+            return type.isReleased();
         }
 
         private static String alphabeticPrefix(String qualifier) {

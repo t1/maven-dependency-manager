@@ -1,9 +1,8 @@
 # AI Assistant Instructions
 
-Be very critical and honest to what I say. **VERY IMPORTANT**
+## General
 
-See `README.md` for project overview and development guidelines.
-Especially the Code Style must be followed at all times.  **VERY IMPORTANT**
+Be very critical and honest to what I say. **VERY IMPORTANT**
 
 See `TDD.md` for Test-Driven Development practices that must be followed every time a new feature is added
 or a bug is fixed (but not when just refactoring). The clean code principles from `CLEAN_CODE.md` are applied
@@ -31,3 +30,25 @@ If you create a new file, also stage exactly this file to git, but not any other
 If you commit something, don't include that co-author hint.
 
 Test coverage should be taken into consideration in the TDD loop.
+
+This file contains instructions for AI assistants working with this codebase.
+
+## Documentation Strategy
+
+**IMPORTANT**: This project uses `package-info.java` files for package-level documentation and architecture.
+
+When working with code:
+
+- **Always read the relevant `package-info.java` files** to understand the architecture, patterns, and conventions for
+  that package
+- Use `package-info.java` to understand package responsibilities, dependencies, and relationships
+- See `README.md` for project overview, tech stack, setup instructions, development guidelines, and coding style
+    - that Code Style is **VERY IMPORTANT**
+- For package-specific details, refer to the co-located `package-info.java` files
+
+## Key Resources
+
+- **README.md** - Project documentation, setup, testing, coding conventions
+- **package-info.java files** - Package-level architecture and patterns
+    - `com.ionos.rocket.backtron.domain` - Domain layer overview
+    - Individual domain packages (profiles, sources, backups, restores, credentials)
