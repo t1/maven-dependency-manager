@@ -37,66 +37,84 @@ This creates an executable JAR: `target/maven-dep-manager.jar`
 
 ## Usage
 
+This project uses Java preview features, so you must pass `--enable-preview` when running the JAR:
+
+```bash
+java --enable-preview -jar target/maven-dep-manager.jar <command> [options]
+```
+
+To avoid typing this every time, add a shell alias:
+
+```bash
+# bash (~/.bashrc or ~/.bash_profile)
+alias mdm='java --enable-preview -jar /path/to/maven-dep-manager.jar'
+
+# fish (~/.config/fish/config.fish)
+alias --save mdm 'java --enable-preview -jar /path/to/maven-dep-manager.jar'
+```
+
+Then simply use `mdm check`, `mdm update`, etc.
+
 ### Basic Usage
 
 ```bash
 # Check current directory's pom.xml (default)
-java -jar maven-dep-manager.jar check
+mdm check
 
 # Check a single project
-java -jar maven-dep-manager.jar check pom.xml
+mdm check pom.xml
 
 # Check a project directory (looks for pom.xml within)
-java -jar maven-dep-manager.jar check my-project/
+mdm check my-project/
 
 # Check multiple projects
-java -jar maven-dep-manager.jar check project1/pom.xml project2/pom.xml
+mdm check project1/pom.xml project2/pom.xml
 
 # Scan directory recursively
-java -jar maven-dep-manager.jar check --recursive ./projects
+mdm check --recursive ./projects
 ```
 
 ### Output Formats
 
 ```bash
 # JSON output
-java -jar maven-dep-manager.jar check pom.xml --format json
+mdm check pom.xml --format json
 
 # Text output (default)
-java -jar maven-dep-manager.jar check pom.xml --format text
+mdm check pom.xml --format text
 
 # Save to file
-java -jar maven-dep-manager.jar check pom.xml --output updates.json
+mdm check pom.xml --output updates.json
 ```
 
 ### Advanced Options
 
 ```bash
 # Show all dependencies (including up-to-date ones)
-java -jar maven-dep-manager.jar check pom.xml --show-all
+mdm check pom.xml --show-all
 
 # Enable verbose output with stack traces for exceptions
-java -jar maven-dep-manager.jar check pom.xml --verbose
-java -jar maven-dep-manager.jar check pom.xml -v
+mdm check pom.xml --verbose
+mdm check pom.xml -v
 ```
 
 ### Updating Dependencies
 
 ```bash
 # Update current directory's pom.xml (default)
-java -jar maven-dep-manager.jar update
+mdm update
 
 # Update pom.xml files with latest versions
-java -jar maven-dep-manager.jar update pom.xml
+mdm update pom.xml
 
 # Update multiple projects
-java -jar maven-dep-manager.jar update project1/pom.xml project2/pom.xml
+mdm update project1/pom.xml project2/pom.xml
 
 # Update with JSON output
-java -jar maven-dep-manager.jar update pom.xml --format json
+mdm update pom.xml --format json
 
 # Update and save report to file
-java -jar maven-dep-manager.jar update pom.xml --output updates.json
+mdm update pom.xml --output updates.json
 ```
 
 ## Output Examples
