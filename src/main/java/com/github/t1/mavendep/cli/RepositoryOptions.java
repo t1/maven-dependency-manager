@@ -27,6 +27,12 @@ class RepositoryOptions {
     )
     String localRepository;
 
+    @Option(
+            names = {"--force-cache-update"},
+            description = "Force refresh of all cached Maven metadata"
+    )
+    boolean forceCacheUpdate;
+
     MavenRepository createMavenRepository() {
         var localRepo = localRepository != null
                 ? Path.of(localRepository)
@@ -40,6 +46,6 @@ class RepositoryOptions {
                 ? mavenCentralUrl
                 : System.getProperty("maven.central.url", "https://repo1.maven.org/maven2");
 
-        return new MavenRepository(localRepo, ttl, url);
+        return new MavenRepository(localRepo, ttl, url, forceCacheUpdate);
     }
 }

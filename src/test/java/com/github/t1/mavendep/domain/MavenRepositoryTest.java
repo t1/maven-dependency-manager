@@ -58,10 +58,10 @@ class MavenRepositoryTest {
         then(versions).isEmpty();
     }
 
-    private void writeCache(String groupId, String invalid, String csq) {
-        var cacheFile = createCacheFile(groupId, invalid);
+    private void writeCache(String groupId, String artifactId, String metadataXml) {
+        var cacheFile = createCacheFile(groupId, artifactId);
         try {
-            writeString(cacheFile, csq);
+            writeString(cacheFile, metadataXml);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -150,6 +150,26 @@ class MavenRepositoryTest {
         var repository = new MavenRepository(tempDir, Duration.ofHours(24), "http://localhost:9999");
 
         var versions = repository.getAvailableVersions("com.example", "old-lib");
+
+        then(versions).isEmpty();
+    }
+
+    @Test
+    void shouldBypassCacheWhenForceCacheUpdateIsEnabled() throws IOException {
+        var cacheFile = createCacheFile("com.example", "cached-lib");
+        writeString(cacheFile, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <metadata>
+                  <versioning>
+                    <versions>
+                      <version>1.0.0</version>
+                    </versions>
+                  </versioning>
+                </metadata>
+                """);
+        var repository = new MavenRepository(tempDir, Duration.ofHours(9999), "http://localhost:9999", true);
+
+        var versions = repository.getAvailableVersions("com.example", "cached-lib");
 
         then(versions).isEmpty();
     }

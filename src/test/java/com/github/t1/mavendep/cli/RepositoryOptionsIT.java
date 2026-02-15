@@ -96,6 +96,20 @@ class RepositoryOptionsIT extends BaseCliIT {
     }
 
     @Nested
+    class ForceCacheUpdate {
+        @Test
+        void shouldRefreshCacheWhenForceCacheUpdateIsSet() throws IOException, InterruptedException {
+            createPom();
+            preSeedCache(defaultLocalRepo(), "1.0.0");
+            givenRemoteHasNewerVersion();
+
+            var output = runCli(tempDir, "check", "--force-cache-update", "-f", "text", "--show-all");
+
+            then(output).contains("2.0.0");
+        }
+    }
+
+    @Nested
     class LocalRepo {
         @Test
         void shouldUseSpecifiedLocalRepo() throws IOException, InterruptedException {

@@ -7,7 +7,7 @@ caching using the local Maven repository.
 
 - **Dependency Version Checking**: Queries Maven Central for the latest versions of your dependencies
 - **Parent POM Version Checking**: Also checks and updates parent POM versions
-- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests
+- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with `--force-cache-update` to bypass the cache
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
 - **Multiple Output Formats**: JSON and human-readable text reports
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
@@ -92,6 +92,9 @@ mdm check pom.xml --output updates.json
 ```bash
 # Show all dependencies (including up-to-date ones)
 mdm check pom.xml --show-all
+
+# Force refresh of all cached Maven metadata
+mdm check pom.xml --force-cache-update
 
 # Enable verbose output with stack traces for exceptions
 mdm check pom.xml --verbose

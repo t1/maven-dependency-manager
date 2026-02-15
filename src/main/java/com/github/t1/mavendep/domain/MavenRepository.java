@@ -36,6 +36,7 @@ public class MavenRepository {
     private final Path localRepositoryDir;
     private final Duration ttl;
     private final String mavenCentralUrl;
+    private final boolean forceCacheUpdate;
 
     public MavenRepository() {
         this(LOCAL_REPOSITORY);
@@ -46,14 +47,19 @@ public class MavenRepository {
     }
 
     public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl) {
-        this(localRepositoryDir, ttl, mavenCentralUrl, HttpClient.newHttpClient());
+        this(localRepositoryDir, ttl, mavenCentralUrl, false);
     }
 
-    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl, HttpClient httpClient) {
+    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl, boolean forceCacheUpdate) {
+        this(localRepositoryDir, ttl, mavenCentralUrl, forceCacheUpdate, HttpClient.newHttpClient());
+    }
+
+    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl, boolean forceCacheUpdate, HttpClient httpClient) {
         this.httpClient = httpClient;
         this.localRepositoryDir = localRepositoryDir;
         this.ttl = ttl;
         this.mavenCentralUrl = mavenCentralUrl;
+        this.forceCacheUpdate = forceCacheUpdate;
     }
 
     /// Retrieves all available versions for the specified Maven artifact.
@@ -81,6 +87,7 @@ public class MavenRepository {
     }
 
     private boolean isCacheFresh(Path cacheFile) {
+        if (forceCacheUpdate) return false;
         try {
             var lastModified = getLastModifiedTime(cacheFile).toInstant();
             var age = Duration.between(lastModified, Instant.now());
