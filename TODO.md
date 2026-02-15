@@ -1,4 +1,3 @@
-* add an IT for the `--cache-ttl` option
 * add an IT for the `--local-repo` option
 * add an option `--force-cache-update` to refresh all maven metadata used for lookup of the latest version
 * refactor the report writing: don't build a String in-memory, but use a PrintStream, which can be System.out or

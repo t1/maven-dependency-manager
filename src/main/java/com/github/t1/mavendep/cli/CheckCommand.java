@@ -1,7 +1,6 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
-import com.github.t1.mavendep.domain.MavenRepository;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -20,16 +19,6 @@ public class CheckCommand implements Runnable {
     @Mixin
     private RepositoryOptions repositoryOptions;
 
-    private final MavenRepository repository;
-
-    public CheckCommand() {
-        this(new MavenRepository());
-    }
-
-    CheckCommand(MavenRepository repository) {
-        this.repository = repository;
-    }
-
     void setCommonOptions(CommonOptions commonOptions) {
         this.commonOptions = commonOptions;
     }
@@ -41,7 +30,7 @@ public class CheckCommand implements Runnable {
     @Override
     public void run() {
         withVerbose(commonOptions.verbose).run(() -> {
-            var mavenRepository = repository != null ? repository : repositoryOptions.createMavenRepository();
+            var mavenRepository = repositoryOptions.createMavenRepository();
             var analyzer = new DependencyAnalyzer(mavenRepository, commonOptions.pomFiles);
 
             var reports = analyzer.run();
