@@ -1,6 +1,5 @@
 package com.github.t1.mavendep.domain;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
@@ -30,13 +29,6 @@ class DependencyAnalyzerTest {
     @Mock
     private MavenRepository mockRepository;
 
-    private DependencyAnalyzer analyzer;
-
-    @BeforeEach
-    void setUp() {
-        analyzer = new DependencyAnalyzer(mockRepository);
-    }
-
     @Test
     void shouldAnalyzeSingleProject() {
         var pomContent = """
@@ -64,7 +56,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("5.11.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -114,7 +106,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("5.10.1")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         then(reports.getFirst().dependencyUpdates()).hasSize(1);
@@ -148,7 +140,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("3.0.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -185,7 +177,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("3.1.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -234,7 +226,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("com.google.guava", "guava"))
                 .willReturn(List.of(Version.fromString("32.0.0")));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -273,7 +265,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("3.2.0-M1")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -315,7 +307,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("6.0.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -354,7 +346,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("5.10.1")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var update = reports.getFirst().dependencyUpdates().getFirst();
@@ -400,7 +392,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("org.springframework", "spring-core"))
                 .willReturn(List.of(Version.fromString("5.3.0"), Version.fromString("6.0.0")));
 
-        var reports = analyzer.analyze(List.of(pom1, pom2));
+        var reports = new DependencyAnalyzer(mockRepository, pom1, pom2).run();
 
         then(reports).hasSize(2);
         then(reports.get(0).pom().path()).isIn(pom1, pom2);
@@ -445,7 +437,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("5.11.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -478,7 +470,7 @@ class DependencyAnalyzerTest {
                 """;
         var pomFile = writePom(pomContent);
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -518,7 +510,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("3.1.0-SNAPSHOT")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         then(reports.getFirst().dependencyUpdates()).hasSize(1);
@@ -552,7 +544,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("3.2.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -592,7 +584,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("5.10.1")
                 ));
 
-        var reports = analyzer.analyze(List.of(nonExistentPomFile, validPomFile));
+        var reports = new DependencyAnalyzer(mockRepository, nonExistentPomFile, validPomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -628,7 +620,7 @@ class DependencyAnalyzerTest {
                         Version.fromString("3.2.0")
                 ));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -657,7 +649,7 @@ class DependencyAnalyzerTest {
                 """;
         var pomFile = writePom(pomContent);
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         then(reports.getFirst().parentUpdate()).isEmpty();
@@ -688,7 +680,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter-parent"))
                 .willReturn(List.of(Version.fromString("3.2.0")));
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -722,7 +714,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("com.example", "unknown-artifact"))
                 .willReturn(List.of());
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -757,7 +749,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("com.example", "private-parent"))
                 .willReturn(List.of());
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -789,7 +781,7 @@ class DependencyAnalyzerTest {
                 """;
         var pomFile = writePom(pomContent);
 
-        var reports = analyzer.analyze(List.of(pomFile));
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
 
         then(reports).hasSize(1);
         var report = reports.getFirst();
@@ -817,7 +809,7 @@ class DependencyAnalyzerTest {
                     <artifactId>parent-project</artifactId>
                     <version>1.0.0</version>
                     <packaging>pom</packaging>
-
+                
                     <modules>
                         <module>module-a</module>
                     </modules>
@@ -827,20 +819,69 @@ class DependencyAnalyzerTest {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project xmlns="http://maven.apache.org/POM/4.0.0">
                     <modelVersion>4.0.0</modelVersion>
-
+                
                     <parent>
                         <groupId>com.example</groupId>
                         <artifactId>parent-project</artifactId>
                         <version>1.0.0</version>
                     </parent>
-
+                
                     <artifactId>module-a</artifactId>
                 </project>
                 """);
 
-        analyzer.analyze(List.of(parentPomPath));
+        new DependencyAnalyzer(mockRepository, parentPomPath).run();
 
         verify(mockRepository, never()).getAvailableVersions("com.example", "parent-project");
+    }
+
+    @Test
+    void shouldIncludeLocalParentInReport() throws IOException {
+        var parentDir = tempDir.resolve("parent2");
+        var moduleDir = parentDir.resolve("module-a");
+        createDirectories(moduleDir);
+        var parentPomPath = parentDir.resolve("pom.xml");
+        writeString(parentPomPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>parent-project</artifactId>
+                    <version>1.0.0</version>
+                    <packaging>pom</packaging>
+                
+                    <modules>
+                        <module>module-a</module>
+                    </modules>
+                </project>
+                """);
+        writeString(moduleDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                
+                    <parent>
+                        <groupId>com.example</groupId>
+                        <artifactId>parent-project</artifactId>
+                        <version>1.0.0</version>
+                    </parent>
+                
+                    <artifactId>module-a</artifactId>
+                </project>
+                """);
+
+        var reports = new DependencyAnalyzer(mockRepository, parentPomPath).run();
+
+        var moduleReport = reports.stream()
+                .filter(r -> r.pom().coordinates().artifactId().equals("module-a"))
+                .findFirst().orElseThrow();
+        then(moduleReport.parentUpdate()).isPresent();
+        var parent = moduleReport.parentUpdate().get();
+        then(parent.groupId()).isEqualTo("com.example");
+        then(parent.artifactId()).isEqualTo("parent-project");
+        then(parent.currentVersion()).isEqualTo(Version.fromString("1.0.0"));
+        then(parent.latestVersion()).isEqualTo(Version.fromString("1.0.0"));
+        then(parent.updateType()).isEqualTo(none);
     }
 
     @Test
@@ -859,7 +900,7 @@ class DependencyAnalyzerTest {
                     <artifactId>parent-project</artifactId>
                     <version>1.0.0</version>
                     <packaging>pom</packaging>
-
+                
                     <modules>
                         <module>module-a</module>
                         <module>module-b</module>
@@ -873,7 +914,7 @@ class DependencyAnalyzerTest {
                     <groupId>com.example</groupId>
                     <artifactId>module-a</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>com.example</groupId>
@@ -893,7 +934,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """);
 
-        analyzer.analyze(List.of(parentPomPath));
+        new DependencyAnalyzer(mockRepository, parentPomPath).run();
 
         verify(mockRepository, never()).getAvailableVersions("com.example", "module-b");
     }
@@ -914,7 +955,7 @@ class DependencyAnalyzerTest {
                     <artifactId>parent-project</artifactId>
                     <version>1.0.0</version>
                     <packaging>pom</packaging>
-
+                
                     <modules>
                         <module>module-a</module>
                         <module>module-b</module>
@@ -928,7 +969,7 @@ class DependencyAnalyzerTest {
                     <groupId>com.example</groupId>
                     <artifactId>module-a</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>com.example</groupId>
@@ -950,7 +991,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("com.example", "module-b"))
                 .willReturn(List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")));
 
-        analyzer.analyze(List.of(parentPomPath));
+        new DependencyAnalyzer(mockRepository, parentPomPath).run();
 
         verify(mockRepository).getAvailableVersions("com.example", "module-b");
     }
@@ -970,11 +1011,11 @@ class DependencyAnalyzerTest {
                     <artifactId>parent-project</artifactId>
                     <version>1.0.0</version>
                     <packaging>pom</packaging>
-
+                
                     <properties>
                         <junit.version>5.10.0</junit.version>
                     </properties>
-
+                
                     <modules>
                         <module>module-a</module>
                     </modules>
@@ -984,15 +1025,15 @@ class DependencyAnalyzerTest {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project xmlns="http://maven.apache.org/POM/4.0.0">
                     <modelVersion>4.0.0</modelVersion>
-
+                
                     <parent>
                         <groupId>com.example</groupId>
                         <artifactId>parent-project</artifactId>
                         <version>1.0.0</version>
                     </parent>
-
+                
                     <artifactId>module-a</artifactId>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -1011,7 +1052,7 @@ class DependencyAnalyzerTest {
     void shouldResolveVersionPropertyFromParentPom() throws IOException {
         var fixture = createMultiModuleProjectWithParentProperty();
 
-        var reports = analyzer.analyze(List.of(fixture.parentPomPath()));
+        var reports = new DependencyAnalyzer(mockRepository, fixture.parentPomPath()).run();
 
         var moduleReport = reports.stream()
                 .filter(r -> r.pom().path().equals(fixture.modulePomPath()))
@@ -1028,7 +1069,7 @@ class DependencyAnalyzerTest {
     void shouldApplyPropertyUpdateToParentPom() throws IOException {
         var fixture = createMultiModuleProjectWithParentProperty();
 
-        var reports = analyzer.analyze(List.of(fixture.parentPomPath()));
+        var reports = new DependencyAnalyzer(mockRepository, fixture.parentPomPath()).run();
         reports.stream()
                 .filter(ProjectReport::hasUpdates)
                 .forEach(report -> report.pom().apply(report.updates()));
@@ -1051,7 +1092,7 @@ class DependencyAnalyzerTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -1064,7 +1105,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
 
-        var reports = analyzer.analyze(List.of(subDir));
+        var reports = new DependencyAnalyzer(mockRepository, subDir).run();
 
         then(reports).hasSize(1);
         then(reports.getFirst().dependencyUpdates()).hasSize(1);
@@ -1136,7 +1177,7 @@ class DependencyAnalyzerTest {
         given(mockRepository.getAvailableVersions("org.springframework", "spring-core"))
                 .willReturn(List.of(Version.fromString("5.3.0"), Version.fromString("6.0.0")));
 
-        var reports = analyzer.analyze(List.of(parentPomFile));
+        var reports = new DependencyAnalyzer(mockRepository, parentPomFile).run();
 
         then(reports).hasSize(3);
         var parentReport = reports.stream()

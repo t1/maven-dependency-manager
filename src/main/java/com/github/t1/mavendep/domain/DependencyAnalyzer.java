@@ -4,11 +4,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static com.github.t1.mavendep.domain.UpdateType.none;
 import static java.util.concurrent.StructuredTaskScope.Subtask;
 import static java.util.stream.Collectors.toMap;
 import static java.util.stream.Collectors.toSet;
@@ -22,25 +24,30 @@ import static java.util.stream.Collectors.toSet;
 /// Skips metadata fetching for local project artifacts (parents and inter-module dependencies)
 /// that are already in the list of analyzed projects.
 public class DependencyAnalyzer {
-
     private static final String POM_FILENAME = "pom.xml";
 
     private final MavenRepository repository;
+    private final List<Path> pomFiles;
 
-    public DependencyAnalyzer(MavenRepository repository) {
-        this.repository = repository;
+    private Set<Coordinates> localArtifacts;
+
+    public DependencyAnalyzer(MavenRepository repository, Path... pomFiles) {
+        this(repository, List.of(pomFiles));
     }
 
-    public List<ProjectReport> analyze(List<Path> pomFiles) {
+    public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles) {
+        this.repository = repository;
+        this.pomFiles = pomFiles;
+    }
+
+    public List<ProjectReport> run() {
         var resolvedFiles = pomFiles.stream().map(DependencyAnalyzer::resolveToPomFile).toList();
         var allPoms = pomsAndModules(resolvedFiles).toList();
         resolveParentProperties(allPoms);
-        var localArtifacts = allPoms.stream()
-                .map(Pom::coordinates)
-                .collect(toSet());
+        localArtifacts = allPoms.stream().map(Pom::coordinates).collect(toSet());
         try (var scope = StructuredTaskScope.<ProjectReport>open()) {
             var tasks = allPoms.stream()
-                    .map(pom -> scope.fork(() -> analyze(pom, localArtifacts)))
+                    .map(pom -> scope.fork(() -> analyze(pom)))
                     .toList();
             scope.join();
             return tasks.stream()
@@ -97,20 +104,20 @@ public class DependencyAnalyzer {
         return parentDir;
     }
 
-    private ProjectReport analyze(Pom pom, Set<Coordinates> localArtifacts) {
+    private ProjectReport analyze(Pom pom) {
         try (var scope = StructuredTaskScope.<DependencyUpdate>open()) {
-            var dependencyUpdatesTasks = submitAnalysis(scope, excludeLocalArtifacts(pom.dependencies(), localArtifacts));
-            var pluginUpdateTasks = submitAnalysis(scope, pom.plugins());
-            var parentToAnalyze = pom.parent()
-                    .filter(dep -> !localArtifacts.contains(dep.coordinates()))
-                    .stream().toList();
-            var parentUpdateTask = submitAnalysis(scope, parentToAnalyze);
+            var dependencyUpdatesTasks = submitAnalysis(scope, pom.dependencies().stream()
+                    .filter(this::isExternalArtifact));
+            var pluginUpdateTasks = submitAnalysis(scope, pom.plugins().stream());
+            var parentUpdateTask = submitAnalysis(scope, pom.parent().stream()
+                    .filter(this::isExternalArtifact));
 
             scope.join();
 
             var dependencyUpdates = await(dependencyUpdatesTasks);
             var pluginUpdates = await(pluginUpdateTasks);
-            var parentUpdate = await(parentUpdateTask).stream().findAny();
+            var parentUpdate = await(parentUpdateTask).stream().findAny()
+                    .or(() -> localParentUpdate(pom));
 
             var totalDependencies = pom.dependencies().size() + pom.plugins().size() + (pom.parent().isPresent() ? 1 : 0);
 
@@ -121,12 +128,14 @@ public class DependencyAnalyzer {
         }
     }
 
+    private boolean isExternalArtifact(Dependency dep) {
+        return !isLocalArtifact(dep);
+    }
+
     private List<Subtask<DependencyUpdate>> submitAnalysis(
             StructuredTaskScope<DependencyUpdate, Void> scope,
-            List<Dependency> dependencies) {
-        return dependencies.stream()
-                .map(dependency -> scope.fork(() -> analyze(dependency)))
-                .toList();
+            Stream<Dependency> dependencies) {
+        return dependencies.map(dependency -> scope.fork(() -> analyze(dependency))).toList();
     }
 
     private static List<DependencyUpdate> await(List<Subtask<DependencyUpdate>> tasks) {
@@ -136,10 +145,14 @@ public class DependencyAnalyzer {
                 .toList();
     }
 
-    private static List<Dependency> excludeLocalArtifacts(List<Dependency> dependencies, Set<Coordinates> localArtifacts) {
-        return dependencies.stream()
-                .filter(dep -> !localArtifacts.contains(dep.coordinates()))
-                .toList();
+    private Optional<DependencyUpdate> localParentUpdate(Pom pom) {
+        return pom.parent()
+                .filter(this::isLocalArtifact)
+                .map(dep -> dep.toUpdate(dep.version(), List.of(), none));
+    }
+
+    private boolean isLocalArtifact(Dependency dep) {
+        return localArtifacts.contains(dep.coordinates());
     }
 
     private DependencyUpdate analyze(Dependency dependency) {

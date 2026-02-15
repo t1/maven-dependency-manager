@@ -1,4 +1,3 @@
-* The showAll option should also print the dependency table for a module that has no dependencies, but only a parent
 * An IOException is logged, if a pomFiles cli parameter starts with `~/`. resolution of the home dir happens too late.
 * if a pom doesn't have a groupId or version, but a parent that has, it inherits that value.
 * add an IT for the `--cache-ttl` option

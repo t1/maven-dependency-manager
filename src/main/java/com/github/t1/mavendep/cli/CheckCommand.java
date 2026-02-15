@@ -42,9 +42,9 @@ public class CheckCommand implements Runnable {
     public void run() {
         withVerbose(commonOptions.verbose).run(() -> {
             var mavenRepository = repository != null ? repository : repositoryOptions.createMavenRepository();
-            var analyzer = new DependencyAnalyzer(mavenRepository);
+            var analyzer = new DependencyAnalyzer(mavenRepository, commonOptions.pomFiles);
 
-            var reports = analyzer.analyze(commonOptions.pomFiles);
+            var reports = analyzer.run();
 
             writeReport(reports, commonOptions.format, commonOptions.outputFile, commonOptions.showAll);
         });

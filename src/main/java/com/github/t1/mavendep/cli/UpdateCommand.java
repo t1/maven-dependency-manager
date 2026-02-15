@@ -64,9 +64,9 @@ public class UpdateCommand implements Runnable {
     @Override
     public void run() {
         withVerbose(commonOptions.verbose).run(() -> {
-            var analyzer = new DependencyAnalyzer(repository);
+            var analyzer = new DependencyAnalyzer(repository, commonOptions.pomFiles);
 
-            var reports = analyzer.analyze(commonOptions.pomFiles);
+            var reports = analyzer.run();
 
             if (dependencyFilters != null) {
                 reports = filterAndValidate(reports);
