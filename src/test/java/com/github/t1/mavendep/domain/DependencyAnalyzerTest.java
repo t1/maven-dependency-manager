@@ -1082,6 +1082,43 @@ class DependencyAnalyzerTest {
     }
 
     @Test
+    void shouldResolveHomeDirInDirectoryPath() throws IOException {
+        var projectDir = tempDir.resolve("my-project");
+        createDirectories(projectDir);
+        writeString(projectDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+                .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
+        var originalHome = System.getProperty("user.home");
+        System.setProperty("user.home", tempDir.toString());
+
+        try {
+            var reports = new DependencyAnalyzer(mockRepository, Path.of("~/my-project")).run();
+
+            then(reports).hasSize(1);
+            then(reports.getFirst().dependencyUpdates()).hasSize(1);
+            then(reports.getFirst().dependencyUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
+        } finally {
+            System.setProperty("user.home", originalHome);
+        }
+    }
+
+    @Test
     void shouldResolveDirectoryToPomXml() throws IOException {
         var subDir = tempDir.resolve("my-project");
         createDirectories(subDir);

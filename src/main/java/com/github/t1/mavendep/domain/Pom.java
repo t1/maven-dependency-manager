@@ -62,12 +62,11 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 /// Properties remain immutable and reflect the initial parsed state.
 public class Pom {
     public static Optional<Pom> parse(Path pomPath) {
-        var resolvedPomPath = resolvePath(pomPath);
         try {
-            String content = readString(resolvedPomPath);
-            return Optional.of(parse(pomPath, content)); // NOT the resolvedPomPath
+            String content = readString(pomPath);
+            return Optional.of(parse(pomPath, content));
         } catch (IOException e) {
-            log("Warning: can't read POM file " + resolvedPomPath + ": " + e.getClass().getSimpleName(), e);
+            log("Warning: can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
             return Optional.empty();
         } catch (PomParsingException e) {
             log("Warning: Can't parse POM file: " + pomPath + ": " + e.getMessage(), e);
@@ -77,12 +76,6 @@ public class Pom {
 
     private static class PomParsingException extends RuntimeException {
         public PomParsingException(String message, Exception cause) {super(message, cause);}
-    }
-
-    private static Path resolvePath(Path raw) {
-        if (!raw.startsWith("~")) return raw;
-        var userHome = Path.of(System.getProperty("user.home"));
-        return userHome.resolve(raw.subpath(1, raw.getNameCount()));
     }
 
     private static Pom parse(Path pomPath, String content) {

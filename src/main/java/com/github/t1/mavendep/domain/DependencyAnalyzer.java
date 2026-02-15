@@ -61,7 +61,14 @@ public class DependencyAnalyzer {
     }
 
     private static Path resolveToPomFile(Path path) {
-        return Files.isDirectory(path) ? path.resolve(POM_FILENAME) : path;
+        var resolved = resolveHomePath(path);
+        return Files.isDirectory(resolved) ? resolved.resolve(POM_FILENAME) : resolved;
+    }
+
+    private static Path resolveHomePath(Path raw) {
+        if (!raw.startsWith("~")) return raw;
+        var userHome = Path.of(System.getProperty("user.home"));
+        return userHome.resolve(raw.subpath(1, raw.getNameCount()));
     }
 
     private void resolveParentProperties(List<Pom> allPoms) {
