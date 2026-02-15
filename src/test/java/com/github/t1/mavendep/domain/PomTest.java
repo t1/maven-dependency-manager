@@ -24,6 +24,50 @@ class PomTest {
     Path tempDir;
 
     @Test
+    void shouldInheritGroupIdFromParent() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+
+                    <parent>
+                        <groupId>com.example</groupId>
+                        <artifactId>parent-project</artifactId>
+                        <version>1.0.0</version>
+                    </parent>
+
+                    <artifactId>child-project</artifactId>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.coordinates().groupId()).isEqualTo("com.example");
+    }
+
+    @Test
+    void shouldInheritVersionFromParent() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+
+                    <parent>
+                        <groupId>com.example</groupId>
+                        <artifactId>parent-project</artifactId>
+                        <version>2.0.0</version>
+                    </parent>
+
+                    <artifactId>child-project</artifactId>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.coordinates().version()).isEqualTo(Version.fromString("2.0.0"));
+    }
+
+    @Test
     void shouldParseFromString() {
         var pomContent = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>

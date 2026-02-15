@@ -32,6 +32,7 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 /// Represents a Maven POM (Project Object Model) file with parsing and updating capabilities.
 ///
 /// ## Features
+/// - Inherits groupId and version from parent POM when not explicitly specified
 /// - Parses dependencies with groupId, artifactId, version, scope
 /// - Parses plugins with groupId, artifactId, version (defaults groupId to `org.apache.maven.plugins` if missing)
 /// - Resolves property references (${property.name})
@@ -82,14 +83,16 @@ public class Pom {
         var doc = parseDocument(content);
         var properties = parsePropertiesFromDocument(doc);
         var document = doc.getDocumentElement();
+        var parent = parseParentFromDocument(doc, properties);
+        var groupId = textContent("groupId", document);
+        var version = textContent("version", document);
+        if (groupId == null && parent.isPresent()) groupId = parent.get().groupId();
+        if (version == null && parent.isPresent()) version = parent.get().version().toString();
         return new Pom(
                 content,
                 pomPath,
-                new Coordinates(
-                        textContent("groupId", document),
-                        textContent("artifactId", document),
-                        Version.fromString(textContent("version", document))),
-                parseParentFromDocument(doc, properties),
+                new Coordinates(groupId, textContent("artifactId", document), Version.fromString(version)),
+                parent,
                 parseElementsFromDocument(doc, dependency, properties),
                 parseElementsFromDocument(doc, plugin, properties),
                 properties,
