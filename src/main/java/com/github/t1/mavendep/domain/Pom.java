@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.domain;
 
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -26,6 +27,7 @@ import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
 import static java.util.regex.Pattern.DOTALL;
 import static java.util.regex.Pattern.quote;
+import static org.w3c.dom.Node.ELEMENT_NODE;
 
 /// Represents a Maven POM (Project Object Model) file with parsing and updating capabilities.
 ///
@@ -86,14 +88,30 @@ public class Pom {
     private static Pom parse(Path pomPath, String content) {
         var doc = parseDocument(content);
         var properties = parsePropertiesFromDocument(doc);
+        var document = doc.getDocumentElement();
         return new Pom(
                 content,
                 pomPath,
+                new Coordinates(
+                        textContent("groupId", document),
+                        textContent("artifactId", document),
+                        Version.fromString(textContent("version", document))),
                 parseParentFromDocument(doc, properties),
                 parseElementsFromDocument(doc, dependency, properties),
                 parseElementsFromDocument(doc, plugin, properties),
                 properties,
                 parseModulesFromDocument(doc));
+    }
+
+    private static String textContent(String tagName, Element element) {
+        var nodes = element.getChildNodes();
+        for (var i = 0; i < nodes.getLength(); i++) {
+            var node = nodes.item(i);
+            if (node.getNodeType() == ELEMENT_NODE && node.getNodeName().equals(tagName)) {
+                return node.getTextContent().trim();
+            }
+        }
+        return null;
     }
 
     private static Document parseDocument(String content) {
@@ -116,7 +134,7 @@ public class Pom {
 
             for (var i = 0; i < children.getLength(); i++) {
                 var child = children.item(i);
-                if (child.getNodeType() == Node.ELEMENT_NODE) {
+                if (child.getNodeType() == ELEMENT_NODE) {
                     var key = child.getNodeName();
                     var value = child.getTextContent().trim();
                     properties.put(key, value);
@@ -155,7 +173,7 @@ public class Pom {
 
             for (var i = 0; i < children.getLength(); i++) {
                 var child = children.item(i);
-                if (child.getNodeType() == Node.ELEMENT_NODE && child.getNodeName().equals("module")) {
+                if (child.getNodeType() == ELEMENT_NODE && child.getNodeName().equals("module")) {
                     modules.add(child.getTextContent().trim());
                 }
             }
@@ -225,6 +243,7 @@ public class Pom {
     private boolean dirty;
     private String content;
     private final Path path;
+    private final Coordinates coordinates;
     private final Optional<Dependency> parent;
     private final Map<String, String> properties;
     private final List<Dependency> dependencies;
@@ -235,6 +254,7 @@ public class Pom {
     private Pom(
             String content,
             Path path,
+            Coordinates coordinates,
             Optional<Dependency> parent,
             List<Dependency> dependencies,
             List<Dependency> plugins,
@@ -242,6 +262,7 @@ public class Pom {
             List<String> modules) {
         this.content = content;
         this.path = path;
+        this.coordinates = coordinates;
         this.parent = parent;
         this.properties = properties;
         this.dependencies = dependencies;
@@ -252,6 +273,8 @@ public class Pom {
     @Override public String toString() {return "Pom[" + path + "]";}
 
     public Path path() {return path;}
+
+    public Coordinates coordinates() {return coordinates;}
 
     public List<Dependency> dependencies() {return dependencies;}
 

@@ -4,13 +4,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.StructuredTaskScope;
 import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.StructuredTaskScope.Subtask;
+import static java.util.stream.Collectors.toMap;
+import static java.util.stream.Collectors.toSet;
 
 /// Service for analyzing Maven project dependencies, plugins, and identifying available updates.
 ///
@@ -18,6 +19,8 @@ import static java.util.concurrent.StructuredTaskScope.Subtask;
 /// showing which dependencies and plugins are outdated. Uses structured concurrency with
 /// virtual threads for efficient parallel processing when analyzing multiple projects.
 /// Automatically discovers and processes modules in multi-module Maven projects.
+/// Skips metadata fetching for local project artifacts (parents and inter-module dependencies)
+/// that are already in the list of analyzed projects.
 public class DependencyAnalyzer {
 
     private static final String POM_FILENAME = "pom.xml";
@@ -32,9 +35,12 @@ public class DependencyAnalyzer {
         var resolvedFiles = pomFiles.stream().map(DependencyAnalyzer::resolveToPomFile).toList();
         var allPoms = pomsAndModules(resolvedFiles).toList();
         resolveParentProperties(allPoms);
+        var localArtifacts = allPoms.stream()
+                .map(Pom::coordinates)
+                .collect(toSet());
         try (var scope = StructuredTaskScope.<ProjectReport>open()) {
             var tasks = allPoms.stream()
-                    .map(pom -> scope.fork(() -> analyze(pom)))
+                    .map(pom -> scope.fork(() -> analyze(pom, localArtifacts)))
                     .toList();
             scope.join();
             return tasks.stream()
@@ -53,11 +59,11 @@ public class DependencyAnalyzer {
 
     private void resolveParentProperties(List<Pom> allPoms) {
         var pomByPath = allPoms.stream()
-                .collect(Collectors.toMap(Pom::path, Function.identity()));
+                .collect(toMap(Pom::path, v -> v));
 
         for (var pom : allPoms) {
             if (pom.parent().isEmpty()) continue;
-            var pomDir = getParentDir(pom.path());
+            var pomDir = containingDir(pom.path());
             var parentDir = pomDir.getParent();
             if (parentDir == null) continue;
             var parentPom = pomByPath.get(parentDir.resolve(POM_FILENAME));
@@ -75,7 +81,7 @@ public class DependencyAnalyzer {
     private void pomAndModules(Pom pom, Consumer<Pom> collect) {
         collect.accept(pom);
         if (!pom.modules().isEmpty()) {
-            var parentDir = getParentDir(pom.path());
+            var parentDir = containingDir(pom.path());
             pom.modules().forEach(module -> {
                 var modulePomFile = parentDir.resolve(module).resolve(POM_FILENAME);
                 pomsAndModules(List.of(modulePomFile)).forEach(collect);
@@ -83,7 +89,7 @@ public class DependencyAnalyzer {
         }
     }
 
-    private static Path getParentDir(Path pomFile) {
+    private static Path containingDir(Path pomFile) {
         var parentDir = pomFile.getParent();
         if (parentDir == null) {
             parentDir = Path.of(".");
@@ -91,11 +97,14 @@ public class DependencyAnalyzer {
         return parentDir;
     }
 
-    private ProjectReport analyze(Pom pom) {
+    private ProjectReport analyze(Pom pom, Set<Coordinates> localArtifacts) {
         try (var scope = StructuredTaskScope.<DependencyUpdate>open()) {
-            var dependencyUpdatesTasks = submitAnalysis(scope, pom.dependencies());
+            var dependencyUpdatesTasks = submitAnalysis(scope, excludeLocalArtifacts(pom.dependencies(), localArtifacts));
             var pluginUpdateTasks = submitAnalysis(scope, pom.plugins());
-            var parentUpdateTask = submitAnalysis(scope, pom.parent().stream().toList());
+            var parentToAnalyze = pom.parent()
+                    .filter(dep -> !localArtifacts.contains(dep.coordinates()))
+                    .stream().toList();
+            var parentUpdateTask = submitAnalysis(scope, parentToAnalyze);
 
             scope.join();
 
@@ -124,6 +133,12 @@ public class DependencyAnalyzer {
         return tasks.stream()
                 .map(Subtask::get)
                 .filter(Objects::nonNull)
+                .toList();
+    }
+
+    private static List<Dependency> excludeLocalArtifacts(List<Dependency> dependencies, Set<Coordinates> localArtifacts) {
+        return dependencies.stream()
+                .filter(dep -> !localArtifacts.contains(dep.coordinates()))
                 .toList();
     }
 

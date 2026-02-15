@@ -27,10 +27,7 @@ public final class Version implements Comparable<Version> {
         this.qualifierSegment = findQualifierSegment();
     }
 
-    public static Version fromString(String version) {
-        if (version == null) return null;
-        return new Version(version);
-    }
+    public static Version fromString(String version) {return (version == null) ? null : new Version(version);}
 
     public int major() {return versionSegment(0);}
 

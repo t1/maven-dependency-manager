@@ -7,9 +7,7 @@ import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 
 public record Dependency(DependencyType type,
-                         String groupId,
-                         String artifactId,
-                         Version version,
+                         Coordinates coordinates,
                          Scope scope,
                          String versionProperty) {
     public enum DependencyType {
@@ -18,24 +16,34 @@ public record Dependency(DependencyType type,
         plugin
     }
 
+    public Dependency(DependencyType type, String groupId, String artifactId, Version version, Scope scope, String versionProperty) {
+        this(type, new Coordinates(groupId, artifactId, version), scope, versionProperty);
+    }
+
+    public String groupId() {return coordinates.groupId();}
+
+    public String artifactId() {return coordinates.artifactId();}
+
+    public Version version() {return coordinates.version();}
+
     public boolean isValid() {
-        return groupId != null && artifactId != null && version != null;
+        return groupId() != null && artifactId() != null && version() != null;
     }
 
     public boolean isManaged() {
-        return groupId != null && artifactId != null && version == null;
+        return groupId() != null && artifactId() != null && version() == null;
     }
 
     @Override
     public String toString() {
         return (type == dependency ? "" : type + "=") +
-               groupId + ":" + artifactId +
-               ((version == null) ? "" : ":" + version) +
+               groupId() + ":" + artifactId() +
+               ((version() == null) ? "" : ":" + version()) +
                ((scope == DEFAULT) ? "" : ":" + scope);
     }
 
     public Dependency with(Version version) {
-        return new Dependency(type, groupId, artifactId, version, scope, versionProperty);
+        return new Dependency(type, groupId(), artifactId(), version, scope, versionProperty);
     }
 
     public DependencyUpdate toUpdate(

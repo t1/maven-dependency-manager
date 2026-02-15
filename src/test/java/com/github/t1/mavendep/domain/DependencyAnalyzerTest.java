@@ -18,6 +18,8 @@ import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class DependencyAnalyzerTest {
@@ -801,6 +803,158 @@ class DependencyAnalyzerTest {
         then(parent.updateType()).isEqualTo(none);
     }
 
+    @Test
+    void shouldNotFetchMetadataForParentAlreadyInPomList() throws IOException {
+        var parentDir = tempDir.resolve("parent");
+        var moduleDir = parentDir.resolve("module-a");
+        createDirectories(moduleDir);
+        var parentPomPath = parentDir.resolve("pom.xml");
+        writeString(parentPomPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>parent-project</artifactId>
+                    <version>1.0.0</version>
+                    <packaging>pom</packaging>
+
+                    <modules>
+                        <module>module-a</module>
+                    </modules>
+                </project>
+                """);
+        writeString(moduleDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+
+                    <parent>
+                        <groupId>com.example</groupId>
+                        <artifactId>parent-project</artifactId>
+                        <version>1.0.0</version>
+                    </parent>
+
+                    <artifactId>module-a</artifactId>
+                </project>
+                """);
+
+        analyzer.analyze(List.of(parentPomPath));
+
+        verify(mockRepository, never()).getAvailableVersions("com.example", "parent-project");
+    }
+
+    @Test
+    void shouldNotFetchMetadataForInterModuleDependency() throws IOException {
+        var parentDir = tempDir.resolve("parent");
+        var moduleADir = parentDir.resolve("module-a");
+        var moduleBDir = parentDir.resolve("module-b");
+        createDirectories(moduleADir);
+        createDirectories(moduleBDir);
+        var parentPomPath = parentDir.resolve("pom.xml");
+        writeString(parentPomPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>parent-project</artifactId>
+                    <version>1.0.0</version>
+                    <packaging>pom</packaging>
+
+                    <modules>
+                        <module>module-a</module>
+                        <module>module-b</module>
+                    </modules>
+                </project>
+                """);
+        writeString(moduleADir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>module-a</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.example</groupId>
+                            <artifactId>module-b</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        writeString(moduleBDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>module-b</artifactId>
+                    <version>1.0.0</version>
+                </project>
+                """);
+
+        analyzer.analyze(List.of(parentPomPath));
+
+        verify(mockRepository, never()).getAvailableVersions("com.example", "module-b");
+    }
+
+    @Test
+    void shouldFetchMetadataForInterModuleDependencyWithDifferentVersion() throws IOException {
+        var parentDir = tempDir.resolve("parent");
+        var moduleADir = parentDir.resolve("module-a");
+        var moduleBDir = parentDir.resolve("module-b");
+        createDirectories(moduleADir);
+        createDirectories(moduleBDir);
+        var parentPomPath = parentDir.resolve("pom.xml");
+        writeString(parentPomPath, """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>parent-project</artifactId>
+                    <version>1.0.0</version>
+                    <packaging>pom</packaging>
+
+                    <modules>
+                        <module>module-a</module>
+                        <module>module-b</module>
+                    </modules>
+                </project>
+                """);
+        writeString(moduleADir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>module-a</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.example</groupId>
+                            <artifactId>module-b</artifactId>
+                            <version>2.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+        writeString(moduleBDir.resolve("pom.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>module-b</artifactId>
+                    <version>1.0.0</version>
+                </project>
+                """);
+        given(mockRepository.getAvailableVersions("com.example", "module-b"))
+                .willReturn(List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")));
+
+        analyzer.analyze(List.of(parentPomPath));
+
+        verify(mockRepository).getAvailableVersions("com.example", "module-b");
+    }
+
     private record MultiModuleFixture(Path parentPomPath, Path modulePomPath) {}
 
     private MultiModuleFixture createMultiModuleProjectWithParentProperty() throws IOException {
@@ -848,8 +1002,6 @@ class DependencyAnalyzerTest {
                     </dependencies>
                 </project>
                 """);
-        given(mockRepository.getAvailableVersions("com.example", "parent-project"))
-                .willReturn(List.of(Version.fromString("1.0.0")));
         given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.11.0")));
         return new MultiModuleFixture(parentPomPath, moduleDir.resolve("pom.xml"));
