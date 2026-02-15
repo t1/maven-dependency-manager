@@ -8,7 +8,9 @@ import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -43,6 +45,12 @@ class TextReportWriterTest {
         return Pom.parse(pomFile).orElseThrow();
     }
 
+    private String writeToString(List<ProjectReport> reports) {
+        var buffer = new ByteArrayOutputStream();
+        new TextReportWriter(new PrintStream(buffer), reports).run();
+        return buffer.toString();
+    }
+
     @Test
     void shouldGenerateTableFormatReport() {
         var update = new DependencyUpdate(
@@ -53,8 +61,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("Maven Dependency Update Report");
         then(text).contains("  Project:");
@@ -86,8 +93,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update1, update2), List.of(), 2);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("Summary: 2 dependencies, 2 updates available");
         then(text).contains("1 major");
@@ -98,8 +104,7 @@ class TextReportWriterTest {
     void shouldShowSummaryWhenNoUpdates() {
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 5);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).doesNotContain("All dependencies are up to date");
         then(text).contains("Summary: 5 dependencies, 0 updates available (0 major, 0 minor, 0 patch)");
@@ -115,8 +120,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).doesNotContain("Outdated Dependencies:");
         then(text).doesNotContain("Dependencies:");
@@ -144,8 +148,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update1, update2, update3), List.of(), 3);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("Summary: 3 dependencies, 3 updates available");
     }
@@ -160,8 +163,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ Group ID");
         then(text).contains("│ org.junit.jupiter");
@@ -177,8 +179,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ Artifact ID");
     }
@@ -199,8 +200,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(outdated, upToDate), List.of(), 2);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report));
+        var text = writeToString(List.of(report));
 
         then(text).contains("│ junit-jupiter");
         then(text).contains("│ spring-core");
@@ -224,8 +224,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(outdated, upToDate), List.of(), 2);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ junit-jupiter");
         then(text).doesNotContain("│ spring-core");
@@ -243,8 +242,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ Type/Scope");
         then(text).contains("│ dependency/test");
@@ -273,8 +271,7 @@ class TextReportWriterTest {
         // Add in reverse order: plugin, dependency, parent
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(dependencyUpdate), List.of(pluginUpdate), 3);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         var parentIndex = text.indexOf("spring-boot-starter-parent");
         var dependencyIndex = text.indexOf("junit-jupiter");
@@ -299,8 +296,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report));
+        var text = writeToString(List.of(report));
 
         then(text).contains("│ unknown-artifact");
         then(text).contains("│ 1.0.0");
@@ -323,8 +319,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ parent");
         then(text).contains("│ spring-boot-starter-parent");
@@ -349,8 +344,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report));
+        var text = writeToString(List.of(report));
 
         then(text).contains("│ parent");
         then(text).contains("│ unknown-parent");
@@ -368,8 +362,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report));
+        var text = writeToString(List.of(report));
 
         then(text).contains("│ managed-artifact");
         then(text).contains("│ <managed>");
@@ -392,8 +385,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report));
+        var text = writeToString(List.of(report));
 
         then(text).contains("│ parent");
         then(text).contains("│ managed-parent");
@@ -419,8 +411,7 @@ class TextReportWriterTest {
         var report1 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update1), List.of(), 1);
         var report2 = new ProjectReport(dummyPom2, Optional.empty(), List.of(update2), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
+        var text = writeToString(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
 
         var project1Index = text.indexOf(DUMMY_POM.path().toAbsolutePath().toString());
         then(project1Index).isGreaterThanOrEqualTo(0);
@@ -455,8 +446,7 @@ class TextReportWriterTest {
         var report1 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update1), List.of(), 1);
         var report2 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update2, update3), List.of(), 2);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
+        var text = writeToString(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
 
         then(text).contains("Total Summary: 3 dependencies, 3 updates available (1 major, 1 minor, 1 patch)");
     }
@@ -471,8 +461,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).doesNotContain("Total Summary");
     }
@@ -487,8 +476,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(upToDate), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("Summary: 1 dependency, 0 updates available (0 major, 0 minor, 0 patch)");
     }
@@ -509,8 +497,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(outdated, upToDate), List.of(), 2);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("Summary: 2 dependencies, 1 updates available (0 major, 0 minor, 1 patch)");
     }
@@ -520,8 +507,7 @@ class TextReportWriterTest {
         var report1 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 0);
         var report2 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 0);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
+        var text = writeToString(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
 
         then(text).doesNotContain("Total Summary");
     }
@@ -543,8 +529,7 @@ class TextReportWriterTest {
         var report1 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(upToDate1), List.of(), 1);
         var report2 = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(upToDate2), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
+        var text = writeToString(List.of(report1.onlyUpdates(), report2.onlyUpdates()));
 
         then(text).contains("Total Summary: 2 dependencies, 0 updates available (0 major, 0 minor, 0 patch)");
     }
@@ -559,8 +544,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(outdated), List.of(), 5);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("Summary: 5 dependencies, 1 updates available (0 major, 0 minor, 1 patch)");
     }
@@ -575,8 +559,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ Type/Scope");
         then(text).contains("│ dependency/compile");
@@ -598,8 +581,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         then(text).contains("│ parent");
         var parentTypeIndex = text.indexOf("│ parent");
@@ -624,8 +606,7 @@ class TextReportWriterTest {
         );
         var report = new ProjectReport(DUMMY_POM, Optional.of(parentUpdate), List.of(update), List.of(), 1);
 
-        var writer = new TextReportWriter();
-        var text = writer.write(List.of(report.onlyUpdates()));
+        var text = writeToString(List.of(report.onlyUpdates()));
 
         var lines = text.split("\n");
         var parentLine = "";

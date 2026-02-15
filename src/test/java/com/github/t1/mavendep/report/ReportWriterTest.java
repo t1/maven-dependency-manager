@@ -4,6 +4,8 @@ import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -16,31 +18,34 @@ class ReportWriterTest {
     // Test list for ReportWriter interface contract
 
     @Test
-    void shouldDefineWriteMethodThatAcceptsListOfProjectReports() {
-        ReportWriter writer = (_) -> "";
+    void shouldDefineRunMethodThatWritesToPrintStream() {
+        var buffer = new ByteArrayOutputStream();
+        ReportWriter writer = () -> new PrintStream(buffer).print("test");
 
-        var result = writer.write(List.of());
+        writer.run();
 
-        then(result).isNotNull();
+        then(buffer.toString()).isEqualTo("test");
     }
 
     @Test
     void shouldAllowJsonReportWriterToImplementInterface() {
-        ReportWriter writer = new JsonReportWriter();
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 0);
+        var buffer = new ByteArrayOutputStream();
 
-        var result = writer.write(List.of(report));
+        ReportWriter writer = new JsonReportWriter(new PrintStream(buffer), List.of(report));
+        writer.run();
 
-        then(result).contains("projects");
+        then(buffer.toString()).contains("projects");
     }
 
     @Test
     void shouldAllowTextReportWriterToImplementInterface() {
-        ReportWriter writer = new TextReportWriter();
         var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(), List.of(), 0);
+        var buffer = new ByteArrayOutputStream();
 
-        var result = writer.write(List.of(report));
+        ReportWriter writer = new TextReportWriter(new PrintStream(buffer), List.of(report));
+        writer.run();
 
-        then(result).contains("Maven Dependency Update Report");
+        then(buffer.toString()).contains("Maven Dependency Update Report");
     }
 }

@@ -13,7 +13,9 @@ import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
@@ -186,9 +188,10 @@ class JsonReportWriterTest {
     }
 
     private JsonNode write(ProjectReport... reports) {
-        var json = new JsonReportWriter().write(List.of(reports));
+        var buffer = new ByteArrayOutputStream();
+        new JsonReportWriter(new PrintStream(buffer), List.of(reports)).run();
         try {
-            return new ObjectMapper().readTree(json);
+            return new ObjectMapper().readTree(buffer.toString());
         } catch (IOException e) {
             throw new RuntimeException("failed to parse JSON", e);
         }

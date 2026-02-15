@@ -4,6 +4,7 @@ import com.github.t1.mavendep.domain.DependencySummary;
 import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.ProjectReport;
 
+import java.io.PrintStream;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -11,33 +12,38 @@ import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency
 
 public class TextReportWriter implements ReportWriter {
 
-    @Override
-    public String write(List<ProjectReport> reports) {
-        var sb = new StringBuilder();
+    private final PrintStream out;
+    private final List<ProjectReport> reports;
 
-        appendHeader(sb);
+    public TextReportWriter(PrintStream out, List<ProjectReport> reports) {
+        this.out = out;
+        this.reports = reports;
+    }
+
+    @Override
+    public void run() {
+        printHeader();
 
         for (var report : reports) {
-            appendProjectReport(sb, report, reports.size() > 1);
+            printProjectReport(report, reports.size() > 1);
         }
 
         if (reports.size() > 1) {
-            appendTotalSummary(sb, reports);
+            printTotalSummary();
         }
-
-        return sb.toString();
     }
 
-    private void appendHeader(StringBuilder sb) {
-        sb.append("\n");
-        sb.append(" ".repeat(40)).append("==============================\n");
-        sb.append(" ".repeat(40)).append("Maven Dependency Update Report\n");
-        sb.append(" ".repeat(40)).append("==============================\n\n");
+    private void printHeader() {
+        out.println();
+        out.println(" ".repeat(40) + "==============================");
+        out.println(" ".repeat(40) + "Maven Dependency Update Report");
+        out.println(" ".repeat(40) + "==============================");
+        out.println();
     }
 
-    private void appendProjectReport(StringBuilder sb, ProjectReport report, boolean isMultiProject) {
-        if (isMultiProject) sb.append("-".repeat(120)).append("\n");
-        sb.append("  Project: ").append(report.pom().path().toAbsolutePath()).append("\n");
+    private void printProjectReport(ProjectReport report, boolean isMultiProject) {
+        if (isMultiProject) out.println("-".repeat(120));
+        out.println("  Project: " + report.pom().path().toAbsolutePath());
 
         var updates = Stream.concat(
                         Stream.concat(
@@ -46,22 +52,22 @@ public class TextReportWriter implements ReportWriter {
                         report.pluginUpdates().stream())
                 .toList();
         if (!updates.isEmpty()) {
-            appendReportWithUpdates(sb, updates);
+            printReportWithUpdates(updates);
         }
 
         var summary = DependencySummary.from(report);
-        appendSummaryText(sb, summary, "  Summary: ");
-        sb.append("\n");
+        printSummaryText(summary, "  Summary: ");
+        out.println();
     }
 
-    private void appendReportWithUpdates(StringBuilder sb, List<DependencyUpdate> updates) {
+    private void printReportWithUpdates(List<DependencyUpdate> updates) {
         var widths = calculateColumnWidths(updates);
 
-        appendTableBorder(sb, widths, "┌─", "─┬─", "─┐");
-        appendTableRow(sb, widths, "Type/Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
-        appendTableBorder(sb, widths, "├─", "─┼─", "─┤");
-        appendTableRows(sb, updates, widths);
-        appendTableBorder(sb, widths, "└─", "─┴─", "─┘");
+        printTableBorder(widths, "┌─", "─┬─", "─┐");
+        printTableRow(widths, "Type/Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
+        printTableBorder(widths, "├─", "─┼─", "─┤");
+        printTableRows(updates, widths);
+        printTableBorder(widths, "└─", "─┴─", "─┘");
     }
 
     private int[] calculateColumnWidths(List<DependencyUpdate> updates) {
@@ -73,75 +79,76 @@ public class TextReportWriter implements ReportWriter {
         var updateWidth = "Update".length();
 
         for (var update : updates) {
-            var typeScopeText = formatTypeScope(update);
-            typeScopeWidth = Math.max(typeScopeWidth, typeScopeText.length());
+            typeScopeWidth = Math.max(typeScopeWidth, formatTypeScope(update).length());
             groupWidth = Math.max(groupWidth, update.groupId().length());
             depWidth = Math.max(depWidth, update.artifactId().length());
-            var currentVersionStr = update.currentVersion() != null ? update.currentVersion().toString() : "<managed>";
-            var latestVersionStr = update.latestVersion() != null ? update.latestVersion().toString() : "?";
-            curWidth = Math.max(curWidth, currentVersionStr.length());
-            latWidth = Math.max(latWidth, latestVersionStr.length());
+            curWidth = Math.max(curWidth, formatCurrentVersion(update).length());
+            latWidth = Math.max(latWidth, formatLatestVersion(update).length());
             updateWidth = Math.max(updateWidth, update.updateType().toString().length());
         }
 
         return new int[]{typeScopeWidth, groupWidth, depWidth, curWidth, latWidth, updateWidth};
     }
 
-    private void appendTableRows(StringBuilder sb, List<DependencyUpdate> updates, int[] widths) {
+    private void printTableRows(List<DependencyUpdate> updates, int[] widths) {
         for (var update : updates) {
-            var typeScopeText = formatTypeScope(update);
-            var currentVersionStr = update.currentVersion() != null ? update.currentVersion().toString() : "<managed>";
-            var latestVersionStr = update.latestVersion() != null ? update.latestVersion().toString() : "?";
-            appendTableRow(sb, widths, typeScopeText,
+            printTableRow(widths, formatTypeScope(update),
                     update.groupId(),
                     update.artifactId(),
-                    currentVersionStr,
-                    latestVersionStr,
+                    formatCurrentVersion(update),
+                    formatLatestVersion(update),
                     update.updateType().toString());
         }
     }
 
-    private void appendTotalSummary(StringBuilder sb, List<ProjectReport> reports) {
+    private String formatCurrentVersion(DependencyUpdate update) {
+        return update.currentVersion() != null ? update.currentVersion().toString() : "<managed>";
+    }
+
+    private String formatLatestVersion(DependencyUpdate update) {
+        return update.latestVersion() != null ? update.latestVersion().toString() : "?";
+    }
+
+    private void printTotalSummary() {
         var totalSummary = DependencySummary.from(reports);
         if (totalSummary.totalDependencies() > 0) {
-            sb.append("=".repeat(120)).append("\n");
-            appendSummaryText(sb, totalSummary, "  Total Summary: ");
-            sb.append("\n");
+            out.println("=".repeat(120));
+            printSummaryText(totalSummary, "  Total Summary: ");
+            out.println();
         }
     }
 
-    private void appendSummaryText(StringBuilder sb, DependencySummary summary, String prefix) {
-        sb.append(prefix);
-        sb.append(summary.totalDependencies());
-        sb.append(summary.totalDependencies() == 1 ? " dependency, " : " dependencies, ");
-        sb.append(summary.outdatedDependencies()).append(" updates available (");
-        sb.append(summary.majorUpdates()).append(" major, ");
-        sb.append(summary.minorUpdates()).append(" minor, ");
-        sb.append(summary.patchUpdates()).append(" patch");
-        sb.append(")\n");
+    private void printSummaryText(DependencySummary summary, String prefix) {
+        out.print(prefix);
+        out.print(summary.totalDependencies());
+        out.print(summary.totalDependencies() == 1 ? " dependency, " : " dependencies, ");
+        out.print(summary.outdatedDependencies() + " updates available (");
+        out.print(summary.majorUpdates() + " major, ");
+        out.print(summary.minorUpdates() + " minor, ");
+        out.println(summary.patchUpdates() + " patch)");
     }
 
-    private void appendTableBorder(StringBuilder sb, int[] widths, String left, String middle, String right) {
-        sb.append(left);
+    private void printTableBorder(int[] widths, String left, String middle, String right) {
+        out.print(left);
         for (var i = 0; i < widths.length; i++) {
-            sb.append("─".repeat(widths[i]));
+            out.print("─".repeat(widths[i]));
             if (i < widths.length - 1) {
-                sb.append(middle);
+                out.print(middle);
             }
         }
-        sb.append(right).append("\n");
+        out.println(right);
     }
 
-    private void appendTableRow(StringBuilder sb, int[] widths, String... cells) {
-        sb.append("│ ");
+    private void printTableRow(int[] widths, String... cells) {
+        out.print("│ ");
         for (var i = 0; i < cells.length; i++) {
-            sb.append(padRight(cells[i], widths[i]));
-            sb.append(" │");
+            out.print(padRight(cells[i], widths[i]));
+            out.print(" │");
             if (i < cells.length - 1) {
-                sb.append(" ");
+                out.print(" ");
             }
         }
-        sb.append("\n");
+        out.println();
     }
 
     private String padRight(String text, int width) {
