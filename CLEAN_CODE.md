@@ -222,7 +222,8 @@ Methods are the fundamental units of behavior. Keep them clean.
 - **Acceptable: 2 arguments (dyadic)**
 - **Questionable: 3 arguments (triadic)**
 - **Smelly: 4+ arguments (polyadic)**
-- Consider argument objects for >3 parameters
+- Consider argument objects for >3 parameters, if they are semantically related
+- When parameters are threaded through many private methods, consider promoting them to constructor-injected fields
 
 ### No Output Arguments
 

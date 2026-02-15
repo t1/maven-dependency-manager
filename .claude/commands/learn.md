@@ -1,5 +1,5 @@
 ---
-description: Loads basic project information into the context
+description: try to improve agentic behavior from recent human corrections
 ---
 
 Your aim is to reduce necessary user interventions to an absolute minimum.
