@@ -10,6 +10,8 @@ caching using the local Maven repository.
 - **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with `--force-cache-update` to bypass the cache
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
 - **Multiple Output Formats**: JSON and human-readable text reports
+- **Show Available Versions**: Query all available versions for a specific artifact by `groupId:artifactId`, `groupId`,
+  or `artifactId` (resolving partial coordinates from your POM)
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
   versions and property-based versions, including parent POMs)
 - **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent
@@ -99,6 +101,22 @@ mdm check pom.xml --force-cache-update
 # Enable verbose output with stack traces for exceptions
 mdm check pom.xml --verbose
 mdm check pom.xml -v
+```
+
+### Showing Available Versions
+
+```bash
+# Show all versions for a specific artifact
+mdm show-available org.assertj:assertj-core
+
+# Show versions using just the artifactId (resolved from pom.xml)
+mdm show-available assertj-core
+
+# Show versions using just the groupId (resolved from pom.xml)
+mdm show-available org.assertj
+
+# Specify a different POM file for coordinate resolution
+mdm show-available assertj-core --pom other/pom.xml
 ```
 
 ### Updating Dependencies
