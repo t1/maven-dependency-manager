@@ -213,26 +213,8 @@ To run a specific integration test (but no unit test): `mvn -Dskip.surefire.test
 
 ### Code Style
 
-Next to the general Clean Code ideals (described in CLEAN_CODE.md)
-and the general practice of Test-Driven Development (described in TDD.md),
-we follow these Coding Conventions at all times:
-
-- Use `var` for local type inference
-- Use Markdown for Javadoc to improves in-IDE readability
-- Add comments only if they add real value; prefer self-explanatory code. Comments should explain "why", not "what".
-- Prefer static imports if they don't make the code less readable, e.g. not for `List.of(...)`
-- Hide checked exceptions within a method by wrapping them in a RuntimeException
-- Console output to `System.err` is acceptable for warnings and diagnostics (this is a CLI tool)
-- Prefer constructor injection over using setters
-- Tests:
-    - BDD naming (`shouldParseSemanticVersion()`)
-    - BDD assertions (`then(...).isEqualTo(...)`, not `assertThat(...).isEqualTo(...)`)
-    - BDD logic when using Mockito, i.e. `given(...).willReturn(...)`
-      instead of `when(...).thenReturn(...)` (and that's part of the BDD given block!)
-    - Within a test method body, always use an empty line to separate the given, when, and then blocks.
-      Other setup code (like `writeString()`) also belong to the given block.
-    - Within the given block itself, do not add empty lines between setup statements.
-      For example, `writeString()` followed by Mockito `given()` should have no empty line between them.
+This project uses the **tdder** plugin for TDD, Clean Code, Java, and Maven conventions.
+See `CLAUDE.md` for details.
 
 ## License
 

@@ -2,7 +2,8 @@
 
 ## General
 
-Be very critical and honest to what I say. **VERY IMPORTANT**
+**VERY IMPORTANT** Be very critical and honest to what I say. And when I ask a question, it's just a question, not a
+suggestion.
 
 Don't forget to update the documentation when you change the code. **VERY IMPORTANT**
 
@@ -15,25 +16,15 @@ Test coverage should be taken into consideration in the TDD loop.
 Always check with the IDE MCP for warnings (make sure that you don't see just errors, but also warnings)
 and all qualified names are replaced by imports (if possible). **VERY IMPORTANT**
 
-## TDD
+## TDD & Clean Code
 
-See `TDD.md` for Test-Driven Development practices that must be followed every time a new feature is added
-or a bug is fixed (but not when just refactoring). The clean code principles from `CLEAN_CODE.md` are applied
-automatically during the TDD refactor phase via a subagent. **VERY IMPORTANT**
+This project uses the **tdder** plugin for TDD and Clean Code practices. **VERY IMPORTANT**
 
-## Clean Code
+- TDD practices (Red-Green-Refactor, baby steps, guessing game) are enforced by the plugin's `tdd` skill
+- Clean Code principles and the Clean Code Reviewer subagent are provided by the plugin's `clean-code` skill
+- Java and Maven conventions are provided by the plugin's `java` and `maven` skills
 
-**VERY IMPORTANT**: If you do a refactoring (i.e. change the production code without affecting the tests)
-or review existing code, then use a **Clean Code Review (Subagent)**:
-Use the Task tool with `subagent_type=general-purpose` to spawn a clean code review subagent.
-The subagent's prompt must instruct it to:
-
-1. Read `CLEAN_CODE.md`
-2. Read the implementation needing refactoring
-3. Analyze the code against all clean code principles in priority order
-   (naming, code smells, SOLID, method design, structure)
-4. Return a prioritized list of specific, actionable refactoring suggestions
-   Apply the returned suggestions, then ensure all tests continue to pass after each change.
+See `TDD.md` and `CLEAN_CODE.md` for pointers to the plugin.
 
 ## Documentation Strategy
 
