@@ -8,16 +8,16 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.BDDAssertions.then;
 
-class VersionTreeFormatterTest {
+class VersionTreeTableFormatterTest {
 
     @Test void shouldReturnEmptyStringForEmptyList() {
-        var result = VersionTreeFormatter.format(List.of());
+        var result = VersionTreeTableFormatter.format(List.of());
 
         then(result).isEmpty();
     }
 
     @Test void shouldFormatSingleVersion() {
-        var result = VersionTreeFormatter.format(List.of(Version.fromString("3.25.1")));
+        var result = VersionTreeTableFormatter.format(List.of(Version.fromString("3.25.1")));
 
         then(result).isEqualTo("""
                 ┌───────┬───────┬─────────┐
@@ -29,7 +29,7 @@ class VersionTreeFormatterTest {
     }
 
     @Test void shouldFormatMultiplePatchVersionsInColumns() {
-        var result = VersionTreeFormatter.format(List.of(
+        var result = VersionTreeTableFormatter.format(List.of(
                 Version.fromString("3.25.1"),
                 Version.fromString("3.25.2"),
                 Version.fromString("3.25.3")));
@@ -44,7 +44,7 @@ class VersionTreeFormatterTest {
     }
 
     @Test void shouldSpanMajorColumnAcrossMinorVersions() {
-        var result = VersionTreeFormatter.format(List.of(
+        var result = VersionTreeTableFormatter.format(List.of(
                 Version.fromString("3.25.1"),
                 Version.fromString("3.26.0"),
                 Version.fromString("3.27.7")));
@@ -61,7 +61,7 @@ class VersionTreeFormatterTest {
     }
 
     @Test void shouldSeparateMajorVersionsWithBorder() {
-        var result = VersionTreeFormatter.format(List.of(
+        var result = VersionTreeTableFormatter.format(List.of(
                 Version.fromString("2.15.0"),
                 Version.fromString("2.15.1"),
                 Version.fromString("3.25.1"),
@@ -84,7 +84,7 @@ class VersionTreeFormatterTest {
                 .mapToObj(i -> Version.fromString("3.25." + i))
                 .toList();
 
-        var result = VersionTreeFormatter.format(versions);
+        var result = VersionTreeTableFormatter.format(versions);
 
         then(result).contains("│ Major │ Minor │ Version");
         then(result).contains("│ 3     │ 25    │");

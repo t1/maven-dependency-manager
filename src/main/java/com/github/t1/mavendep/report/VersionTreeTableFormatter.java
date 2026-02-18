@@ -24,7 +24,7 @@ import java.util.Map;
 /// │       │ 26    │ 3.26.0  │         │
 /// └───────┴───────┴─────────┴─────────┘
 /// ```
-public class VersionTreeFormatter {
+public class VersionTreeTableFormatter {
 
     private static final int MAX_TABLE_WIDTH = 120;
     private static final String MAJOR_HEADER = "Major";
@@ -35,7 +35,7 @@ public class VersionTreeFormatter {
 
     public static String format(List<Version> versions) {
         if (versions.isEmpty()) return "";
-        return new VersionTreeFormatter(versions).buildTable();
+        return new VersionTreeTableFormatter(versions).buildTable();
     }
 
     private final LinkedHashMap<Integer, LinkedHashMap<Integer, List<Version>>> majorGroups;
@@ -43,7 +43,7 @@ public class VersionTreeFormatter {
     private final int versionColumns;
     private final int versionWidth;
 
-    private VersionTreeFormatter(List<Version> versions) {
+    private VersionTreeTableFormatter(List<Version> versions) {
         var majorWidth = Math.max(
                 versions.stream().mapToInt(v -> String.valueOf(v.major()).length()).max().orElse(1),
                 MAJOR_HEADER.length());
