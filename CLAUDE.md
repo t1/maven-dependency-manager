@@ -2,8 +2,10 @@
 
 ## General
 
-**VERY IMPORTANT** Be very critical and honest to what I say. And when I ask a question, it's just a question, not a
-suggestion.
+**VERY IMPORTANT** Be very critical and honest to what I say. And when I ask a question,
+it's just a question, not a suggestion.
+**Do NOT use local/private auto memory.** Store all learnings and conventions in this file (or other project files),
+so they are shared with everyone working on the project.
 
 Don't forget to update the documentation when you change the code. **VERY IMPORTANT**
 
