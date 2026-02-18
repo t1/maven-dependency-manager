@@ -20,9 +20,10 @@ class ShowAvailableCommandIT extends BaseCliIT {
 
         var output = runCli("show-available", "org.assertj:assertj-core");
 
-        then(output).contains("3.25.1");
-        then(output).contains("3.26.0");
-        then(output).contains("3.27.7");
+        then(output).contains("│ Major │ Minor │ Version");
+        then(output).contains("│ 3     │ 25    │ 3.25.1");
+        then(output).contains("│       │ 26    │ 3.26.0");
+        then(output).contains("│       │ 27    │ 3.27.7");
     }
 
     @Test void shouldDisplayMessageWhenNoVersionsFound() throws IOException, InterruptedException {

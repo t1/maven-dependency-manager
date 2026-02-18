@@ -11,7 +11,7 @@ caching using the local Maven repository.
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
 - **Multiple Output Formats**: JSON and human-readable text reports
 - **Show Available Versions**: Query all available versions for a specific artifact by `groupId:artifactId`, `groupId`,
-  or `artifactId` (resolving partial coordinates from your POM)
+  or `artifactId` (resolving partial coordinates from your POM), displayed as a tree grouped by major/minor version
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
   versions and property-based versions, including parent POMs)
 - **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent

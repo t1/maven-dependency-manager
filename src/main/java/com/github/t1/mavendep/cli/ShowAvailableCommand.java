@@ -2,6 +2,7 @@ package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Pom;
+import com.github.t1.mavendep.report.VersionTreeFormatter;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Option;
@@ -47,7 +48,7 @@ public class ShowAvailableCommand implements Runnable {
         if (versions.isEmpty()) {
             System.out.println("No versions found for " + coordinate);
         } else {
-            versions.forEach(System.out::println);
+            System.out.println(VersionTreeFormatter.format(versions));
         }
     }
 
