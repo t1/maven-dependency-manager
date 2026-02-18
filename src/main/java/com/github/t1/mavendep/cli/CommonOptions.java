@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.OutputFormat;
+import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
@@ -17,12 +18,31 @@ class CommonOptions {
     )
     List<Path> pomFiles;
 
-    @Option(
-            names = {"-f", "--format"},
-            description = "Output format: text, json (default: text)",
-            defaultValue = "text"
-    )
-    OutputFormat format;
+    @ArgGroup
+    @SuppressWarnings("unused") // set by Picocli
+    private FormatOption formatOption;
+
+    static class FormatOption {
+        @Option(names = {"-f", "--format"}, description = "Output format: text, json (default: text)")
+        OutputFormat format;
+
+        @Option(names = "--json", description = "Shortcut for --format=json")
+        boolean json;
+
+        @Option(names = "--text", description = "Shortcut for --format=text")
+        boolean text;
+
+        OutputFormat resolve() {
+            if (json) return OutputFormat.json;
+            if (text) return OutputFormat.text;
+            return format;
+        }
+    }
+
+    OutputFormat format() {
+        if (formatOption == null) return OutputFormat.text;
+        return formatOption.resolve();
+    }
 
     @Option(
             names = {"-o", "--output"},

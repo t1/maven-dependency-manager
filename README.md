@@ -80,9 +80,11 @@ mdm check --recursive ./projects
 
 ```bash
 # JSON output
+mdm check pom.xml --json
 mdm check pom.xml --format json
 
 # Text output (default)
+mdm check pom.xml --text
 mdm check pom.xml --format text
 
 # Save to file

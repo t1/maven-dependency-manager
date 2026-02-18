@@ -86,7 +86,7 @@ public class UpdateCommand implements Runnable {
                         System.out.println("Updated: " + pom.path());
                     });
 
-            writeReport(reports, commonOptions.format, commonOptions.outputFile, commonOptions.showAll);
+            writeReport(reports, commonOptions.format(), commonOptions.outputFile, commonOptions.showAll);
         });
     }
 

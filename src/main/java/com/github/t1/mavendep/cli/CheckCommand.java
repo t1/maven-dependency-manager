@@ -35,7 +35,7 @@ public class CheckCommand implements Runnable {
 
             var reports = analyzer.run();
 
-            writeReport(reports, commonOptions.format, commonOptions.outputFile, commonOptions.showAll);
+            writeReport(reports, commonOptions.format(), commonOptions.outputFile, commonOptions.showAll);
         });
     }
 }

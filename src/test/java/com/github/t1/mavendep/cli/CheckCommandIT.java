@@ -281,6 +281,32 @@ class CheckCommandIT extends BaseCliIT {
     }
 
     @Test
+    void shouldAcceptJsonShortcutOption() throws IOException, InterruptedException {
+        var pomFile = createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.27.7")
+        ));
+
+        var output = runCli("check", pomFile.toString(), "--json");
+
+        then(output).contains("\"artifactId\" : \"assertj-core\"");
+    }
+
+    @Test
+    void shouldAcceptTextShortcutOption() throws IOException, InterruptedException {
+        var pomFile = createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.27.7")
+        ));
+
+        var output = runCli("check", pomFile.toString(), "--text");
+
+        then(output).contains("Maven Dependency Update Report");
+    }
+
+    @Test
     void shouldAnalyzeMultiModuleProject() throws IOException, InterruptedException {
         var parentDir = tempDir.resolve("parent");
         var moduleADir = parentDir.resolve("module-a");
