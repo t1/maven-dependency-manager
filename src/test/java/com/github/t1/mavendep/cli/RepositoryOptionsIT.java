@@ -78,7 +78,7 @@ class RepositoryOptionsIT extends BaseCliIT {
             preSeedCache(defaultLocalRepo(), "1.0.0");
             givenRemoteHasNewerVersion();
 
-            var output = runCli(tempDir, "check", "--cache-ttl", "0", "-f", "text", "--show-all");
+            var output = runCli(tempDir, "check", "--cache-ttl", "0", "--format", "text", "--show-all");
 
             then(output).contains("2.0.0");
         }
@@ -89,7 +89,7 @@ class RepositoryOptionsIT extends BaseCliIT {
             preSeedCache(defaultLocalRepo(), "1.0.0");
             givenRemoteHasNewerVersion();
 
-            var output = runCli(tempDir, "check", "--cache-ttl", "9999", "-f", "text", "--show-all");
+            var output = runCli(tempDir, "check", "--cache-ttl", "9999", "--format", "text", "--show-all");
 
             then(output).doesNotContain("2.0.0");
         }
@@ -103,7 +103,7 @@ class RepositoryOptionsIT extends BaseCliIT {
             preSeedCache(defaultLocalRepo(), "1.0.0");
             givenRemoteHasNewerVersion();
 
-            var output = runCli(tempDir, "check", "--force-cache-update", "-f", "text", "--show-all");
+            var output = runCli(tempDir, "check", "--force-cache-update", "--format", "text", "--show-all");
 
             then(output).contains("2.0.0");
         }
@@ -118,7 +118,7 @@ class RepositoryOptionsIT extends BaseCliIT {
             preSeedCache(customRepo, "1.0.0", "2.0.0");
 
             var output = runCli(tempDir, "check", "--local-repo", customRepo.toString(),
-                    "--cache-ttl", "9999", "-f", "text", "--show-all");
+                    "--cache-ttl", "9999", "--format", "text", "--show-all");
 
             then(output).contains("2.0.0");
         }
@@ -132,7 +132,7 @@ class RepositoryOptionsIT extends BaseCliIT {
             Files.createDirectories(emptyCustomRepo);
 
             var output = runCli(tempDir, "check", "--local-repo", emptyCustomRepo.toString(),
-                    "--cache-ttl", "9999", "-f", "text", "--show-all");
+                    "--cache-ttl", "9999", "--format", "text", "--show-all");
 
             then(output).doesNotContain("2.0.0");
         }

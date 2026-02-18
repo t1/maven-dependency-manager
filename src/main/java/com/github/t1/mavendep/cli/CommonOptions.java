@@ -23,7 +23,7 @@ class CommonOptions {
     private FormatOption formatOption;
 
     static class FormatOption {
-        @Option(names = {"-f", "--format"}, description = "Output format: text, json (default: text)")
+        @Option(names = {"--format"}, description = "Output format: text, json (default: text)")
         OutputFormat format;
 
         @Option(names = "--json", description = "Shortcut for --format=json")

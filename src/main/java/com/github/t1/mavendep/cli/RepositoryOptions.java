@@ -28,7 +28,7 @@ class RepositoryOptions {
     String localRepository;
 
     @Option(
-            names = {"--force-cache-update"},
+            names = {"-f", "--force-cache-update"},
             description = "Force refresh of all cached Maven metadata"
     )
     boolean forceCacheUpdate;

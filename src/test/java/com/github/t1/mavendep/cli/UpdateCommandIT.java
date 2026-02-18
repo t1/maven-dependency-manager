@@ -52,7 +52,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        var output = runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         then(output).contains("Updated: " + pomFile);
         then(contentOf(pomFile.toFile()))
@@ -87,7 +87,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("2.16.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         then(contentOf(pomFile.toFile()))
                 .contains("<jackson.version>2.16.0</jackson.version>")
@@ -102,7 +102,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("5.10.1")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         then(contentOf(pomFile.toFile()))
                 .contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -116,7 +116,7 @@ class UpdateCommandIT extends BaseCliIT {
         var originalContent = contentOf(pomFile.toFile());
         givenMavenRepoVersions("org.junit.jupiter", "junit-jupiter", List.of(Version.fromString("5.10.1")));
 
-        var output = runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        var output = runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         then(output).doesNotContain("Updated:");
         var unchangedContent = contentOf(pomFile.toFile());
@@ -131,7 +131,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli(tempDir, "update", "-f", "text");
+        var output = runCli(tempDir, "update", "--format", "text");
 
         then(output).contains("Updated:");
         then(contentOf(pomFile.toFile())).contains("<version>3.27.7</version>");
@@ -163,7 +163,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("5.11.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("5.11.0");
@@ -197,7 +197,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("2.13.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("2.13.0");
@@ -231,7 +231,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.13.0")
         ));
 
-        var output = runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        var output = runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         then(output).contains("Updated: " + pomFile);
         then(contentOf(pomFile.toFile()))
@@ -270,7 +270,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("2.13.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("2.13.0");
@@ -318,7 +318,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldOnlyApplyPatchUpdatesWithPatchFlag() throws IOException, InterruptedException {
         var pomFile = createPomWithPatchAndMinorUpdates();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--patch", "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--patch", "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.25.3</version>"); // patch update applied
@@ -367,7 +367,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.0.0") // major update
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--minor", "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--minor", "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.25.3</version>"); // patch update applied
@@ -415,7 +415,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldFilterByGroupIdAndArtifactId() throws IOException, InterruptedException {
         var pomFile = createPomWithTwoDependencies();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj:assertj-core", "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj:assertj-core", "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.27.7</version>");
@@ -426,7 +426,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldFilterByGroupId() throws IOException, InterruptedException {
         var pomFile = createPomWithTwoDependencies();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj", "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj", "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.27.7</version>");
@@ -437,7 +437,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldFilterByArtifactId() throws IOException, InterruptedException {
         var pomFile = createPomWithTwoDependencies();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--only", "assertj-core", "-f", "text"});
+        runCli(null, new String[]{"update", pomFile.toString(), "--only", "assertj-core", "--format", "text"});
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.27.7</version>");
@@ -453,7 +453,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        thenThrownBy(() -> runCli(null, true, new String[]{"update", pomFile.toString(), "--only", "nonexistent:artifact", "-f", "text"}))
+        thenThrownBy(() -> runCli(null, true, new String[]{"update", pomFile.toString(), "--only", "nonexistent:artifact", "--format", "text"}))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("exit code")
                 .hasMessageContaining("No dependencies match the filter")

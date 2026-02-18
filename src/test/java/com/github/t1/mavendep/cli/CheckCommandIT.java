@@ -54,7 +54,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli("check", pomFile.toString(), "-f", "text");
+        var output = runCli("check", pomFile.toString(), "--format", "text");
 
         then(output).contains("Maven Dependency Update Report");
         then(output).contains("assertj-core");
@@ -69,7 +69,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("5.10.1")
         ));
 
-        var output = runCli("check", pomFile.toString(), "-f", "json");
+        var output = runCli("check", pomFile.toString(), "--format", "json");
 
         then(output).contains("\"artifactId\" : \"junit-jupiter\"");
         then(output).contains("\"latestVersion\" : \"5.10.1\"");
@@ -103,7 +103,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("2.16.0")
         ));
 
-        var output = runCli("check", pomFile.toString(), "-f", "text");
+        var output = runCli("check", pomFile.toString(), "--format", "text");
 
         then(output).contains("jackson-databind");
         then(output).contains("2.16.0");
@@ -118,7 +118,7 @@ class CheckCommandIT extends BaseCliIT {
         ));
         var outputFile = tempDir.resolve("report.txt");
 
-        runCli("check", pomFile.toString(), "-f", "text", "-o", outputFile.toString());
+        runCli("check", pomFile.toString(), "--format", "text", "-o", outputFile.toString());
 
         then(contentOf(outputFile.toFile()))
                 .contains("Maven Dependency Update Report")
@@ -155,7 +155,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("5.1.0")
         ));
 
-        var output = runCli("check", pomFile.toString(), "-f", "text", "--show-all");
+        var output = runCli("check", pomFile.toString(), "--format", "text", "--show-all");
 
         then(output).contains("junit-jupiter");
         then(output).contains("mockito-core");
@@ -170,7 +170,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli("check", pomFile.toString(), "-f", "json");
+        var output = runCli("check", pomFile.toString(), "--format", "json");
 
         var json = readJson(output);
 
@@ -246,7 +246,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli(tempDir, "check", "-f", "text");
+        var output = runCli(tempDir, "check", "--format", "text");
 
         then(output).contains("Maven Dependency Update Report");
         then(output).contains("assertj-core");
@@ -260,7 +260,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli(tempDir, "-f", "text");
+        var output = runCli(tempDir, "--format", "text");
 
         then(output).contains("Maven Dependency Update Report");
         then(output).contains("assertj-core");
@@ -274,7 +274,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli(tempDir, "check", "--maven-central-url", fakeMavenRepo(), "-f", "text");
+        var output = runCli(tempDir, "check", "--maven-central-url", fakeMavenRepo(), "--format", "text");
 
         then(output).contains("Maven Dependency Update Report");
         then(output).contains("assertj-core");
@@ -375,7 +375,7 @@ class CheckCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli("check", parentPomFile.toString(), "-f", "text");
+        var output = runCli("check", parentPomFile.toString(), "--format", "text");
 
         then(output).contains("Maven Dependency Update Report");
         then(output).contains("module-a/pom.xml");
