@@ -18,6 +18,7 @@ import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
 
 @Command(
         name = "update",
+        aliases = "up",
         description = "Update Maven dependencies to their latest versions"
 )
 public class UpdateCommand implements Runnable {

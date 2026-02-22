@@ -124,7 +124,7 @@ mdm show-available assertj-core --pom other/pom.xml
 ### Updating Dependencies
 
 ```bash
-# Update current directory's pom.xml (default)
+# Update current directory's pom.xml (default) (alias: "up")
 mdm update
 
 # Update pom.xml files with latest versions

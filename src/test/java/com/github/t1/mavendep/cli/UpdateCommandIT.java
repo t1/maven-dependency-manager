@@ -52,7 +52,22 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        var output = runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        var output = runCli("update", pomFile.toString(), "--format", "text");
+
+        then(output).contains("Updated: " + pomFile);
+        then(contentOf(pomFile.toFile()))
+                .contains("<version>3.27.7</version>");
+    }
+
+    @Test
+    void shouldAcceptUpAlias() throws IOException, InterruptedException {
+        var pomFile = createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
+        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
+                Version.fromString("3.25.1"),
+                Version.fromString("3.27.7")
+        ));
+
+        var output = runCli("up", pomFile.toString(), "--format", "text");
 
         then(output).contains("Updated: " + pomFile);
         then(contentOf(pomFile.toFile()))
@@ -87,7 +102,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("2.16.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        runCli("update", pomFile.toString(), "--format", "text");
 
         then(contentOf(pomFile.toFile()))
                 .contains("<jackson.version>2.16.0</jackson.version>")
@@ -102,7 +117,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("5.10.1")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        runCli("update", pomFile.toString(), "--format", "text");
 
         then(contentOf(pomFile.toFile()))
                 .contains("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
@@ -116,7 +131,7 @@ class UpdateCommandIT extends BaseCliIT {
         var originalContent = contentOf(pomFile.toFile());
         givenMavenRepoVersions("org.junit.jupiter", "junit-jupiter", List.of(Version.fromString("5.10.1")));
 
-        var output = runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        var output = runCli("update", pomFile.toString(), "--format", "text");
 
         then(output).doesNotContain("Updated:");
         var unchangedContent = contentOf(pomFile.toFile());
@@ -163,7 +178,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("5.11.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        runCli("update", pomFile.toString(), "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("5.11.0");
@@ -197,7 +212,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("2.13.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        runCli("update", pomFile.toString(), "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("2.13.0");
@@ -214,7 +229,7 @@ class UpdateCommandIT extends BaseCliIT {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <build>
                         <plugins>
                             <plugin>
@@ -231,7 +246,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.13.0")
         ));
 
-        var output = runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        var output = runCli("update", pomFile.toString(), "--format", "text");
 
         then(output).contains("Updated: " + pomFile);
         then(contentOf(pomFile.toFile()))
@@ -270,7 +285,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("2.13.0")
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--format", "text"});
+        runCli("update", pomFile.toString(), "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("2.13.0");
@@ -288,7 +303,7 @@ class UpdateCommandIT extends BaseCliIT {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.assertj</groupId>
@@ -318,7 +333,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldOnlyApplyPatchUpdatesWithPatchFlag() throws IOException, InterruptedException {
         var pomFile = createPomWithPatchAndMinorUpdates();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--patch", "--format", "text"});
+        runCli("update", pomFile.toString(), "--patch", "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.25.3</version>"); // patch update applied
@@ -334,7 +349,7 @@ class UpdateCommandIT extends BaseCliIT {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.assertj</groupId>
@@ -367,7 +382,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.0.0") // major update
         ));
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--minor", "--format", "text"});
+        runCli("update", pomFile.toString(), "--minor", "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.25.3</version>"); // patch update applied
@@ -385,7 +400,7 @@ class UpdateCommandIT extends BaseCliIT {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.assertj</groupId>
@@ -415,7 +430,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldFilterByGroupIdAndArtifactId() throws IOException, InterruptedException {
         var pomFile = createPomWithTwoDependencies();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj:assertj-core", "--format", "text"});
+        runCli("update", pomFile.toString(), "--only", "org.assertj:assertj-core", "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.27.7</version>");
@@ -426,7 +441,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldFilterByGroupId() throws IOException, InterruptedException {
         var pomFile = createPomWithTwoDependencies();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--only", "org.assertj", "--format", "text"});
+        runCli("update", pomFile.toString(), "--only", "org.assertj", "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.27.7</version>");
@@ -437,7 +452,7 @@ class UpdateCommandIT extends BaseCliIT {
     void shouldFilterByArtifactId() throws IOException, InterruptedException {
         var pomFile = createPomWithTwoDependencies();
 
-        runCli(null, new String[]{"update", pomFile.toString(), "--only", "assertj-core", "--format", "text"});
+        runCli("update", pomFile.toString(), "--only", "assertj-core", "--format", "text");
 
         var content = contentOf(pomFile.toFile());
         then(content).contains("<version>3.27.7</version>");
@@ -453,7 +468,7 @@ class UpdateCommandIT extends BaseCliIT {
                 Version.fromString("3.27.7")
         ));
 
-        thenThrownBy(() -> runCli(null, true, new String[]{"update", pomFile.toString(), "--only", "nonexistent:artifact", "--format", "text"}))
+        thenThrownBy(() -> runCli(null, true, "update", pomFile.toString(), "--only", "nonexistent:artifact", "--format", "text"))
                 .isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("exit code")
                 .hasMessageContaining("No dependencies match the filter")
