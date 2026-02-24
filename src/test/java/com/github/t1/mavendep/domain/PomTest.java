@@ -865,6 +865,64 @@ class PomTest {
     }
 
     @Test
+    void shouldSkipNonUpdates() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.11.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+        var sameVersion = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.11.0"), test, null),
+                Version.fromString("5.11.0"),
+                List.of(),
+                none
+        );
+        var olderVersion = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.11.0"), test, null),
+                Version.fromString("5.10.0"),
+                List.of(),
+                none
+        );
+
+        var nullCurrentVersion = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", null, test, null),
+                Version.fromString("5.11.0"),
+                List.of(),
+                none
+        );
+        var nullLatestVersion = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.11.0"), test, null),
+                null,
+                List.of(),
+                none
+        );
+        var bothNull = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", null, test, null),
+                null,
+                List.of(),
+                none
+        );
+
+        pom.apply(Stream.of(sameVersion, olderVersion, nullCurrentVersion, nullLatestVersion, bothNull));
+
+        then(pom.isDirty()).isFalse();
+    }
+
+    @Test
     void shouldUpdateCorrectPropertyWhenMultiplePropertiesHaveSameVersion() throws IOException {
         var pomFile = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>
