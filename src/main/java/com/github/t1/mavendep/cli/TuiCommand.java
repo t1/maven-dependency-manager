@@ -31,7 +31,7 @@ public class TuiCommand implements Runnable {
         try {
             var repository = repositoryOptions.createMavenRepository();
             var goals = Arrays.asList(buildGoals.split("\\s+"));
-            var app = new DashboardApp(repository, commonOptions.pomFiles, goals);
+            var app = new DashboardApp(repository, commonOptions.pomFiles, goals, commonOptions.showAll);
             app.run();
         } catch (Exception e) {
             System.err.println("TUI error: " + e.getMessage());

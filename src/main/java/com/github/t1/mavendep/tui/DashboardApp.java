@@ -17,15 +17,18 @@ public class DashboardApp {
     private final MavenRepository repository;
     private final List<Path> pomFiles;
     private final List<String> buildGoals;
+    private final boolean showAll;
 
-    public DashboardApp(MavenRepository repository, List<Path> pomFiles, List<String> buildGoals) {
+    public DashboardApp(MavenRepository repository, List<Path> pomFiles, List<String> buildGoals, boolean showAll) {
         this.repository = repository;
         this.pomFiles = pomFiles;
         this.buildGoals = buildGoals;
+        this.showAll = showAll;
     }
 
     public void run() throws Exception {
         var model = new DashboardModel();
+        model.setShowAll(showAll);
         var view = new DashboardView(model);
 
         var backend = new BackTabBackendWrapper(BackendFactory.create());

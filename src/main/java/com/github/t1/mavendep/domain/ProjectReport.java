@@ -27,7 +27,7 @@ public record ProjectReport(
                 Stream.concat(
                                 dependencyUpdates.stream(),
                                 pluginUpdates.stream())
-                        .filter(DependencyUpdate::isUpdate));
+                        .filter(DependencyUpdate::canUpdate));
     }
 
     public boolean hasUpdates() {
@@ -44,6 +44,6 @@ public record ProjectReport(
     }
 
     public ProjectReport onlyUpdates() {
-        return filterUpdates(DependencyUpdate::isUpdate);
+        return filterUpdates(DependencyUpdate::canUpdate);
     }
 }

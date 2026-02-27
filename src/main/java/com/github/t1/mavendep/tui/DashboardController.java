@@ -62,6 +62,7 @@ public class DashboardController {
         if (key.isChar(' ')) {model.toggleSelection(); return true;}
         if (key.isChar('a')) {model.selectAll(); return true;}
         if (key.isChar('n')) {model.selectNone(); return true;}
+        if (key.isChar('s')) {model.toggleShowAll(); return true;}
         if (key.isChar('u')) {onUpdate.run(); return true;}
         if (key.isChar('b')) {onBuild.run(); return true;}
         if (key.isChar('r')) {onRescan.run(); return true;}

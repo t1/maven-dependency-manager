@@ -2,6 +2,7 @@ package com.github.t1.mavendep.tui.action;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
 import com.github.t1.mavendep.domain.MavenRepository;
+import com.github.t1.mavendep.report.Logger;
 import com.github.t1.mavendep.tui.DashboardModel;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.tui.TuiRunner;
@@ -30,6 +31,11 @@ public class ScanAction {
     }
 
     private void scan() {
+        Logger.withLogOutput(msg -> runner.runOnRenderThread(() -> model.addLogMessage(msg)))
+                .run(this::doScan);
+    }
+
+    private void doScan() {
         var analyzer = new DependencyAnalyzer(repository, pomFiles, (completed, total, artifact) ->
                 runner.runOnRenderThread(() -> model.updateScanProgress(completed, total, artifact)));
         var reports = analyzer.run();

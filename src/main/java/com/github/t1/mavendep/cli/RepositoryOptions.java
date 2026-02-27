@@ -23,7 +23,7 @@ class RepositoryOptions {
 
     @Option(
             names = {"--local-repo"},
-            description = "Local repository path (default: ~/.m2/repository)"
+            description = "Local repository path (default: ${maven.repo.local} or ~/.m2/repository)"
     )
     String localRepository;
 
@@ -36,7 +36,7 @@ class RepositoryOptions {
     MavenRepository createMavenRepository() {
         var localRepo = localRepository != null
                 ? Path.of(localRepository)
-                : Path.of(System.getProperty("user.home"), ".m2", "repository");
+                : MavenRepository.defaultLocalRepository();
 
         var ttl = cacheTtlHours != null
                 ? Duration.ofHours(cacheTtlHours)

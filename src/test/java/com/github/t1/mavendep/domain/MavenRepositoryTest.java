@@ -175,6 +175,21 @@ class MavenRepositoryTest {
     }
 
     @Test
+    void shouldUseSystemPropertyForLocalRepo() {
+        var customPath = tempDir.resolve("custom-repo");
+        System.setProperty("maven.repo.local", customPath.toString());
+        try {
+            var repository = new MavenRepository();
+
+            var path = repository.metadataFilePath("org.example", "test");
+
+            then(path.toString()).startsWith(customPath.toString());
+        } finally {
+            System.clearProperty("maven.repo.local");
+        }
+    }
+
+    @Test
     void shouldReturnEmptyListForMalformedXml() {
         writeCache("org.example", "malformed", "not xml at all <");
         var repository = new MavenRepository(tempDir);

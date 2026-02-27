@@ -64,7 +64,8 @@ class TuiDashboardIT {
 
         tui.awaitText("Maven Dependency Manager", ofSeconds(10));
         tui.awaitText("Dependencies", ofSeconds(2));
-        tui.awaitText("[q]uit", ofSeconds(5));
+        tui.awaitText("[s]how all", ofSeconds(5));
+        tui.awaitText("[q]uit", ofSeconds(2));
     }
 
     @Test void scanCompletesAndShowsDependencies() {
@@ -103,7 +104,8 @@ class TuiDashboardIT {
         tui.awaitText("selected", ofSeconds(10));
         tui.awaitText("assertj-core", ofSeconds(2));
         tui.awaitText("3.27.7", ofSeconds(2));
-        // junit-jupiter shows up but with update type "none"
+        // junit-jupiter has update type "none" and is hidden by default
+        tui.type("s"); // toggle show-all
         tui.awaitText("junit-jupiter", ofSeconds(2));
         tui.awaitText("none", ofSeconds(2));
     }

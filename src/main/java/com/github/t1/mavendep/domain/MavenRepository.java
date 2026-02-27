@@ -28,7 +28,6 @@ import static java.util.Collections.sort;
 ///
 /// Implements local caching with configurable TTL to minimize network requests.
 public class MavenRepository {
-    private static final Path LOCAL_REPOSITORY = Path.of(System.getProperty("user.home"), ".m2", "repository");
     private static final String DEFAULT_MAVEN_CENTRAL_URL = "https://repo1.maven.org/maven2";
     private static final Duration DEFAULT_TTL = Duration.ofHours(24);
 
@@ -39,7 +38,12 @@ public class MavenRepository {
     private final boolean forceCacheUpdate;
 
     public MavenRepository() {
-        this(LOCAL_REPOSITORY);
+        this(defaultLocalRepository());
+    }
+
+    public static Path defaultLocalRepository() {
+        return Path.of(System.getProperty("maven.repo.local",
+                System.getProperty("user.home") + "/.m2/repository"));
     }
 
     public MavenRepository(Path localRepositoryDir) {

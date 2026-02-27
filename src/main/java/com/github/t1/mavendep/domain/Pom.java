@@ -298,7 +298,7 @@ public class Pom {
 
     public boolean isDirty() {return dirty;}
 
-    public void apply(Stream<DependencyUpdate> updates) {updates.filter(DependencyUpdate::isUpdate).forEach(new Updater()::apply);}
+    public void apply(Stream<DependencyUpdate> updates) {updates.filter(DependencyUpdate::canUpdate).forEach(new Updater()::apply);}
 
     public void writeToDisk() {
         try {
