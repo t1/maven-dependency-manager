@@ -28,7 +28,7 @@ public record DependencyUpdate(
 
     public String versionProperty() {return dependency.versionProperty();}
 
-    public boolean canUpdate() {
+    public boolean isUpdatable() {
         return currentVersion() != null && latestVersion() != null && latestVersion().compareTo(currentVersion()) > 0;
     }
 }

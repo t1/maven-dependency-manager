@@ -96,7 +96,7 @@ public class DashboardView {
                 .constraints(Constraint.fill(), Constraint.length(logHeight))
                 .split(area);
 
-        dependencyTablePanel.render(frame, split.get(0), model);
+        dependencyTablePanel.render(frame, split.getFirst(), model);
 
         var text = String.join("\n", messages);
         var visibleLines = Math.max(1, logHeight - 2);

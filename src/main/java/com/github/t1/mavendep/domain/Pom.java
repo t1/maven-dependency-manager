@@ -22,7 +22,7 @@ import java.util.stream.Stream;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
-import static com.github.t1.mavendep.report.Logger.log;
+import static com.github.t1.mavendep.domain.Logger.log;
 import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
 import static java.util.regex.Pattern.DOTALL;
@@ -67,10 +67,10 @@ public class Pom {
             String content = readString(pomPath);
             return Optional.of(parse(pomPath, content));
         } catch (IOException e) {
-            log("Warning: can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
+            log().log("Warning: can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
             return Optional.empty();
         } catch (PomParsingException e) {
-            log("Warning: Can't parse POM file: " + pomPath + ": " + e.getMessage(), e);
+            log().log("Warning: Can't parse POM file: " + pomPath + ": " + e.getMessage(), e);
             return Optional.empty();
         }
     }
@@ -220,13 +220,13 @@ public class Pom {
             }
 
             if (groupId == null && type == plugin) {
-                log("Warning: missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
+                log().log("Warning: missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
                 groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
 
             var dependency = new Dependency(type, groupId, artifactId, version, scope, versionProperty);
-            if (groupId == null) log("Warning: missing groupId in " + dependency);
-            if (artifactId == null) log("Warning: missing artifactId in " + dependency);
+            if (groupId == null) log().log("Warning: missing groupId in " + dependency);
+            if (artifactId == null) log().log("Warning: missing artifactId in " + dependency);
             return dependency;
         }
 
@@ -298,7 +298,7 @@ public class Pom {
 
     public boolean isDirty() {return dirty;}
 
-    public void apply(Stream<DependencyUpdate> updates) {updates.filter(DependencyUpdate::canUpdate).forEach(new Updater()::apply);}
+    public void apply(Stream<DependencyUpdate> updates) {updates.filter(DependencyUpdate::isUpdatable).forEach(new Updater()::apply);}
 
     public void writeToDisk() {
         try {

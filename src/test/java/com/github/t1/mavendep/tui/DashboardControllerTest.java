@@ -151,7 +151,7 @@ class DashboardControllerTest {
     }
 
     @Test void shouldNotRedrawOnTickWhenClean() {
-        model.clearDirty(); // setUp sets reports which marks dirty
+        model.clearNeedsRedraw(); // setUp sets reports which marks dirty
         var result = controller.handle(new TickEvent(0, java.time.Duration.ZERO), runner);
         then(result).isFalse();
     }
@@ -176,6 +176,6 @@ class DashboardControllerTest {
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
-        model.clearDirty();
+        model.clearNeedsRedraw();
     }
 }

@@ -4,7 +4,7 @@ import com.github.t1.mavendep.domain.DependencyAnalyzer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
-import static com.github.t1.mavendep.report.Logger.withVerbose;
+import static com.github.t1.mavendep.domain.Logger.with;
 import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
 
 @Command(
@@ -29,7 +29,7 @@ public class CheckCommand implements Runnable {
 
     @Override
     public void run() {
-        withVerbose(commonOptions.verbose).run(() -> {
+        with(commonOptions.logger()).run(() -> {
             var mavenRepository = repositoryOptions.createMavenRepository();
             var analyzer = new DependencyAnalyzer(mavenRepository, commonOptions.pomFiles);
 

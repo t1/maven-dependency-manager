@@ -15,7 +15,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.t1.mavendep.report.Logger.log;
+import static com.github.t1.mavendep.domain.Logger.log;
 import static java.net.http.HttpResponse.BodyHandlers;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.exists;
@@ -37,9 +37,7 @@ public class MavenRepository {
     private final String mavenCentralUrl;
     private final boolean forceCacheUpdate;
 
-    public MavenRepository() {
-        this(defaultLocalRepository());
-    }
+    public MavenRepository() {this(defaultLocalRepository());}
 
     public static Path defaultLocalRepository() {
         return Path.of(System.getProperty("maven.repo.local",
@@ -85,7 +83,7 @@ public class MavenRepository {
 
             return parseMetadata(metadata);
         } catch (Exception e) {
-            log("Failed to get available versions for " + groupId + ":" + artifactId + ", assuming none available: " + e.getMessage(), e);
+            log().log("Failed to get available versions for " + groupId + ":" + artifactId + ", assuming none available: " + e.getMessage(), e);
             return List.of();
         }
     }
@@ -112,7 +110,7 @@ public class MavenRepository {
 
     private String fetchMetadata(String groupId, String artifactId) throws IOException, InterruptedException {
         var uri = metadataUri(groupId, artifactId);
-        log("Fetching metadata for " + groupId + ":" + artifactId + " from " + uri.getAuthority());
+        log().log("Fetching metadata for " + groupId + ":" + artifactId + " from " + uri.getAuthority());
         var request = HttpRequest.newBuilder()
                 .uri(uri)
                 .GET()

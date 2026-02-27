@@ -38,22 +38,24 @@ public class DashboardModel {
     private final List<String> buildOutputLines = new ArrayList<>();
     private Integer buildExitCode;
 
-    private boolean dirty;
+    private boolean needsRedraw;
 
     private boolean showAll;
 
     private boolean versionPickerOpen;
     private int versionPickerCursor;
 
-    // --- Dirty flag ---
+    // --- needs redraw flag ---
 
-    /// Returns true if the model has been modified since the last [#clearDirty] call.
+    /// Returns true if the model has been modified since the last [#clearNeedsRedraw] call.
     /// Used by the controller to trigger redraws for background state changes
     /// that arrive via [dev.tamboui.tui.TuiRunner#runOnRenderThread],
     /// which executes the update but does not trigger a redraw on its own.
-    public boolean isDirty() {return dirty;}
+    public boolean needsRedraw() {return needsRedraw;}
 
-    public void clearDirty() {dirty = false;}
+    private void setNeedsRedraw() {needsRedraw = true;}
+
+    public void clearNeedsRedraw() {needsRedraw = false;}
 
     // --- Show all ---
 
@@ -67,7 +69,10 @@ public class DashboardModel {
 
     public Phase phase() {return phase;}
 
-    public void setPhase(Phase phase) {this.phase = phase; dirty = true;}
+    public void setPhase(Phase phase) {
+        this.phase = phase;
+        setNeedsRedraw();
+    }
 
     // --- Tab ---
 
@@ -94,7 +99,7 @@ public class DashboardModel {
         cursor = 0;
         selectedKeys.clear();
         customVersions.clear();
-        dirty = true;
+        setNeedsRedraw();
     }
 
     /// Returns the flat list of dependency updates for the active tab.
@@ -131,15 +136,15 @@ public class DashboardModel {
     // --- Selection ---
 
     public boolean isSelected(DependencyUpdate update) {
-        return selectedKeys.contains(key(update));
+        return selectedKeys.contains(selectionKey(update));
     }
 
     public void toggleSelection() {
         var updates = activeUpdates();
         if (cursor < 0 || cursor >= updates.size()) return;
         var update = updates.get(cursor);
-        if (!update.canUpdate()) return;
-        var k = key(update);
+        if (!update.isUpdatable()) return;
+        var k = selectionKey(update);
         if (!selectedKeys.remove(k)) selectedKeys.add(k);
     }
 
@@ -149,7 +154,7 @@ public class DashboardModel {
     }
 
     private Stream<DependencyUpdate> selectableUpdates() {
-        return activeUpdates().stream().filter(DependencyUpdate::canUpdate);
+        return activeUpdates().stream().filter(DependencyUpdate::isUpdatable);
     }
 
     private boolean allSelected() {
@@ -157,11 +162,11 @@ public class DashboardModel {
     }
 
     public void selectAll() {
-        selectableUpdates().forEach(u -> selectedKeys.add(key(u)));
+        selectableUpdates().forEach(u -> selectedKeys.add(selectionKey(u)));
     }
 
     public void selectNone() {
-        activeUpdates().forEach(u -> selectedKeys.remove(key(u)));
+        activeUpdates().forEach(u -> selectedKeys.remove(selectionKey(u)));
     }
 
     public long selectedCount() {
@@ -174,19 +179,17 @@ public class DashboardModel {
                 .flatMap(r -> Stream.concat(
                         r.dependencyUpdates().stream(),
                         r.pluginUpdates().stream()))
-                .filter(DependencyUpdate::canUpdate)
+                .filter(DependencyUpdate::isUpdatable)
                 .filter(this::isSelected)
                 .map(this::applyCustomVersion);
     }
 
     private DependencyUpdate applyCustomVersion(DependencyUpdate update) {
-        var custom = customVersions.get(key(update));
+        var custom = customVersions.get(selectionKey(update));
         return (custom != null) ? custom : update;
     }
 
-    private static String key(DependencyUpdate u) {
-        return u.groupId() + ":" + u.artifactId();
-    }
+    private static String selectionKey(DependencyUpdate u) {return u.groupId() + ":" + u.artifactId();}
 
     // --- Custom version (version picker) ---
 
@@ -197,7 +200,7 @@ public class DashboardModel {
                 targetVersion,
                 original.availableVersions(),
                 newUpdateType);
-        customVersions.put(key(original), custom);
+        customVersions.put(selectionKey(original), custom);
     }
 
     public DependencyUpdate effectiveUpdate(DependencyUpdate update) {
@@ -216,7 +219,7 @@ public class DashboardModel {
         this.scanCompleted = completed;
         this.scanTotal = total;
         this.scanCurrentArtifact = artifactName;
-        dirty = true;
+        setNeedsRedraw();
     }
 
     // --- Log messages ---
@@ -225,7 +228,7 @@ public class DashboardModel {
 
     public void addLogMessage(String message) {
         logMessages.add(message);
-        dirty = true;
+        setNeedsRedraw();
     }
 
     // --- Build output ---
@@ -236,12 +239,12 @@ public class DashboardModel {
 
     public void addBuildOutputLine(String line) {
         buildOutputLines.add(line);
-        dirty = true;
+        setNeedsRedraw();
     }
 
     public void setBuildExitCode(int exitCode) {
         this.buildExitCode = exitCode;
-        dirty = true;
+        setNeedsRedraw();
     }
 
     public void clearBuildOutput() {

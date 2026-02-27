@@ -13,7 +13,7 @@ import picocli.CommandLine.Option;
 
 import java.util.List;
 
-import static com.github.t1.mavendep.report.Logger.withVerbose;
+import static com.github.t1.mavendep.domain.Logger.with;
 import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
 
 @Command(
@@ -64,7 +64,7 @@ public class UpdateCommand implements Runnable {
 
     @Override
     public void run() {
-        withVerbose(commonOptions.verbose).run(() -> {
+        with(commonOptions.logger()).run(() -> {
             var analyzer = new DependencyAnalyzer(repository, commonOptions.pomFiles);
 
             var reports = analyzer.run();

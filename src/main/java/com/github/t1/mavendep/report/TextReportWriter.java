@@ -55,7 +55,7 @@ public class TextReportWriter implements ReportWriter {
             printReportWithUpdates(updates);
         }
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
         printSummaryText(summary, "  Summary: ");
         out.println();
     }
@@ -110,7 +110,7 @@ public class TextReportWriter implements ReportWriter {
     }
 
     private void printTotalSummary() {
-        var totalSummary = DependencySummary.from(reports);
+        var totalSummary = DependencySummary.summarize(reports);
         if (totalSummary.totalDependencies() > 0) {
             out.println("=".repeat(120));
             printSummaryText(totalSummary, "  Total Summary: ");

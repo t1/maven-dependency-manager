@@ -102,6 +102,7 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
         return textBuffer.getScreenLines().contains(text);
     }
 
+    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
     @Override public void awaitText(String text, Duration timeout) {
         var deadline = System.currentTimeMillis() + timeout.toMillis();
         while (System.currentTimeMillis() < deadline) {

@@ -176,33 +176,33 @@ class DashboardModelTest {
     }
 
     @Test void shouldBeDirtyAfterSetPhase() {
-        model.clearDirty();
+        model.clearNeedsRedraw();
         model.setPhase(Phase.SCANNING);
-        then(model.isDirty()).isTrue();
+        then(model.needsRedraw()).isTrue();
     }
 
     @Test void shouldBeDirtyAfterSetReports() {
-        model.clearDirty();
+        model.clearNeedsRedraw();
         setReportsWithTwoDependencyUpdates();
-        then(model.isDirty()).isTrue();
+        then(model.needsRedraw()).isTrue();
     }
 
     @Test void shouldBeDirtyAfterScanProgress() {
-        model.clearDirty();
+        model.clearNeedsRedraw();
         model.updateScanProgress(1, 5, "org:lib");
-        then(model.isDirty()).isTrue();
+        then(model.needsRedraw()).isTrue();
     }
 
     @Test void shouldBeDirtyAfterBuildOutput() {
-        model.clearDirty();
+        model.clearNeedsRedraw();
         model.addBuildOutputLine("line");
-        then(model.isDirty()).isTrue();
+        then(model.needsRedraw()).isTrue();
     }
 
-    @Test void shouldClearDirty() {
+    @Test void shouldClearNeedsRedraw() {
         model.setPhase(Phase.SCANNING);
-        model.clearDirty();
-        then(model.isDirty()).isFalse();
+        model.clearNeedsRedraw();
+        then(model.needsRedraw()).isFalse();
     }
 
     @Test void shouldCollectLogMessages() {
@@ -213,9 +213,9 @@ class DashboardModelTest {
     }
 
     @Test void shouldBeDirtyAfterLogMessage() {
-        model.clearDirty();
+        model.clearNeedsRedraw();
         model.addLogMessage("msg");
-        then(model.isDirty()).isTrue();
+        then(model.needsRedraw()).isTrue();
     }
 
     @Test void shouldNotToggleSelectNoneUpdate() {

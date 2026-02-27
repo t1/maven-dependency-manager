@@ -3,11 +3,10 @@ package com.github.t1.mavendep.domain;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.github.t1.mavendep.domain.Logger.with;
 import static java.util.Collections.sort;
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -170,35 +169,29 @@ class VersionTest {
         @Test
         void shouldIncludeContextInUnknownQualifierWarning() {
             var version = Version.fromString("1.0.0-unknownQualifier");
-            var stderr = new ByteArrayOutputStream();
-            var originalErr = System.err;
-            System.setErr(new PrintStream(stderr));
-            try {
+            var messages = new ArrayList<String>();
 
+            with(collectingLogger(messages)).run(() -> {
                 var released = version.isReleased("com.example:my-artifact");
 
                 then(released).isFalse();
-                then(stderr.toString()).contains("com.example:my-artifact");
-            } finally {
-                System.setErr(originalErr);
-            }
+            });
+
+            then(messages).anyMatch(msg -> msg.contains("com.example:my-artifact"));
         }
 
         @Test
         void shouldHandleNullContext() {
             var version = Version.fromString("1.0.0-unknownQualifier");
-            var stderr = new ByteArrayOutputStream();
-            var originalErr = System.err;
-            System.setErr(new PrintStream(stderr));
-            try {
+            var messages = new ArrayList<String>();
 
+            with(collectingLogger(messages)).run(() -> {
                 var released = version.isReleased(null);
 
                 then(released).isFalse();
-                then(stderr.toString()).doesNotContain("[");
-            } finally {
-                System.setErr(originalErr);
-            }
+            });
+
+            then(messages).noneMatch(msg -> msg.contains("["));
         }
     }
 
@@ -427,5 +420,13 @@ class VersionTest {
 
             then(UpdateType.between(current, same)).isEqualTo(UpdateType.none);
         }
+    }
+
+    private static Logger collectingLogger(List<String> messages) {
+        return new Logger() {
+            @Override public void log(String message) {messages.add(message);}
+
+            @Override public void log(String message, Exception e) {log(message);}
+        };
     }
 }

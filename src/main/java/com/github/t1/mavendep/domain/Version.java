@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiPredicate;
 
-import static com.github.t1.mavendep.report.Logger.log;
+import static com.github.t1.mavendep.domain.Logger.log;
 
 /// Parses version strings by splitting on `.`, `-`, and transitions between digits and non-digits.
 /// Leading numeric segments (separated by `.` or `-`) form the version number (major, minor, patch).
@@ -192,7 +192,7 @@ public final class Version implements Comparable<Version> {
         }
 
         private void logUnknownQualifier(String qualifier) {
-            log("Warning: unknown version qualifier '" + qualifier + "' in " + Version.this +
+            log().log("Warning: unknown version qualifier '" + qualifier + "' in " + Version.this +
                 ((context == null) ? "" : " [" + context + "]") +
                 "; assuming pre-release");
         }

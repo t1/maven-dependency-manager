@@ -22,8 +22,8 @@ public record DependencySummary(
     ///
     /// @param report Project report to summarize
     /// @return Summary statistics
-    public static DependencySummary from(ProjectReport report) {
-        return from(List.of(report));
+    public static DependencySummary summarize(ProjectReport report) {
+        return summarize(List.of(report));
     }
 
     /// Calculates summary statistics from a list of project reports.
@@ -37,7 +37,7 @@ public record DependencySummary(
     ///
     /// @param reports List of project reports to summarize
     /// @return Summary statistics
-    public static DependencySummary from(List<ProjectReport> reports) {
+    public static DependencySummary summarize(List<ProjectReport> reports) {
         var totalDependencies = 0;
         var outdatedDependencies = 0;
         var majorUpdates = 0;
@@ -48,7 +48,7 @@ public record DependencySummary(
             totalDependencies += report.totalDependencies();
             var allUpdates = getAllUpdates(report);
             for (var update : allUpdates) {
-                if (update.canUpdate()) {
+                if (update.isUpdatable()) {
                     outdatedDependencies++;
                     switch (update.updateType()) {
                         case major -> majorUpdates++;

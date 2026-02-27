@@ -30,7 +30,7 @@ class DependencySummaryTest {
                 List.of(),
                 5);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.totalDependencies()).isEqualTo(5);
         then(summary.outdatedDependencies()).isEqualTo(2);
@@ -50,7 +50,7 @@ class DependencySummaryTest {
                 List.of(),
                 3);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.totalDependencies()).isEqualTo(3);
         then(summary.outdatedDependencies()).isEqualTo(2);
@@ -65,7 +65,7 @@ class DependencySummaryTest {
         var dependencyUpdate = createUpdate("com.example", "lib", "1.0.0", "1.0.1", patch);
         var report = new ProjectReport(pom, Optional.empty(), List.of(dependencyUpdate), List.of(pluginUpdate), 4);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.totalDependencies()).isEqualTo(4);
         then(summary.outdatedDependencies()).isEqualTo(2);
@@ -83,7 +83,7 @@ class DependencySummaryTest {
                 List.of(),
                 3);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.totalDependencies()).isEqualTo(3);
         then(summary.outdatedDependencies()).isEqualTo(0);
@@ -102,7 +102,7 @@ class DependencySummaryTest {
                 List.of(),
                 5);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.outdatedDependencies()).isEqualTo(0);
         then(summary.majorUpdates()).isEqualTo(0);
@@ -128,7 +128,7 @@ class DependencySummaryTest {
                 List.of(),
                 3);
 
-        var summary = DependencySummary.from(List.of(report1, report2));
+        var summary = DependencySummary.summarize(List.of(report1, report2));
 
         then(summary.totalDependencies()).isEqualTo(8);
         then(summary.outdatedDependencies()).isEqualTo(3);
@@ -156,7 +156,7 @@ class DependencySummaryTest {
                 List.of(),
                 6);
 
-        var summary = DependencySummary.from(List.of(report1, report2));
+        var summary = DependencySummary.summarize(List.of(report1, report2));
 
         then(summary.totalDependencies()).isEqualTo(10);
         then(summary.outdatedDependencies()).isEqualTo(4);
@@ -167,7 +167,7 @@ class DependencySummaryTest {
 
     @Test
     void shouldCalculateSummary_whenEmptyReportList() {
-        var summary = DependencySummary.from(List.of());
+        var summary = DependencySummary.summarize(List.of());
 
         then(summary.totalDependencies()).isEqualTo(0);
         then(summary.outdatedDependencies()).isEqualTo(0);
@@ -187,7 +187,7 @@ class DependencySummaryTest {
                 List.of(),
                 5);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.outdatedDependencies()).isEqualTo(2);
         then(summary.majorUpdates()).isEqualTo(0);
@@ -205,7 +205,7 @@ class DependencySummaryTest {
                 List.of(),
                 2);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.outdatedDependencies()).isEqualTo(0);
     }
@@ -220,7 +220,7 @@ class DependencySummaryTest {
                 List.of(),
                 2);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.outdatedDependencies()).isEqualTo(0);
     }
@@ -237,7 +237,7 @@ class DependencySummaryTest {
                 List.of(),
                 10);
 
-        var summary = DependencySummary.from(report);
+        var summary = DependencySummary.summarize(report);
 
         then(summary.outdatedDependencies()).isEqualTo(3);
         then(summary.majorUpdates()).isEqualTo(1);

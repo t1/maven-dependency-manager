@@ -35,7 +35,7 @@ public class JsonReportWriter implements ReportWriter {
         }
         root.set("projects", projectsArray);
 
-        var summary = DependencySummary.from(reports);
+        var summary = DependencySummary.summarize(reports);
         root.set("summary", buildSummaryNode(summary));
 
         try {

@@ -1,10 +1,13 @@
 package com.github.t1.mavendep.cli;
 
+import com.github.t1.mavendep.domain.Logger;
 import com.github.t1.mavendep.domain.OutputFormat;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -61,4 +64,19 @@ class CommonOptions {
             description = "Print stack traces for exceptions"
     )
     boolean verbose;
+
+    Logger logger() {
+        return new Logger() {
+            @Override public void log(String message) {System.err.println(message);}
+
+            @Override public void log(String message, Exception e) {
+                log(message);
+                if (verbose) {
+                    var sw = new StringWriter();
+                    e.printStackTrace(new PrintWriter(sw));
+                    System.err.println(sw);
+                }
+            }
+        };
+    }
 }

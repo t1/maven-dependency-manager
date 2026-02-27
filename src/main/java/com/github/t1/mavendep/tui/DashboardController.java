@@ -28,8 +28,8 @@ public class DashboardController {
         // Background state changes (via TuiRunner.runOnRenderThread) update the model
         // but don't trigger a redraw, so we pick them up on the next tick.
         if (event instanceof TickEvent) {
-            if (model.isDirty()) {
-                model.clearDirty();
+            if (model.needsRedraw()) {
+                model.clearNeedsRedraw();
                 return true;
             }
             return false;
@@ -50,22 +50,64 @@ public class DashboardController {
     }
 
     private boolean handleMain(KeyEvent key) {
-        if (key.isUp()) {model.cursorUp(); return true;}
-        if (key.isDown()) {model.cursorDown(); return true;}
-        if (key.isHome()) {model.cursorHome(); return true;}
-        if (key.isEnd()) {model.cursorEnd(); return true;}
+        if (key.isUp()) {
+            model.cursorUp();
+            return true;
+        }
+        if (key.isDown()) {
+            model.cursorDown();
+            return true;
+        }
+        if (key.isHome()) {
+            model.cursorHome();
+            return true;
+        }
+        if (key.isEnd()) {
+            model.cursorEnd();
+            return true;
+        }
 
-        if (key.isFocusPrevious() || isBackTab(key) || key.isChar('[')) {model.previousTab(); return true;}
-        if (key.isFocusNext() || key.isChar(']')) {model.nextTab(); return true;}
+        if (key.isFocusPrevious() || isBackTab(key) || key.isChar('[')) {
+            model.previousTab();
+            return true;
+        }
+        if (key.isFocusNext() || key.isChar(']')) {
+            model.nextTab();
+            return true;
+        }
 
-        if (key.isKey(dev.tamboui.tui.event.KeyCode.ENTER)) {model.openVersionPicker(); return true;}
-        if (key.isChar(' ')) {model.toggleSelection(); return true;}
-        if (key.isChar('a')) {model.toggleSelectAll(); return true;}
-        if (key.isChar('n')) {model.selectNone(); return true;}
-        if (key.isChar('s')) {model.toggleShowAll(); return true;}
-        if (key.isChar('u')) {onUpdate.run(); return true;}
-        if (key.isChar('b')) {onBuild.run(); return true;}
-        if (key.isChar('r')) {onRescan.run(); return true;}
+        if (key.isKey(dev.tamboui.tui.event.KeyCode.ENTER)) {
+            model.openVersionPicker();
+            return true;
+        }
+        if (key.isChar(' ')) {
+            model.toggleSelection();
+            return true;
+        }
+        if (key.isChar('a')) {
+            model.toggleSelectAll();
+            return true;
+        }
+        if (key.isChar('n')) {
+            model.selectNone();
+            return true;
+        }
+        if (key.isChar('s')) {
+            model.toggleShowAll();
+            return true;
+        }
+        if (key.isChar('u')) {
+            onUpdate.run();
+            return true;
+        }
+        if (key.isChar('b')) {
+            onBuild.run();
+            return true;
+        }
+        if (key.isChar('r')) {
+            onRescan.run();
+            return true;
+        }
 
         return false;
     }
@@ -79,10 +121,22 @@ public class DashboardController {
     }
 
     private boolean handleVersionPicker(KeyEvent key) {
-        if (key.isUp()) {model.versionPickerUp(); return true;}
-        if (key.isDown()) {model.versionPickerDown(); return true;}
-        if (key.isConfirm()) {model.confirmVersionPick(); return true;}
-        if (key.isCancel()) {model.closeVersionPicker(); return true;}
+        if (key.isUp()) {
+            model.versionPickerUp();
+            return true;
+        }
+        if (key.isDown()) {
+            model.versionPickerDown();
+            return true;
+        }
+        if (key.isConfirm()) {
+            model.confirmVersionPick();
+            return true;
+        }
+        if (key.isCancel()) {
+            model.closeVersionPicker();
+            return true;
+        }
         return false;
     }
 }
