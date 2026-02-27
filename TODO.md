@@ -1,4 +1,3 @@
-* pressing `a` a second time on the dependencies tab should deselect all
 * it shouldn't be possible to check updates that have type = none
 * get smarter about the menu:
     * right-align

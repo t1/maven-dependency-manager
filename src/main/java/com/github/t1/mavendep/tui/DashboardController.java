@@ -60,7 +60,7 @@ public class DashboardController {
 
         if (key.isKey(dev.tamboui.tui.event.KeyCode.ENTER)) {model.openVersionPicker(); return true;}
         if (key.isChar(' ')) {model.toggleSelection(); return true;}
-        if (key.isChar('a')) {model.selectAll(); return true;}
+        if (key.isChar('a')) {model.toggleSelectAll(); return true;}
         if (key.isChar('n')) {model.selectNone(); return true;}
         if (key.isChar('s')) {model.toggleShowAll(); return true;}
         if (key.isChar('u')) {onUpdate.run(); return true;}

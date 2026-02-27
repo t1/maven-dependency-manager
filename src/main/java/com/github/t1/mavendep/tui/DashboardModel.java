@@ -141,6 +141,15 @@ public class DashboardModel {
         if (!selectedKeys.remove(k)) selectedKeys.add(k);
     }
 
+    public void toggleSelectAll() {
+        if (allSelected()) selectNone();
+        else selectAll();
+    }
+
+    private boolean allSelected() {
+        return activeUpdates().stream().allMatch(this::isSelected);
+    }
+
     public void selectAll() {
         activeUpdates().forEach(u -> selectedKeys.add(key(u)));
     }

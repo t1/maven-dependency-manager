@@ -73,6 +73,12 @@ class DashboardControllerTest {
         then(model.selectedCount()).isEqualTo(2);
     }
 
+    @Test void shouldDeselectAllWhenAllSelected() {
+        model.selectAll();
+        controller.handle(KeyEvent.ofChar('a'), runner);
+        then(model.selectedCount()).isEqualTo(0);
+    }
+
     @Test void shouldSelectNone() {
         model.selectAll();
         controller.handle(KeyEvent.ofChar('n'), runner);

@@ -82,8 +82,16 @@ class DashboardModelTest {
     @Test void shouldSelectAll() {
         setReportsWithTwoDependencyUpdates();
 
-        model.selectAll();
+        model.toggleSelectAll();
         then(model.selectedCount()).isEqualTo(2);
+    }
+
+    @Test void shouldDeselectAllWhenAllSelected() {
+        setReportsWithTwoDependencyUpdates();
+        model.selectAll();
+
+        model.toggleSelectAll();
+        then(model.selectedCount()).isEqualTo(0);
     }
 
     @Test void shouldSelectNone() {
