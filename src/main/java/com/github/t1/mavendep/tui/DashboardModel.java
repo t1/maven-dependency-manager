@@ -19,7 +19,7 @@ public class DashboardModel {
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
-    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, LOG}
+    public enum Tab {DEPENDENCIES, PLUGINS, BUILD}
 
     private Phase phase = Phase.SCANNING;
     private Tab activeTab = Tab.DEPENDENCIES;
@@ -103,7 +103,7 @@ public class DashboardModel {
                 .flatMap(r -> switch (activeTab) {
                     case DEPENDENCIES -> r.dependencyUpdates().stream();
                     case PLUGINS -> r.pluginUpdates().stream();
-                    case BUILD, LOG -> Stream.of();
+                    case BUILD -> Stream.of();
                 });
         if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none);
         return stream.toList();

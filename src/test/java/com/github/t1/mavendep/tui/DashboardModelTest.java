@@ -37,9 +37,6 @@ class DashboardModelTest {
         then(model.activeTab()).isEqualTo(Tab.BUILD);
 
         model.nextTab();
-        then(model.activeTab()).isEqualTo(Tab.LOG);
-
-        model.nextTab();
         then(model.activeTab()).isEqualTo(Tab.DEPENDENCIES);
     }
 
@@ -160,9 +157,6 @@ class DashboardModelTest {
     }
 
     @Test void shouldCycleTabsBackward() {
-        model.previousTab();
-        then(model.activeTab()).isEqualTo(Tab.LOG);
-
         model.previousTab();
         then(model.activeTab()).isEqualTo(Tab.BUILD);
 

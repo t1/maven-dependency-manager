@@ -101,13 +101,13 @@ class DashboardControllerTest {
 
     @Test void shouldSwitchTabsBackwardWithShiftTab() {
         controller.handle(KeyEvent.ofKey(KeyCode.TAB, dev.tamboui.tui.event.KeyModifiers.SHIFT), runner);
-        then(model.activeTab()).isEqualTo(DashboardModel.Tab.LOG);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.BUILD);
     }
 
     @Test void shouldSwitchTabsBackwardWithBackTabWorkaround() {
         // BackTabBackendWrapper translates ESC [ Z into UNKNOWN + SHIFT
         controller.handle(KeyEvent.ofKey(KeyCode.UNKNOWN, dev.tamboui.tui.event.KeyModifiers.SHIFT), runner);
-        then(model.activeTab()).isEqualTo(DashboardModel.Tab.LOG);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.BUILD);
     }
 
     @Test void shouldSwitchTabsForwardWithBracket() {
@@ -117,7 +117,7 @@ class DashboardControllerTest {
 
     @Test void shouldSwitchTabsBackwardWithBracket() {
         controller.handle(KeyEvent.ofChar('['), runner);
-        then(model.activeTab()).isEqualTo(DashboardModel.Tab.LOG);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.BUILD);
     }
 
     @Test void shouldOpenVersionPicker() {

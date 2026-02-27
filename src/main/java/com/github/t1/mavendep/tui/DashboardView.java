@@ -1,10 +1,8 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
-import com.github.t1.mavendep.tui.DashboardModel.Tab;
 import com.github.t1.mavendep.tui.panel.BuildOutputPanel;
 import com.github.t1.mavendep.tui.panel.DependencyTablePanel;
-import com.github.t1.mavendep.tui.panel.LogPanel;
 import com.github.t1.mavendep.tui.panel.ScanProgressPanel;
 import com.github.t1.mavendep.tui.panel.VersionPickerPanel;
 import dev.tamboui.layout.Constraint;
@@ -28,7 +26,6 @@ public class DashboardView {
     private final DependencyTablePanel dependencyTablePanel = new DependencyTablePanel();
     private final VersionPickerPanel versionPickerPanel = new VersionPickerPanel();
     private final BuildOutputPanel buildOutputPanel = new BuildOutputPanel();
-    private final LogPanel logPanel = new LogPanel();
     private final TabsState tabsState = new TabsState(0);
 
     public DashboardView(DashboardModel model) {
@@ -62,7 +59,7 @@ public class DashboardView {
     private void renderTabs(Frame frame, Rect area) {
         tabsState.select(model.activeTab().ordinal());
         var tabs = Tabs.builder()
-                .titles("Dependencies", "Plugins", "Build Output", "Log")
+                .titles("Dependencies", "Plugins", "Build Output")
                 .highlightStyle(Style.EMPTY.bold().fg(Color.YELLOW))
                 .divider(" | ")
                 .block(Block.builder().borders(Borders.ALL).build())
@@ -76,15 +73,43 @@ public class DashboardView {
             return;
         }
 
-        switch (model.activeTab()) {
-            case BUILD -> buildOutputPanel.render(frame, area, model);
-            case LOG -> logPanel.render(frame, area, model);
-            default -> dependencyTablePanel.render(frame, area, model);
+        if (model.activeTab() == DashboardModel.Tab.BUILD) {
+            buildOutputPanel.render(frame, area, model);
+        } else {
+            renderDependencyTabWithErrors(frame, area);
         }
 
         if (model.isVersionPickerOpen()) {
             versionPickerPanel.render(frame, area, model);
         }
+    }
+
+    private void renderDependencyTabWithErrors(Frame frame, Rect area) {
+        var messages = model.logMessages();
+        if (messages.isEmpty()) {
+            dependencyTablePanel.render(frame, area, model);
+            return;
+        }
+
+        var logHeight = Math.min(messages.size() + 2, area.height() / 3); // +2 for borders, cap at 1/3
+        var split = Layout.vertical()
+                .constraints(Constraint.fill(), Constraint.length(logHeight))
+                .split(area);
+
+        dependencyTablePanel.render(frame, split.get(0), model);
+
+        var text = String.join("\n", messages);
+        var visibleLines = Math.max(1, logHeight - 2);
+        var scroll = Math.max(0, messages.size() - visibleLines);
+        var paragraph = Paragraph.builder()
+                .text(text)
+                .style(Style.EMPTY.fg(Color.YELLOW))
+                .scroll(scroll)
+                .block(Block.builder().borders(Borders.ALL)
+                        .title("Errors (" + messages.size() + ")")
+                        .build())
+                .build();
+        frame.renderWidget(paragraph, split.get(1));
     }
 
     private void renderStatusBar(Frame frame, Rect area) {
