@@ -218,6 +218,23 @@ class DashboardModelTest {
         then(model.isDirty()).isTrue();
     }
 
+    @Test void shouldNotToggleSelectNoneUpdate() {
+        setReportsWithMixedUpdates();
+        model.setShowAll(true);
+        model.cursorDown(); // move to the none update
+
+        model.toggleSelection();
+        then(model.selectedCount()).isEqualTo(0);
+    }
+
+    @Test void shouldNotSelectAllNoneUpdates() {
+        setReportsWithMixedUpdates();
+        model.setShowAll(true);
+
+        model.selectAll();
+        then(model.selectedCount()).isEqualTo(1);
+    }
+
     @Test void shouldDefaultShowAllToFalse() {
         then(model.showAll()).isFalse();
     }

@@ -137,7 +137,9 @@ public class DashboardModel {
     public void toggleSelection() {
         var updates = activeUpdates();
         if (cursor < 0 || cursor >= updates.size()) return;
-        var k = key(updates.get(cursor));
+        var update = updates.get(cursor);
+        if (!update.canUpdate()) return;
+        var k = key(update);
         if (!selectedKeys.remove(k)) selectedKeys.add(k);
     }
 
@@ -146,12 +148,16 @@ public class DashboardModel {
         else selectAll();
     }
 
+    private Stream<DependencyUpdate> selectableUpdates() {
+        return activeUpdates().stream().filter(DependencyUpdate::canUpdate);
+    }
+
     private boolean allSelected() {
-        return activeUpdates().stream().allMatch(this::isSelected);
+        return selectableUpdates().allMatch(this::isSelected);
     }
 
     public void selectAll() {
-        activeUpdates().forEach(u -> selectedKeys.add(key(u)));
+        selectableUpdates().forEach(u -> selectedKeys.add(key(u)));
     }
 
     public void selectNone() {
