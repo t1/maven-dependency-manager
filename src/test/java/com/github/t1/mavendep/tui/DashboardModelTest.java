@@ -37,6 +37,9 @@ class DashboardModelTest {
         then(model.activeTab()).isEqualTo(Tab.BUILD);
 
         model.nextTab();
+        then(model.activeTab()).isEqualTo(Tab.LOG);
+
+        model.nextTab();
         then(model.activeTab()).isEqualTo(Tab.DEPENDENCIES);
     }
 
@@ -158,6 +161,9 @@ class DashboardModelTest {
 
     @Test void shouldCycleTabsBackward() {
         model.previousTab();
+        then(model.activeTab()).isEqualTo(Tab.LOG);
+
+        model.previousTab();
         then(model.activeTab()).isEqualTo(Tab.BUILD);
 
         model.previousTab();
@@ -195,6 +201,61 @@ class DashboardModelTest {
         model.setPhase(Phase.SCANNING);
         model.clearDirty();
         then(model.isDirty()).isFalse();
+    }
+
+    @Test void shouldCollectLogMessages() {
+        model.addLogMessage("msg1");
+        model.addLogMessage("msg2");
+
+        then(model.logMessages()).containsExactly("msg1", "msg2");
+    }
+
+    @Test void shouldBeDirtyAfterLogMessage() {
+        model.clearDirty();
+        model.addLogMessage("msg");
+        then(model.isDirty()).isTrue();
+    }
+
+    @Test void shouldDefaultShowAllToFalse() {
+        then(model.showAll()).isFalse();
+    }
+
+    @Test void shouldFilterOutUpToDateWhenShowAllIsFalse() {
+        setReportsWithMixedUpdates();
+
+        then(model.activeUpdates()).hasSize(1);
+        then(model.activeUpdates().getFirst().updateType()).isEqualTo(UpdateType.major);
+    }
+
+    @Test void shouldShowAllAfterToggle() {
+        setReportsWithMixedUpdates();
+
+        model.toggleShowAll();
+
+        then(model.showAll()).isTrue();
+        then(model.activeUpdates()).hasSize(2);
+    }
+
+    @Test void shouldSetShowAll() {
+        model.setShowAll(true);
+        then(model.showAll()).isTrue();
+    }
+
+    private void setReportsWithMixedUpdates() {
+        var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var dep2 = new Dependency(dependency, "com.example", "up-to-date",
+                Version.fromString("1.0.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major);
+        var update2 = dep2.toUpdate(Version.fromString("1.0.0"),
+                List.of(Version.fromString("1.0.0")), UpdateType.none);
+
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        when(pom.path()).thenReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
     }
 
     private void setReportsWithTwoDependencyUpdates() {

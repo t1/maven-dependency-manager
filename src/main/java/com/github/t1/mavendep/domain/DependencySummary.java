@@ -48,12 +48,13 @@ public record DependencySummary(
             totalDependencies += report.totalDependencies();
             var allUpdates = getAllUpdates(report);
             for (var update : allUpdates) {
-                if (update.isUpdate()) {
+                if (update.canUpdate()) {
                     outdatedDependencies++;
                     switch (update.updateType()) {
                         case major -> majorUpdates++;
                         case minor -> minorUpdates++;
                         case patch -> patchUpdates++;
+                        case none -> {} // already filtered by canUpdate()
                     }
                 }
             }

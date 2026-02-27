@@ -4,6 +4,7 @@ import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import com.github.t1.mavendep.tui.DashboardModel.Tab;
 import com.github.t1.mavendep.tui.panel.BuildOutputPanel;
 import com.github.t1.mavendep.tui.panel.DependencyTablePanel;
+import com.github.t1.mavendep.tui.panel.LogPanel;
 import com.github.t1.mavendep.tui.panel.ScanProgressPanel;
 import com.github.t1.mavendep.tui.panel.VersionPickerPanel;
 import dev.tamboui.layout.Constraint;
@@ -14,6 +15,7 @@ import dev.tamboui.style.Style;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
 import dev.tamboui.widgets.block.Borders;
+import dev.tamboui.style.Overflow;
 import dev.tamboui.widgets.paragraph.Paragraph;
 import dev.tamboui.widgets.tabs.Tabs;
 import dev.tamboui.widgets.tabs.TabsState;
@@ -26,6 +28,7 @@ public class DashboardView {
     private final DependencyTablePanel dependencyTablePanel = new DependencyTablePanel();
     private final VersionPickerPanel versionPickerPanel = new VersionPickerPanel();
     private final BuildOutputPanel buildOutputPanel = new BuildOutputPanel();
+    private final LogPanel logPanel = new LogPanel();
     private final TabsState tabsState = new TabsState(0);
 
     public DashboardView(DashboardModel model) {
@@ -38,7 +41,7 @@ public class DashboardView {
                         Constraint.length(3),  // title bar
                         Constraint.length(3),  // tabs
                         Constraint.fill(),     // content
-                        Constraint.length(1))  // status bar
+                        Constraint.length(2))  // status bar
                 .split(frame.area());
 
         renderTitleBar(frame, areas.get(0));
@@ -59,7 +62,7 @@ public class DashboardView {
     private void renderTabs(Frame frame, Rect area) {
         tabsState.select(model.activeTab().ordinal());
         var tabs = Tabs.builder()
-                .titles("Dependencies", "Plugins", "Build Output")
+                .titles("Dependencies", "Plugins", "Build Output", "Log")
                 .highlightStyle(Style.EMPTY.bold().fg(Color.YELLOW))
                 .divider(" | ")
                 .block(Block.builder().borders(Borders.ALL).build())
@@ -73,10 +76,10 @@ public class DashboardView {
             return;
         }
 
-        if (model.activeTab() == Tab.BUILD) {
-            buildOutputPanel.render(frame, area, model);
-        } else {
-            dependencyTablePanel.render(frame, area, model);
+        switch (model.activeTab()) {
+            case BUILD -> buildOutputPanel.render(frame, area, model);
+            case LOG -> logPanel.render(frame, area, model);
+            default -> dependencyTablePanel.render(frame, area, model);
         }
 
         if (model.isVersionPickerOpen()) {
@@ -86,14 +89,21 @@ public class DashboardView {
 
     private void renderStatusBar(Frame frame, Rect area) {
         var status = switch (model.phase()) {
-            case SCANNING -> "Scanning...";
+            case SCANNING -> {
+                var messages = model.logMessages();
+                yield messages.isEmpty() ? "Scanning..." : "Scanning... " + messages.getLast();
+            }
             case APPLYING -> "Applying updates...";
             case BUILDING -> "Building...";
-            case READY -> model.selectedCount() + " selected | " +
-                    "[Space] toggle [Enter] pick version [u]pdate [b]uild [r]escan Tab/[ ] tabs [q]uit";
+            case READY -> {
+                var logCount = model.logMessages().size();
+                var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
+                yield model.selectedCount() + " selected" + logHint + " | " +
+                        "[Space] toggle [Enter] pick version [s]how all [u]pdate [b]uild [r]escan Tab/[ ] tabs [q]uit";
+            }
         };
 
-        var paragraph = Paragraph.from(status);
+        var paragraph = Paragraph.builder().text(status).overflow(Overflow.WRAP_WORD).build();
         frame.renderWidget(paragraph, area);
     }
 }

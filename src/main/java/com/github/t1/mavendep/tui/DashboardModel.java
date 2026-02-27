@@ -19,7 +19,7 @@ public class DashboardModel {
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
-    public enum Tab {DEPENDENCIES, PLUGINS, BUILD}
+    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, LOG}
 
     private Phase phase = Phase.SCANNING;
     private Tab activeTab = Tab.DEPENDENCIES;
@@ -33,10 +33,14 @@ public class DashboardModel {
     private int scanTotal;
     private String scanCurrentArtifact = "";
 
+    private final List<String> logMessages = new ArrayList<>();
+
     private final List<String> buildOutputLines = new ArrayList<>();
     private Integer buildExitCode;
 
     private boolean dirty;
+
+    private boolean showAll;
 
     private boolean versionPickerOpen;
     private int versionPickerCursor;
@@ -50,6 +54,14 @@ public class DashboardModel {
     public boolean isDirty() {return dirty;}
 
     public void clearDirty() {dirty = false;}
+
+    // --- Show all ---
+
+    public boolean showAll() {return showAll;}
+
+    public void setShowAll(boolean showAll) {this.showAll = showAll;}
+
+    public void toggleShowAll() {showAll = !showAll;}
 
     // --- Phase ---
 
@@ -87,14 +99,14 @@ public class DashboardModel {
 
     /// Returns the flat list of dependency updates for the active tab.
     public List<DependencyUpdate> activeUpdates() {
-        return reports.stream()
+        var stream = reports.stream()
                 .flatMap(r -> switch (activeTab) {
                     case DEPENDENCIES -> r.dependencyUpdates().stream();
                     case PLUGINS -> r.pluginUpdates().stream();
-                    case BUILD -> Stream.of();
-                })
-                .filter(DependencyUpdate::isUpdate)
-                .toList();
+                    case BUILD, LOG -> Stream.of();
+                });
+        if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none);
+        return stream.toList();
     }
 
     // --- Cursor ---
@@ -147,7 +159,7 @@ public class DashboardModel {
                 .flatMap(r -> Stream.concat(
                         r.dependencyUpdates().stream(),
                         r.pluginUpdates().stream()))
-                .filter(DependencyUpdate::isUpdate)
+                .filter(DependencyUpdate::canUpdate)
                 .filter(this::isSelected)
                 .map(this::applyCustomVersion);
     }
@@ -189,6 +201,15 @@ public class DashboardModel {
         this.scanCompleted = completed;
         this.scanTotal = total;
         this.scanCurrentArtifact = artifactName;
+        dirty = true;
+    }
+
+    // --- Log messages ---
+
+    public List<String> logMessages() {return logMessages;}
+
+    public void addLogMessage(String message) {
+        logMessages.add(message);
         dirty = true;
     }
 

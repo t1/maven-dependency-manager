@@ -7,7 +7,7 @@ caching using the local Maven repository.
 
 - **Dependency Version Checking**: Queries Maven Central for the latest versions of your dependencies
 - **Parent POM Version Checking**: Also checks and updates parent POM versions
-- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with `--force-cache-update` to bypass the cache
+- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with `--force-cache-update` to bypass the cache. The local repo path can be overridden via the `maven.repo.local` system property or the `--local-repo` CLI option.
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
 - **Multiple Output Formats**: JSON and human-readable text reports
 - **Show Available Versions**: Query all available versions for a specific artifact by `groupId:artifactId`, `groupId`,
@@ -144,7 +144,8 @@ The TUI provides a full interactive dashboard where you can:
 - Apply selected updates (`u`)
 - Run a Maven build and see output in a scrollable panel (`b`)
 - Rescan after applying updates (`r`)
-- Switch between Dependencies/Plugins/Build tabs (Tab/`]` forward, `[` backward)
+- Switch between Dependencies/Plugins/Build/Log tabs (Tab/`]` forward, `[` backward)
+- View scan error messages and warnings in the Log tab
 - Quit (`q`)
 
 ### Updating Dependencies
