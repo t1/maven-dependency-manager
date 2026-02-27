@@ -133,7 +133,7 @@
                 </executions>
                 <configuration>
                     <!--suppress MavenModelInspection -->
-                    <argLine>@{argLine} -Xshare:off --enable-preview -javaagent:${org.mockito:mockito-core:jar}</argLine>
+                    <argLine>@{argLine} -Xshare:off --enable-preview -javaagent:${org.mockito:mockito-core:jar} -Dmdm.offline=${settings.offline}</argLine>
                 </configuration>
             </plugin>
             <plugin>
@@ -212,4 +212,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

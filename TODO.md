@@ -1,5 +1,5 @@
-* skip the MavenRepositoryIT if maven runs with `--offline`
 * pressing `a` a second time on the dependencies tab should deselect all
+* it shouldn't be possible to check updates that have type = none
 * get smarter about the menu:
     * right-align
     * use a single model for handling and displaying key bindings; show only when available on a tab

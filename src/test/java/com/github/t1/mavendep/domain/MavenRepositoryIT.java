@@ -1,12 +1,14 @@
 package com.github.t1.mavendep.domain;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.DisabledIfSystemProperty;
 
 import java.io.IOException;
 
 import static java.nio.file.Files.deleteIfExists;
 import static org.assertj.core.api.BDDAssertions.then;
 
+@DisabledIfSystemProperty(named = "mdm.offline", matches = "true", disabledReason = "requires network access")
 class MavenRepositoryIT {
 
     @Test
