@@ -121,6 +121,32 @@ mdm show-available org.assertj
 mdm show-available assertj-core --pom other/pom.xml
 ```
 
+### Interactive TUI Dashboard
+
+```bash
+# Launch the interactive TUI for the current directory
+mdm tui
+
+# Launch with specific POM files
+mdm tui project1/pom.xml project2/pom.xml
+
+# Specify custom build goals
+mdm tui --build-goals "clean install"
+
+# Force cache refresh on startup
+mdm tui --force-cache-update
+```
+
+The TUI provides a full interactive dashboard where you can:
+- Browse dependencies and plugins with live scan progress
+- Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none)
+- Pick specific target versions (Enter to open version picker)
+- Apply selected updates (`u`)
+- Run a Maven build and see output in a scrollable panel (`b`)
+- Rescan after applying updates (`r`)
+- Switch between Dependencies/Plugins/Build tabs (Tab/`]` forward, `[` backward)
+- Quit (`q`)
+
 ### Updating Dependencies
 
 ```bash

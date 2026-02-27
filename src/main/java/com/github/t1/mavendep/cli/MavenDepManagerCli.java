@@ -9,7 +9,7 @@ import picocli.CommandLine.Mixin;
 @Command(
         name = "maven-dep-manager",
         description = "Maven Dependency Manager - Check for or apply dependency updates",
-        subcommands = {CheckCommand.class, UpdateCommand.class, ShowAvailableCommand.class, HelpCommand.class, GenerateCompletion.class},
+        subcommands = {CheckCommand.class, UpdateCommand.class, ShowAvailableCommand.class, TuiCommand.class, HelpCommand.class, GenerateCompletion.class},
         mixinStandardHelpOptions = true,
         usageHelpAutoWidth = true,
         version = "1.0.0"

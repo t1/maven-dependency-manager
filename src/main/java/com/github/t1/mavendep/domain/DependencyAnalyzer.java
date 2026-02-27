@@ -7,6 +7,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.StructuredTaskScope;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -28,7 +29,10 @@ public class DependencyAnalyzer {
 
     private final MavenRepository repository;
     private final List<Path> pomFiles;
+    private final AnalysisProgressListener progressListener;
 
+    private final AtomicInteger analyzedCount = new AtomicInteger();
+    private int totalDependencyCount;
     private Set<Coordinates> localArtifacts;
 
     public DependencyAnalyzer(MavenRepository repository, Path... pomFiles) {
@@ -36,8 +40,13 @@ public class DependencyAnalyzer {
     }
 
     public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles) {
+        this(repository, pomFiles, null);
+    }
+
+    public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles, AnalysisProgressListener progressListener) {
         this.repository = repository;
         this.pomFiles = pomFiles;
+        this.progressListener = progressListener;
     }
 
     public List<ProjectReport> run() {
@@ -45,6 +54,9 @@ public class DependencyAnalyzer {
         var allPoms = pomsAndModules(resolvedFiles).toList();
         resolveParentProperties(allPoms);
         localArtifacts = allPoms.stream().map(Pom::coordinates).collect(toSet());
+        totalDependencyCount = allPoms.stream()
+                .mapToInt(pom -> pom.dependencies().size() + pom.plugins().size() + (pom.parent().isPresent() ? 1 : 0))
+                .sum();
         try (var scope = StructuredTaskScope.<ProjectReport>open()) {
             var tasks = allPoms.stream()
                     .map(pom -> scope.fork(() -> analyze(pom)))
@@ -171,6 +183,11 @@ public class DependencyAnalyzer {
                 .toList();
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
         var updateType = UpdateType.between(dependency.version(), latestVersion);
-        return dependency.toUpdate(latestVersion, availableVersions, updateType);
+        var result = dependency.toUpdate(latestVersion, availableVersions, updateType);
+        if (progressListener != null) {
+            var artifactName = dependency.groupId() + ":" + dependency.artifactId();
+            progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifactName);
+        }
+        return result;
     }
 }
