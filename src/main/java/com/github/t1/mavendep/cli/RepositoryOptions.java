@@ -6,12 +6,15 @@ import picocli.CommandLine.Option;
 import java.nio.file.Path;
 import java.time.Duration;
 
+import static com.github.t1.mavendep.domain.MavenRepository.DEFAULT_MAVEN_CENTRAL_URL;
+
 /// Maven repository configuration options.
 class RepositoryOptions {
 
     @Option(
             names = {"--maven-central-url"},
-            description = "Maven Central URL (default: https://repo1.maven.org/maven2)"
+            description = "Maven Central URL (default: ${DEFAULT-VALUE})",
+            defaultValue = DEFAULT_MAVEN_CENTRAL_URL
     )
     String mavenCentralUrl;
 
