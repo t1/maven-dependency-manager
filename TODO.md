@@ -1,5 +1,3 @@
-* DIP/Bug: `UpdateCommand` ignores `RepositoryOptions` — its no-arg constructor creates `new MavenRepository()`
-  bypassing CLI options like `--cache-ttl`, `--local-repo`
 * `ReportOutputHandler.writeReport` has 4 parameters — group the last 3 into a config object
 * `DependencyAnalyzer` has 3 telescoping constructors with nullable `progressListener` — use a no-op default
 * boolean `showAll` passed through multiple layers as flag argument -- let's discuss our options
@@ -28,3 +26,5 @@
     * connect logs to the dependency they belong to, so we can associate them in the TUI (and maybe in the Table output)
     * ignore "Fetching metadata" logs in the TUI... those are harmless
 * TUI: when I'm on the DIFF tab, pressing `d` should jump to the DEPENDENCIES tab; this should be visible in the menu
+* TUI: put header of the version picker **into** the box, so it's easier to see; and wrap it into three lines:
+  "Pick version for", "groupId", and "artifactId"

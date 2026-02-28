@@ -33,6 +33,10 @@ public class UpdateCommand implements Callable<Integer> {
     @Mixin
     private CommonOptions commonOptions;
 
+    @Mixin
+    @SuppressWarnings("unused") // set by Picocli
+    private RepositoryOptions repositoryOptions;
+
     @Option(
             names = {"--only"},
             description = "Only update dependencies matching groupId:artifactId, groupId, or artifactId",
@@ -58,12 +62,10 @@ public class UpdateCommand implements Callable<Integer> {
         }
     }
 
-    private final MavenRepository repository;
+    private MavenRepository repository;
 
     @SuppressWarnings("unused") // Used by Picocli
-    public UpdateCommand() {
-        this(MavenRepository.builder().build());
-    }
+    public UpdateCommand() {}
 
     UpdateCommand(MavenRepository repository) {
         this.repository = repository;
@@ -72,7 +74,8 @@ public class UpdateCommand implements Callable<Integer> {
     @Override
     public Integer call() {
         return with(commonOptions.logger()).call(() -> {
-            var analyzer = new DependencyAnalyzer(repository, commonOptions.pomFiles);
+            var effectiveRepository = (repository != null) ? repository : repositoryOptions.createMavenRepository();
+            var analyzer = new DependencyAnalyzer(effectiveRepository, commonOptions.pomFiles);
 
             var reports = analyzer.run();
 
