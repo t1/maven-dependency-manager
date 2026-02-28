@@ -11,7 +11,7 @@ caching using the local Maven repository.
   `--force-cache-update` to bypass the cache. The local repo path can be overridden via the `maven.repo.local` system
   property or the `--local-repo` CLI option.
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
-- **Multiple Output Formats**: JSON and human-readable text reports
+- **Multiple Output Formats**: JSON, YAML, XML, and human-readable text reports
 - **Show Available Versions**: Query all available versions for a specific artifact by `groupId:artifactId`, `groupId`,
   or `artifactId` (resolving partial coordinates from your POM), displayed as a tree grouped by major/minor version
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
@@ -83,6 +83,14 @@ If a `pom` declares `modules`, those are always included in the scan.
 # JSON output
 mdm check pom.xml --json
 mdm check pom.xml --format json
+
+# YAML output
+mdm check pom.xml --yaml
+mdm check pom.xml --format yaml
+
+# XML output
+mdm check pom.xml --xml
+mdm check pom.xml --format xml
 
 # Text output (default)
 mdm check pom.xml --text

@@ -22,6 +22,8 @@ public class ReportOutputHandler {
             var reportWriter = switch (config.format()) {
                 case json -> new JsonReportWriter(out, filteredReports);
                 case text -> new TextReportWriter(out, filteredReports);
+                case yaml -> new YamlReportWriter(out, filteredReports);
+                case xml -> new XmlReportWriter(out, filteredReports);
             };
             reportWriter.run();
         } catch (FileNotFoundException e) {

@@ -27,7 +27,7 @@ class CommonOptions {
     private FormatOption formatOption;
 
     static class FormatOption {
-        @Option(names = {"--format"}, description = "Output format: text, json (default: text)")
+        @Option(names = {"--format"}, description = "Output format: text, json, yaml, xml (default: text)")
         OutputFormat format;
 
         @Option(names = "--json", description = "Shortcut for --format=json")
@@ -36,9 +36,17 @@ class CommonOptions {
         @Option(names = "--text", description = "Shortcut for --format=text")
         boolean text;
 
+        @Option(names = "--yaml", description = "Shortcut for --format=yaml")
+        boolean yaml;
+
+        @Option(names = "--xml", description = "Shortcut for --format=xml")
+        boolean xml;
+
         OutputFormat resolve() {
             if (json) return OutputFormat.json;
             if (text) return OutputFormat.text;
+            if (yaml) return OutputFormat.yaml;
+            if (xml) return OutputFormat.xml;
             return format;
         }
     }
