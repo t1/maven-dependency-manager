@@ -2,6 +2,7 @@ package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.Logger;
 import com.github.t1.mavendep.domain.OutputFormat;
+import com.github.t1.mavendep.report.ReportConfig;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -64,6 +65,10 @@ class CommonOptions {
             description = "Print stack traces for exceptions"
     )
     boolean verbose;
+
+    ReportConfig reportConfig() {
+        return new ReportConfig(format(), outputFile, showAll);
+    }
 
     Logger logger() {
         return new Logger() {

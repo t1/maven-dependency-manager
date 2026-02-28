@@ -1,6 +1,5 @@
 package com.github.t1.mavendep.report;
 
-import com.github.t1.mavendep.domain.OutputFormat;
 import com.github.t1.mavendep.domain.ProjectReport;
 
 import java.io.FileNotFoundException;
@@ -14,12 +13,12 @@ public class ReportOutputHandler {
         // Utility class
     }
 
-    public static void writeReport(List<ProjectReport> reports, OutputFormat format, String outputFile, boolean showAll) {
-        var filteredReports = showAll ? reports : reports.stream().map(ProjectReport::onlyUpdates).toList();
+    public static void writeReport(List<ProjectReport> reports, ReportConfig config) {
+        var filteredReports = config.showAll() ? reports : reports.stream().map(ProjectReport::onlyUpdates).toList();
 
         try {
-            var out = (outputFile == null) ? System.out : new PrintStream(outputFile);
-            var reportWriter = switch (format) {
+            var out = (config.outputFile() == null) ? System.out : new PrintStream(config.outputFile());
+            var reportWriter = switch (config.format()) {
                 case json -> new JsonReportWriter(out, filteredReports);
                 case text -> new TextReportWriter(out, filteredReports);
             };

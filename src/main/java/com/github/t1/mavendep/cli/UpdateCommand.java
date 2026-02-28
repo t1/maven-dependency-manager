@@ -100,7 +100,7 @@ public class UpdateCommand implements Callable<Integer> {
                         System.out.println("Updated: " + pom.path());
                     });
 
-            writeReport(reports, commonOptions.format(), commonOptions.outputFile, commonOptions.showAll);
+            writeReport(reports, commonOptions.reportConfig());
             return 0;
         });
     }

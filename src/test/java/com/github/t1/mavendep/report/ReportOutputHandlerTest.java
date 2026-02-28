@@ -22,7 +22,7 @@ class ReportOutputHandlerTest {
         var outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
 
-        ReportOutputHandler.writeReport(reports, json, null, false);
+        ReportOutputHandler.writeReport(reports, new ReportConfig(json, null, false));
 
         System.setOut(originalOut);
         then(outputStream.toString()).contains("\"projects\"");
@@ -35,7 +35,7 @@ class ReportOutputHandlerTest {
         var outputStream = new ByteArrayOutputStream();
         System.setOut(new PrintStream(outputStream));
 
-        ReportOutputHandler.writeReport(reports, text, null, false);
+        ReportOutputHandler.writeReport(reports, new ReportConfig(text, null, false));
 
         System.setOut(originalOut);
         then(outputStream.toString()).contains("Maven Dependency Update Report");
@@ -46,7 +46,7 @@ class ReportOutputHandlerTest {
         var reports = List.<ProjectReport>of();
         var tempFile = Files.createTempFile("report", ".json");
 
-        ReportOutputHandler.writeReport(reports, json, tempFile.toString(), false);
+        ReportOutputHandler.writeReport(reports, new ReportConfig(json, tempFile.toString(), false));
 
         var content = Files.readString(tempFile);
         then(content).contains("\"projects\"");
@@ -58,7 +58,7 @@ class ReportOutputHandlerTest {
         var reports = List.<ProjectReport>of();
         var tempFile = Files.createTempFile("report", ".txt");
 
-        ReportOutputHandler.writeReport(reports, text, tempFile.toString(), false);
+        ReportOutputHandler.writeReport(reports, new ReportConfig(text, tempFile.toString(), false));
 
         var content = Files.readString(tempFile);
         then(content).contains("Maven Dependency Update Report");

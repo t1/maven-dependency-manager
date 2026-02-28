@@ -1,4 +1,3 @@
-* `ReportOutputHandler.writeReport` has 4 parameters — group the last 3 into a config object
 * `DependencyAnalyzer` has 3 telescoping constructors with nullable `progressListener` — use a no-op default
 * boolean `showAll` passed through multiple layers as flag argument -- let's discuss our options
 * broad `catch (Exception e)` in `MavenRepository.getAvailableVersions` — catch specific exceptions to avoid masking
