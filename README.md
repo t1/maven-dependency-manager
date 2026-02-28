@@ -73,10 +73,9 @@ mdm check my-project/
 
 # Check multiple projects
 mdm check project1/pom.xml project2/pom.xml
-
-# Scan directory recursively
-mdm check --recursive ./projects
 ```
+
+If a `pom` declares `modules`, those are always included in the scan.
 
 ### Output Formats
 

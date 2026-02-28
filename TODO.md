@@ -1,4 +1,3 @@
-* TUI: when I'm on the DIFF tab, pressing `d` should jump to the DEPENDENCIES tab; this should be visible in the menu
 * get smarter about the menu:
     * right-align
     * use a single model for handling and displaying key bindings; show only when available on a tab
@@ -12,3 +11,4 @@
 * TUI: put header of the version picker **into** the box, so it's easier to see; and wrap it into three lines:
   "Pick version for", "groupId", and "artifactId"
 * Add yaml and xml output format
+* TUI: build output with colors?

@@ -113,8 +113,12 @@ public class DashboardController {
             return true;
         }
         if (key.isChar('d')) {
-            model.setActiveTab(DashboardModel.Tab.DIFF);
-            refreshDiffIfActive();
+            if (model.activeTab() == DashboardModel.Tab.DIFF) {
+                model.setActiveTab(DashboardModel.Tab.DEPENDENCIES);
+            } else {
+                model.setActiveTab(DashboardModel.Tab.DIFF);
+                refreshDiffIfActive();
+            }
             return true;
         }
 

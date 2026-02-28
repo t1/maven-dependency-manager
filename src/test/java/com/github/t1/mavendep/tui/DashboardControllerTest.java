@@ -107,6 +107,14 @@ class DashboardControllerTest {
         then(diffCalled).isTrue();
     }
 
+    @Test void shouldJumpBackToDependenciesWhenPressingDOnDiffTab() {
+        model.setActiveTab(DashboardModel.Tab.DIFF);
+
+        controller.handle(KeyEvent.ofChar('d'), runner);
+
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.DEPENDENCIES);
+    }
+
     @Test void shouldSwitchTabs() {
         controller.handle(KeyEvent.ofKey(KeyCode.TAB), runner);
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);

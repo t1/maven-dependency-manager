@@ -122,8 +122,9 @@ public class DashboardView {
             case READY -> {
                 var logCount = model.logMessages().size();
                 var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
+                var dHint = model.activeTab() == DashboardModel.Tab.DIFF ? "[d]ependencies" : "[d]iff";
                 yield model.selectedCount() + " selected" + logHint + " | " +
-                        "[Space] toggle [Enter] pick version [s]how all [b]uild [r]escan [d]iff Tab/[ ] tabs [q]uit";
+                        "[Space] toggle [Enter] pick version [s]how all [b]uild [r]escan " + dHint + " Tab/[ ] tabs [q]uit";
             }
         };
 
