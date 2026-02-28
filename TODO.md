@@ -1,5 +1,3 @@
-* TUI: put header of the version picker **into** the box, so it's easier to see; and wrap it into three lines:
-  "Pick version for", "groupId", and "artifactId"
 * Add yaml and xml output format
 * more structured logging, so we can
     * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`
