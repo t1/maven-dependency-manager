@@ -70,7 +70,7 @@ public class Pom {
             log().log("Warning: can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
             return Optional.empty();
         } catch (PomParsingException e) {
-            log().log("Warning: Can't parse POM file: " + pomPath + ": " + e.getMessage(), e);
+            log().log("Warning: Can't parse POM file: " + pomPath + ": " + e, e);
             return Optional.empty();
         }
     }

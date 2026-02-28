@@ -67,7 +67,7 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
                 while (emulator.hasNext()) {
                     emulator.next();
                 }
-            } catch (Exception e) {
+            } catch (IOException e) {
                 if (!e.getMessage().contains("closed")) {
                     throw new RuntimeException("PTY reader error", e);
                 }

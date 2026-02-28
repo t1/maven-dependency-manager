@@ -51,7 +51,7 @@ public class TuiCommand implements Callable<Integer> {
         try {
             dashboardRunner.accept(this);
             return 0;
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             var cause = e.getCause() != null ? e.getCause() : e;
             spec.commandLine().getErr().println("TUI error: " + cause.getMessage());
             if (commonOptions.verbose) cause.printStackTrace(spec.commandLine().getErr());
