@@ -269,6 +269,14 @@ public class DashboardModel {
 
     public List<LogMessage> logMessages() {return logMessages;}
 
+    public boolean hasLogMessagesFor(String artifact) {
+        return logMessages.stream().anyMatch(m -> artifact.equals(m.artifact()));
+    }
+
+    public List<LogMessage> logMessagesFor(String artifact) {
+        return logMessages.stream().filter(m -> artifact.equals(m.artifact())).toList();
+    }
+
     public void addLogMessage(LogMessage message) {
         logMessages.add(message);
         setNeedsRedraw();

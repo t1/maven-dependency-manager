@@ -43,6 +43,20 @@ class LoggerTest {
         then(messages.getFirst().exception()).isEqualTo(exception);
     }
 
+    @Test void shouldLogWarningForArtifact() {
+        with(collectingLogger()).run(() -> log().warning("org.example:lib", "something odd"));
+
+        then(messages).hasSize(1);
+        then(messages.getFirst().artifact()).isEqualTo("org.example:lib");
+        then(messages.getFirst().message()).isEqualTo("something odd");
+    }
+
+    @Test void shouldDefaultArtifactToNull() {
+        with(collectingLogger()).run(() -> log().warning("something odd"));
+
+        then(messages.getFirst().artifact()).isNull();
+    }
+
     @Test void shouldNoOpWhenNoLoggerBound() {
         log().info("should not throw");
         log().warning("should not throw");

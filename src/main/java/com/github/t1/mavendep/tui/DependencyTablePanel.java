@@ -55,7 +55,9 @@ class DependencyTablePanel {
     private static Row toRow(DependencyUpdate update, DashboardModel model) {
         var effective = model.effectiveUpdate(update);
         var checkbox = !update.isUpdatable() ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
-        var coords = update.groupId() + ":" + update.artifactId();
+        var artifactKey = update.groupId() + ":" + update.artifactId();
+        var icon = model.hasLogMessagesFor(artifactKey) ? "! " : "";
+        var coords = icon + artifactKey;
         var current = String.valueOf(update.currentVersion());
         var latest = String.valueOf(effective.latestVersion());
         var type = effective.updateType().name();

@@ -220,6 +220,22 @@ class DashboardModelTest {
         then(model.logMessages()).extracting(LogMessage::message).containsExactly("msg1", "msg2");
     }
 
+    @Test void shouldDetectLogMessagesForArtifact() {
+        model.addLogMessage(new LogMessage(WARNING, "problem", "org.example:lib", null));
+
+        then(model.hasLogMessagesFor("org.example:lib")).isTrue();
+        then(model.hasLogMessagesFor("org.example:other")).isFalse();
+    }
+
+    @Test void shouldFilterLogMessagesByArtifact() {
+        model.addLogMessage(new LogMessage(WARNING, "problem1", "org.example:lib", null));
+        model.addLogMessage(new LogMessage(WARNING, "problem2", "org.example:other", null));
+        model.addLogMessage(new LogMessage(WARNING, "general problem"));
+
+        then(model.logMessagesFor("org.example:lib"))
+                .extracting(LogMessage::message).containsExactly("problem1");
+    }
+
     @Test void shouldBeDirtyAfterLogMessage() {
         model.clearNeedsRedraw();
         model.addLogMessage(new LogMessage(WARNING, "msg"));
