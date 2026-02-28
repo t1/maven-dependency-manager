@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Logger.LogLevel.WARNING;
+import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
@@ -212,15 +214,15 @@ class DashboardModelTest {
     }
 
     @Test void shouldCollectLogMessages() {
-        model.addLogMessage("msg1");
-        model.addLogMessage("msg2");
+        model.addLogMessage(new LogMessage(WARNING, "msg1"));
+        model.addLogMessage(new LogMessage(WARNING, "msg2"));
 
-        then(model.logMessages()).containsExactly("msg1", "msg2");
+        then(model.logMessages()).extracting(LogMessage::message).containsExactly("msg1", "msg2");
     }
 
     @Test void shouldBeDirtyAfterLogMessage() {
         model.clearNeedsRedraw();
-        model.addLogMessage("msg");
+        model.addLogMessage(new LogMessage(WARNING, "msg"));
         then(model.needsRedraw()).isTrue();
     }
 

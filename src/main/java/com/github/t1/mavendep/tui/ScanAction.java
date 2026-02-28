@@ -1,7 +1,6 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
-import com.github.t1.mavendep.domain.Logger;
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.tui.TuiRunner;
@@ -32,11 +31,8 @@ class ScanAction {
     }
 
     private void scan() {
-        with(new Logger() {
-            @Override public void log(String message) {runner.runOnRenderThread(() -> model.addLogMessage(message));}
-
-            @Override public void log(String message, Exception e) {log(message);}
-        }).run(this::doScan);
+        with(message -> runner.runOnRenderThread(() -> model.addLogMessage(message)))
+                .run(this::doScan);
     }
 
     private void doScan() {

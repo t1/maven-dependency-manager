@@ -423,10 +423,6 @@ class VersionTest {
     }
 
     private static Logger collectingLogger(List<String> messages) {
-        return new Logger() {
-            @Override public void log(String message) {messages.add(message);}
-
-            @Override public void log(String message, Exception e) {log(message);}
-        };
+        return logMessage -> messages.add(logMessage.message());
     }
 }

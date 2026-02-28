@@ -95,7 +95,7 @@ public class MavenRepository {
 
             return parseMetadata(metadata);
         } catch (IOException | InterruptedException | ParserConfigurationException | SAXException e) {
-            log().log("Failed to get available versions for " + groupId + ":" + artifactId + ", assuming none available: " + e, e);
+            log().error("Failed to get available versions for " + groupId + ":" + artifactId + ", assuming none available: " + e, e);
             return List.of();
         }
     }
@@ -122,7 +122,7 @@ public class MavenRepository {
 
     private String fetchMetadata(String groupId, String artifactId) throws IOException, InterruptedException {
         var uri = metadataUri(groupId, artifactId);
-        log().log("Fetching metadata for " + groupId + ":" + artifactId + " from " + uri.getAuthority());
+        log().info("Fetching metadata for " + groupId + ":" + artifactId + " from " + uri.getAuthority());
         var request = HttpRequest.newBuilder()
                 .uri(uri)
                 .GET()

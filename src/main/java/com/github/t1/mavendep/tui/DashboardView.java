@@ -2,20 +2,24 @@ package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.layout.Constraint;
-
-import static com.github.t1.mavendep.tui.DashboardModel.Tab.BUILD;
-import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
 import dev.tamboui.layout.Layout;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
+import dev.tamboui.style.Overflow;
 import dev.tamboui.style.Style;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
 import dev.tamboui.widgets.block.Borders;
-import dev.tamboui.style.Overflow;
 import dev.tamboui.widgets.paragraph.Paragraph;
 import dev.tamboui.widgets.tabs.Tabs;
 import dev.tamboui.widgets.tabs.TabsState;
+
+import java.util.stream.Collectors;
+
+import static com.github.t1.mavendep.domain.Logger.LogLevel.INFO;
+import static com.github.t1.mavendep.domain.Logger.LogMessage;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.BUILD;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
 
 /// Renders the [DashboardModel] into TamboUI widgets.
 public class DashboardView {
@@ -87,7 +91,9 @@ public class DashboardView {
     }
 
     private void renderDependencyTabWithErrors(Frame frame, Rect area) {
-        var messages = model.logMessages();
+        var messages = model.logMessages().stream()
+                .filter(m -> m.level() != INFO)
+                .toList();
         if (messages.isEmpty()) {
             dependencyTablePanel.render(frame, area, model);
             return;
@@ -100,7 +106,7 @@ public class DashboardView {
 
         dependencyTablePanel.render(frame, split.getFirst(), model);
 
-        var text = String.join("\n", messages);
+        var text = messages.stream().map(LogMessage::message).collect(Collectors.joining("\n"));
         var visibleLines = Math.max(1, logHeight - 2);
         var scroll = Math.max(0, messages.size() - visibleLines);
         var paragraph = Paragraph.builder()
@@ -119,7 +125,7 @@ public class DashboardView {
             var status = switch (model.phase()) {
                 case SCANNING -> {
                     var messages = model.logMessages();
-                    yield messages.isEmpty() ? "Scanning..." : "Scanning... " + messages.getLast();
+                    yield messages.isEmpty() ? "Scanning..." : "Scanning... " + messages.getLast().message();
                 }
                 case APPLYING -> "Applying updates...";
                 case BUILDING -> "Building...";

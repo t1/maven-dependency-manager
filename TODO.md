@@ -1,5 +1,4 @@
-* more structured logging, so we can
-    * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`
-    * connect logs to the dependency they belong to, so we can associate them in the TUI (and maybe in the Table output)
-    * ignore "Fetching metadata" logs in the TUI... those are harmless
-* TUI: build output with colors?
+* TUI: make the error panel wrap
+* if log messages are written for a dependency, add it to the log message, so in the TUI
+    * on the dependencies tabs, show a warning or error icon before the version columns, if there are such messages
+    * in the errors box, show only the messages for the selected dependency

@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.tui.DashboardModel.Phase.SCANNING;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DEPENDENCIES;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
@@ -40,7 +41,7 @@ public class DashboardModel {
     private int scanTotal;
     private String scanCurrentArtifact = "";
 
-    private final List<String> logMessages = new ArrayList<>();
+    private final List<LogMessage> logMessages = new ArrayList<>();
 
     private final List<String> buildOutputLines = new ArrayList<>();
     private Integer buildExitCode;
@@ -266,9 +267,9 @@ public class DashboardModel {
 
     // --- Log messages ---
 
-    public List<String> logMessages() {return logMessages;}
+    public List<LogMessage> logMessages() {return logMessages;}
 
-    public void addLogMessage(String message) {
+    public void addLogMessage(LogMessage message) {
         logMessages.add(message);
         setNeedsRedraw();
     }
@@ -334,8 +335,6 @@ public class DashboardModel {
     }
 
     private DependencyUpdate rawFocusedUpdate() {
-        var updates = activeUpdates();
-        if (cursor < 0 || cursor >= updates.size()) return null;
-        return updates.get(cursor);
+        return activeUpdates().get(cursor);
     }
 }

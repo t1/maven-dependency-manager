@@ -68,10 +68,10 @@ public class Pom {
             String content = readString(pomPath);
             return Optional.of(parse(pomPath, content));
         } catch (IOException e) {
-            log().log("Warning: can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
+            log().warning("can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
             return Optional.empty();
         } catch (PomParsingException e) {
-            log().log("Warning: Can't parse POM file: " + pomPath + ": " + e, e);
+            log().warning("Can't parse POM file: " + pomPath + ": " + e, e);
             return Optional.empty();
         }
     }
@@ -221,13 +221,13 @@ public class Pom {
             }
 
             if (groupId.isEmpty() && type == plugin) {
-                log().log("Warning: missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
+                log().warning("missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
                 groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
 
             var dependency = new Dependency(type, groupId, artifactId, version, scope, versionProperty);
-            if (groupId.isEmpty()) log().log("Warning: missing groupId in " + dependency);
-            if (artifactId.isEmpty()) log().log("Warning: missing artifactId in " + dependency);
+            if (groupId.isEmpty()) log().warning("missing groupId in " + dependency);
+            if (artifactId.isEmpty()) log().warning("missing artifactId in " + dependency);
             return dependency;
         }
 

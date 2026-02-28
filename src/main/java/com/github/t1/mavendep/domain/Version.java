@@ -192,7 +192,7 @@ public final class Version implements Comparable<Version> {
         }
 
         private void logUnknownQualifier(String qualifier) {
-            log().log("Warning: unknown version qualifier '" + qualifier + "' in " + Version.this +
+            log().warning("unknown version qualifier '" + qualifier + "' in " + Version.this +
                 ((context == null) ? "" : " [" + context + "]") +
                 "; assuming pre-release");
         }

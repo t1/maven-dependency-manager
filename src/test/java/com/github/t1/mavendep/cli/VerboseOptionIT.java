@@ -16,7 +16,7 @@ class VerboseOptionIT extends BaseCliIT {
 
         var output = runCli(null, true, "check", invalidPomFile.toString(), "--verbose");
 
-        then(output).contains("Warning: Can't parse POM file:");
+        then(output).contains("WARNING: Can't parse POM file:");
         then(output).contains("at ");
     }
 
@@ -27,7 +27,7 @@ class VerboseOptionIT extends BaseCliIT {
 
         var output = runCli(null, true, "check", invalidPomFile.toString());
 
-        then(output).contains("Warning: Can't parse POM file:");
+        then(output).contains("WARNING: Can't parse POM file:");
         then(output).doesNotContain("at ");
     }
 
@@ -38,7 +38,7 @@ class VerboseOptionIT extends BaseCliIT {
 
         var output = runCli(null, true, "check", invalidPomFile.toString(), "-v");
 
-        then(output).contains("Warning: Can't parse POM file:");
+        then(output).contains("WARNING: Can't parse POM file:");
         then(output).contains("at ");
     }
 }

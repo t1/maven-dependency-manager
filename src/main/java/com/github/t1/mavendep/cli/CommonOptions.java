@@ -7,8 +7,6 @@ import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -79,16 +77,10 @@ class CommonOptions {
     }
 
     Logger logger() {
-        return new Logger() {
-            @Override public void log(String message) {System.err.println(message);}
-
-            @Override public void log(String message, Exception e) {
-                log(message);
-                if (verbose) {
-                    var sw = new StringWriter();
-                    e.printStackTrace(new PrintWriter(sw));
-                    System.err.println(sw);
-                }
+        return logMessage -> {
+            System.err.println(logMessage.level() + ": " + logMessage.message());
+            if (verbose && logMessage.exception() != null) {
+                logMessage.exception().printStackTrace(System.err);
             }
         };
     }
