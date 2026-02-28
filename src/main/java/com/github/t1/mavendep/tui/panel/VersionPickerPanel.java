@@ -2,14 +2,16 @@ package com.github.t1.mavendep.tui.panel;
 
 import com.github.t1.mavendep.tui.DashboardModel;
 import dev.tamboui.layout.Rect;
-import dev.tamboui.style.Color;
-import dev.tamboui.style.Style;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
-import dev.tamboui.widgets.block.Borders;
 import dev.tamboui.widgets.list.ListItem;
 import dev.tamboui.widgets.list.ListState;
 import dev.tamboui.widgets.list.ListWidget;
+
+import static dev.tamboui.style.Color.BLUE;
+import static dev.tamboui.style.Style.EMPTY;
+import static dev.tamboui.widgets.Clear.clear;
+import static dev.tamboui.widgets.block.Borders.ALL;
 
 /// Renders an overlay list for choosing a target version.
 public class VersionPickerPanel {
@@ -29,9 +31,9 @@ public class VersionPickerPanel {
 
         var list = ListWidget.builder()
                 .items(items)
-                .highlightStyle(Style.EMPTY.bg(Color.BLUE))
+                .highlightStyle(EMPTY.bg(BLUE))
                 .highlightSymbol("> ")
-                .block(Block.builder().borders(Borders.ALL)
+                .block(Block.builder().borders(ALL)
                         .title("Pick version for " + focused.groupId() + ":" + focused.artifactId())
                         .build())
                 .build();
@@ -43,6 +45,7 @@ public class VersionPickerPanel {
         var y = area.top() + (area.height() - overlayHeight) / 2;
         var overlayArea = new Rect(x, y, overlayWidth, overlayHeight);
 
+        frame.renderWidget(clear(), overlayArea);
         frame.renderStatefulWidget(list, overlayArea, listState);
     }
 }

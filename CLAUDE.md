@@ -24,7 +24,8 @@ This project uses the **tdder** plugin for TDD and Clean Code practices. **VERY 
 
 - TDD practices (Red-Green-Refactor, baby steps, guessing game) are enforced by the plugin's `tdd` skill
 - Clean Code principles and the Clean Code Reviewer subagent are provided by the plugin's `clean-code` skill
-- Java and Maven conventions are provided by the plugin's `java` and `maven` skills
+- Java and Maven conventions are provided by the plugin's `java` and `maven` skills —
+  **always load these before making coding style decisions** (e.g. static imports, visibility, naming)
 
 See `TDD.md` and `CLEAN_CODE.md` for pointers to the plugin.
 
