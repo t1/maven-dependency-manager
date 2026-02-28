@@ -5,7 +5,6 @@ import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Layout;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
-import dev.tamboui.style.Overflow;
 import dev.tamboui.style.Style;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
@@ -20,6 +19,7 @@ import static com.github.t1.mavendep.domain.Logger.LogLevel.INFO;
 import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.BUILD;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
+import static dev.tamboui.style.Overflow.WRAP_WORD;
 
 /// Renders the [DashboardModel] into TamboUI widgets.
 public class DashboardView {
@@ -99,7 +99,11 @@ public class DashboardView {
             return;
         }
 
-        var logHeight = Math.min(messages.size() + 2, area.height() / 3); // +2 for borders, cap at 1/3
+        var innerWidth = Math.max(1, area.width() - 2); // account for borders
+        var wrappedLineCount = messages.stream()
+                .mapToInt(m -> Math.max(1, (m.message().length() + innerWidth - 1) / innerWidth))
+                .sum();
+        var logHeight = Math.min(wrappedLineCount + 2, area.height() / 3); // +2 for borders, cap at 1/3
         var split = Layout.vertical()
                 .constraints(Constraint.fill(), Constraint.length(logHeight))
                 .split(area);
@@ -108,10 +112,11 @@ public class DashboardView {
 
         var text = messages.stream().map(LogMessage::message).collect(Collectors.joining("\n"));
         var visibleLines = Math.max(1, logHeight - 2);
-        var scroll = Math.max(0, messages.size() - visibleLines);
+        var scroll = Math.max(0, wrappedLineCount - visibleLines);
         var paragraph = Paragraph.builder()
                 .text(text)
                 .style(Style.EMPTY.fg(Color.YELLOW))
+                .overflow(WRAP_WORD)
                 .scroll(scroll)
                 .block(Block.builder().borders(Borders.ALL)
                         .title("Errors (" + messages.size() + ")")
@@ -131,7 +136,7 @@ public class DashboardView {
                 case BUILDING -> "Building...";
                 case READY -> throw new IllegalStateException();
             };
-            frame.renderWidget(Paragraph.builder().text(status).overflow(Overflow.WRAP_WORD).build(), area);
+            frame.renderWidget(Paragraph.builder().text(status).overflow(WRAP_WORD).build(), area);
             return;
         }
 
@@ -144,6 +149,6 @@ public class DashboardView {
         var status = gap >= 2
                 ? left + " ".repeat(gap) + right
                 : left + " | " + right;
-        frame.renderWidget(Paragraph.builder().text(status).overflow(Overflow.WRAP_WORD).build(), area);
+        frame.renderWidget(Paragraph.builder().text(status).overflow(WRAP_WORD).build(), area);
     }
 }
