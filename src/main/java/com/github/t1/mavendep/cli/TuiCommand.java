@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.tui.DashboardApp;
+import com.github.t1.mavendep.tui.DashboardConfig;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 import picocli.CommandLine.Model.CommandSpec;
@@ -62,7 +63,8 @@ public class TuiCommand implements Callable<Integer> {
         try {
             var repository = cmd.repositoryOptions.createMavenRepository();
             var goals = Arrays.asList(cmd.buildGoals.split("\\s+"));
-            var app = new DashboardApp(repository, cmd.commonOptions.pomFiles, goals, cmd.commonOptions.showAll);
+            var config = new DashboardConfig(repository, cmd.commonOptions.pomFiles, goals, cmd.commonOptions.showAll);
+            var app = new DashboardApp(config);
             app.run();
         } catch (Exception e) {
             throw new RuntimeException(e);

@@ -1,4 +1,3 @@
-* boolean `showAll` passed through multiple layers as flag argument -- let's discuss our options
 * broad `catch (Exception e)` in `MavenRepository.getAvailableVersions` — catch specific exceptions to avoid masking
   bugs
 * `Pom.writeToDisk` wraps `IOException` in bare `RuntimeException` — use `UncheckedIOException`
