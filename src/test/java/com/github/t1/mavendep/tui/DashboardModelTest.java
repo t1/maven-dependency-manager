@@ -278,6 +278,42 @@ class DashboardModelTest {
         then(model.showAll()).isTrue();
     }
 
+    @Test void shouldShowDependencyMenuOnDependenciesTab() {
+        setReportsWithTwoDependencyUpdates();
+
+        then(model.menuText()).contains("[Space] toggle", "[Enter] pick version", "[s]how all");
+    }
+
+    @Test void shouldHideDependencyActionsOnBuildTab() {
+        setReportsWithTwoDependencyUpdates();
+        model.setActiveTab(Tab.BUILD);
+
+        then(model.menuText())
+                .doesNotContain("[Space] toggle")
+                .doesNotContain("[Enter] pick version")
+                .doesNotContain("[s]how all");
+    }
+
+    @Test void shouldShowGlobalActionsOnAllTabs() {
+        setReportsWithTwoDependencyUpdates();
+        model.setActiveTab(Tab.BUILD);
+
+        then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ] tabs", "[q]uit");
+    }
+
+    @Test void shouldShowDiffHintOnNonDiffTab() {
+        setReportsWithTwoDependencyUpdates();
+
+        then(model.menuText()).contains("[d]iff");
+    }
+
+    @Test void shouldShowDependenciesHintOnDiffTab() {
+        setReportsWithTwoDependencyUpdates();
+        model.setActiveTab(Tab.DIFF);
+
+        then(model.menuText()).contains("[d]ependencies");
+    }
+
     private void setReportsWithMixedUpdates() {
         var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
                 Version.fromString("5.10.0"), DEFAULT, null);

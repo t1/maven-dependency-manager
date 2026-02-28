@@ -2,6 +2,9 @@ package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.layout.Constraint;
+
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.BUILD;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
 import dev.tamboui.layout.Layout;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
@@ -70,9 +73,9 @@ public class DashboardView {
             return;
         }
 
-        if (model.activeTab() == DashboardModel.Tab.BUILD) {
+        if (model.activeTab() == BUILD) {
             buildOutputPanel.render(frame, area, model);
-        } else if (model.activeTab() == DashboardModel.Tab.DIFF) {
+        } else if (model.activeTab() == DIFF) {
             gitDiffPanel.render(frame, area, model);
         } else {
             renderDependencyTabWithErrors(frame, area);
@@ -112,23 +115,29 @@ public class DashboardView {
     }
 
     private void renderStatusBar(Frame frame, Rect area) {
-        var status = switch (model.phase()) {
-            case SCANNING -> {
-                var messages = model.logMessages();
-                yield messages.isEmpty() ? "Scanning..." : "Scanning... " + messages.getLast();
-            }
-            case APPLYING -> "Applying updates...";
-            case BUILDING -> "Building...";
-            case READY -> {
-                var logCount = model.logMessages().size();
-                var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
-                var dHint = model.activeTab() == DashboardModel.Tab.DIFF ? "[d]ependencies" : "[d]iff";
-                yield model.selectedCount() + " selected" + logHint + " | " +
-                        "[Space] toggle [Enter] pick version [s]how all [b]uild [r]escan " + dHint + " Tab/[ ] tabs [q]uit";
-            }
-        };
+        if (model.phase() != Phase.READY) {
+            var status = switch (model.phase()) {
+                case SCANNING -> {
+                    var messages = model.logMessages();
+                    yield messages.isEmpty() ? "Scanning..." : "Scanning... " + messages.getLast();
+                }
+                case APPLYING -> "Applying updates...";
+                case BUILDING -> "Building...";
+                case READY -> throw new IllegalStateException();
+            };
+            frame.renderWidget(Paragraph.builder().text(status).overflow(Overflow.WRAP_WORD).build(), area);
+            return;
+        }
 
-        var paragraph = Paragraph.builder().text(status).overflow(Overflow.WRAP_WORD).build();
-        frame.renderWidget(paragraph, area);
+        var logCount = model.logMessages().size();
+        var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
+        var left = model.selectedCount() + " selected" + logHint;
+        var right = model.menuText();
+
+        var gap = area.width() - left.length() - right.length();
+        var status = gap >= 2
+                ? left + " ".repeat(gap) + right
+                : left + " | " + right;
+        frame.renderWidget(Paragraph.builder().text(status).overflow(Overflow.WRAP_WORD).build(), area);
     }
 }

@@ -2,6 +2,9 @@ package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.tui.TuiRunner;
+
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.DEPENDENCIES;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
 import dev.tamboui.tui.event.Event;
 import dev.tamboui.tui.event.KeyCode;
 import dev.tamboui.tui.event.KeyEvent;
@@ -113,10 +116,10 @@ public class DashboardController {
             return true;
         }
         if (key.isChar('d')) {
-            if (model.activeTab() == DashboardModel.Tab.DIFF) {
-                model.setActiveTab(DashboardModel.Tab.DEPENDENCIES);
+            if (model.activeTab() == DIFF) {
+                model.setActiveTab(DEPENDENCIES);
             } else {
-                model.setActiveTab(DashboardModel.Tab.DIFF);
+                model.setActiveTab(DIFF);
                 refreshDiffIfActive();
             }
             return true;
@@ -126,7 +129,7 @@ public class DashboardController {
     }
 
     private void refreshDiffIfActive() {
-        if (model.activeTab() == DashboardModel.Tab.DIFF) onDiff.run();
+        if (model.activeTab() == DIFF) onDiff.run();
     }
 
     /// Detects Shift+Tab via the [BackTabBackendWrapper] workaround.

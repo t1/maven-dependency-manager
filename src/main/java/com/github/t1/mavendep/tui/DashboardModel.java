@@ -6,12 +6,19 @@ import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.github.t1.mavendep.tui.DashboardModel.Phase.SCANNING;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.DEPENDENCIES;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.PLUGINS;
 
 /// Holds all mutable state for the TUI dashboard.
 /// Designed for testability: no TamboUI dependencies, pure state management.
@@ -21,8 +28,8 @@ public class DashboardModel {
 
     public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF}
 
-    private Phase phase = Phase.SCANNING;
-    private Tab activeTab = Tab.DEPENDENCIES;
+    private Phase phase = SCANNING;
+    private Tab activeTab = DEPENDENCIES;
 
     private List<ProjectReport> reports = List.of();
     private int cursor;
@@ -44,7 +51,33 @@ public class DashboardModel {
 
     private boolean showAll;
 
+    private static final Set<Tab> DEPENDENCY_TABS = EnumSet.of(DEPENDENCIES, PLUGINS);
+    private static final Set<Tab> ALL_TABS = EnumSet.allOf(Tab.class);
+
+    private static final List<MenuBinding> STATIC_BINDINGS = List.of(
+            new MenuBinding("[Space] toggle", DEPENDENCY_TABS),
+            new MenuBinding("[Enter] pick version", DEPENDENCY_TABS),
+            new MenuBinding("[s]how all", DEPENDENCY_TABS),
+            new MenuBinding("[b]uild", ALL_TABS),
+            new MenuBinding("[r]escan", ALL_TABS),
+            new MenuBinding("Tab/[ ] tabs", ALL_TABS),
+            new MenuBinding("[q]uit", ALL_TABS));
+
     private final VersionPickerModel versionPicker = new VersionPickerModel(this::rawFocusedUpdate);
+
+    // --- Menu ---
+
+    /// Returns the formatted menu text showing only bindings available on the active tab.
+    public String menuText() {
+        var dBinding = (activeTab == DIFF)
+                ? new MenuBinding("[d]ependencies", ALL_TABS)
+                : new MenuBinding("[d]iff", ALL_TABS);
+
+        return Stream.concat(STATIC_BINDINGS.stream(), Stream.of(dBinding))
+                .filter(b -> b.isAvailableOn(activeTab))
+                .map(MenuBinding::display)
+                .collect(Collectors.joining(" "));
+    }
 
     // --- needs redraw flag ---
 

@@ -1,6 +1,3 @@
-* get smarter about the menu:
-    * right-align
-    * use a single model for handling and displaying key bindings; show only when available on a tab
 * TUI: if there are no updates (dependencies as well as plugins), show "no updates available",
   or if showing all and there are none "no dependencies/plugins"
 * reduce flashing when scanning... don't paint everything in cyan
