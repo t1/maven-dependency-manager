@@ -9,9 +9,12 @@ import com.github.t1.mavendep.domain.UpdateType;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static com.github.t1.mavendep.domain.Logger.with;
 import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
@@ -21,7 +24,11 @@ import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
         aliases = "up",
         description = "Update Maven dependencies to their latest versions"
 )
-public class UpdateCommand implements Runnable {
+public class UpdateCommand implements Callable<Integer> {
+
+    @Spec
+    @SuppressWarnings("unused") // set by Picocli
+    private CommandSpec spec;
 
     @Mixin
     private CommonOptions commonOptions;
@@ -63,14 +70,17 @@ public class UpdateCommand implements Runnable {
     }
 
     @Override
-    public void run() {
-        with(commonOptions.logger()).run(() -> {
+    public Integer call() {
+        return with(commonOptions.logger()).call(() -> {
             var analyzer = new DependencyAnalyzer(repository, commonOptions.pomFiles);
 
             var reports = analyzer.run();
 
-            if (dependencyFilters != null) {
-                reports = filterAndValidate(reports);
+            try {
+                if (dependencyFilters != null) reports = filterByDependencyFilters(reports);
+            } catch (NoMatchingFilterException e) {
+                spec.commandLine().getErr().println(e.getMessage());
+                return 1;
             }
 
             reports = filterByUpdateType(reports);
@@ -88,6 +98,7 @@ public class UpdateCommand implements Runnable {
                     });
 
             writeReport(reports, commonOptions.format(), commonOptions.outputFile, commonOptions.showAll);
+            return 0;
         });
     }
 
@@ -100,18 +111,22 @@ public class UpdateCommand implements Runnable {
                 .toList();
     }
 
-    private List<ProjectReport> filterAndValidate(List<ProjectReport> reports) {
+    private List<ProjectReport> filterByDependencyFilters(List<ProjectReport> reports) {
         var filtered = reports.stream()
                 .map(report -> report.filterUpdates(this::matchesAnyFilter))
                 .toList();
 
-        var hasMatchingUpdates = filtered.stream().anyMatch(ProjectReport::hasUpdates);
-        if (!hasMatchingUpdates) {
-            System.err.println("No dependencies match the filter: " + String.join(", ", dependencyFilters));
-            System.exit(1);
+        if (filtered.stream().noneMatch(ProjectReport::hasUpdates)) {
+            throw new NoMatchingFilterException(dependencyFilters);
         }
 
         return filtered;
+    }
+
+    private static class NoMatchingFilterException extends RuntimeException {
+        NoMatchingFilterException(List<String> filters) {
+            super("No dependencies match the filter: " + String.join(", ", filters));
+        }
     }
 
     private boolean matchesAnyFilter(DependencyUpdate update) {

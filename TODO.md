@@ -1,5 +1,3 @@
-* `System.exit(1)` in `UpdateCommand.filterAndValidate` — untestable, use PicoCLI exit codes instead
-* `System.exit` in `TuiCommand.run` — same issue
 * duplicated `padRight` in `TextReportWriter` and `VersionTreeTableFormatter`
 * duplicated `totalDependencies` calculation in `DependencyAnalyzer.run()` and `analyze()` — extract to `Pom`
 * duplicated default Maven Central URL in `MavenRepository` and `RepositoryOptions`

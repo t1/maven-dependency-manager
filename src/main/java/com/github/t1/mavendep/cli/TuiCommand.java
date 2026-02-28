@@ -3,15 +3,23 @@ package com.github.t1.mavendep.cli;
 import com.github.t1.mavendep.tui.DashboardApp;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
+import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
+import picocli.CommandLine.Spec;
 
 import java.util.Arrays;
+import java.util.concurrent.Callable;
+import java.util.function.Consumer;
 
 @Command(
         name = "tui",
         description = "Launch the interactive TUI dashboard"
 )
-public class TuiCommand implements Runnable {
+public class TuiCommand implements Callable<Integer> {
+
+    @Spec
+    @SuppressWarnings("unused") // set by Picocli
+    private CommandSpec spec;
 
     @Mixin
     private CommonOptions commonOptions;
@@ -26,20 +34,38 @@ public class TuiCommand implements Runnable {
     )
     private String buildGoals;
 
+    private final Consumer<TuiCommand> dashboardRunner;
+
+    @SuppressWarnings("unused") // Used by Picocli
+    public TuiCommand() {
+        this(TuiCommand::runDashboard);
+    }
+
+    TuiCommand(Consumer<TuiCommand> dashboardRunner) {
+        this.dashboardRunner = dashboardRunner;
+    }
+
     @Override
-    public void run() {
+    public Integer call() {
         try {
-            var repository = repositoryOptions.createMavenRepository();
-            var goals = Arrays.asList(buildGoals.split("\\s+"));
-            var app = new DashboardApp(repository, commonOptions.pomFiles, goals, commonOptions.showAll);
-            app.run();
+            dashboardRunner.accept(this);
+            return 0;
         } catch (Exception e) {
-            System.err.println("TUI error: " + e.getMessage());
-            if (commonOptions.verbose) e.printStackTrace(System.err);
-            System.exit(1);
+            var cause = e.getCause() != null ? e.getCause() : e;
+            spec.commandLine().getErr().println("TUI error: " + cause.getMessage());
+            if (commonOptions.verbose) cause.printStackTrace(spec.commandLine().getErr());
+            return 1;
         }
     }
 
-    @SuppressWarnings("unused") // Used by Picocli
-    public TuiCommand() {}
+    private static void runDashboard(TuiCommand cmd) {
+        try {
+            var repository = cmd.repositoryOptions.createMavenRepository();
+            var goals = Arrays.asList(cmd.buildGoals.split("\\s+"));
+            var app = new DashboardApp(repository, cmd.commonOptions.pomFiles, goals, cmd.commonOptions.showAll);
+            app.run();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
