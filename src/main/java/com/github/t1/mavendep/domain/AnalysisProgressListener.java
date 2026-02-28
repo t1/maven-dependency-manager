@@ -5,5 +5,7 @@ package com.github.t1.mavendep.domain;
 @FunctionalInterface
 public interface AnalysisProgressListener {
 
+    AnalysisProgressListener NONE = (completed, total, artifactName) -> {};
+
     void onProgress(int completed, int total, String artifactName);
 }

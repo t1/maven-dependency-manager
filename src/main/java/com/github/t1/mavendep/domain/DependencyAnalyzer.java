@@ -40,7 +40,7 @@ public class DependencyAnalyzer {
     }
 
     public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles) {
-        this(repository, pomFiles, null);
+        this(repository, pomFiles, AnalysisProgressListener.NONE);
     }
 
     public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles, AnalysisProgressListener progressListener) {
@@ -182,10 +182,8 @@ public class DependencyAnalyzer {
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
         var updateType = UpdateType.between(dependency.version(), latestVersion);
         var result = dependency.toUpdate(latestVersion, availableVersions, updateType);
-        if (progressListener != null) {
-            var artifactName = dependency.groupId() + ":" + dependency.artifactId();
-            progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifactName);
-        }
+        var artifactName = dependency.groupId() + ":" + dependency.artifactId();
+        progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifactName);
         return result;
     }
 }
