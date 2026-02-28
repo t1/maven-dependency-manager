@@ -1,5 +1,3 @@
-* broad `catch (Exception e)` in `MavenRepository.getAvailableVersions` — catch specific exceptions to avoid masking
-  bugs
 * `Pom.writeToDisk` wraps `IOException` in bare `RuntimeException` — use `UncheckedIOException`
 * `MavenRepository.isCacheFresh` same issue — use `UncheckedIOException`
 * `MavenDepManagerCli.run()` manually wires `CheckCommand` via setters — use PicoCLI's `defaultCommand` instead

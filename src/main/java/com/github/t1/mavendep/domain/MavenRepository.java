@@ -93,7 +93,7 @@ public class MavenRepository {
                     : writeCache(cacheFile, fetchMetadata(groupId, artifactId));
 
             return parseMetadata(metadata);
-        } catch (Exception e) {
+        } catch (IOException | InterruptedException | ParserConfigurationException | SAXException e) {
             log().log("Failed to get available versions for " + groupId + ":" + artifactId + ", assuming none available: " + e.getMessage(), e);
             return List.of();
         }
@@ -132,8 +132,8 @@ public class MavenRepository {
         var contentType = response.headers().firstValue("Content-Type").orElse(null);
 
         if (response.statusCode() != 200 || !isXml(contentType)) {
-            throw new RuntimeException("Failed to fetch metadata from " + uri +
-                                       ((metadata == null || "text/html".equals(contentType)) ? "" : ": " + metadata));
+            throw new IOException("Failed to fetch metadata from " + uri +
+                                  ((metadata == null || "text/html".equals(contentType)) ? "" : ": " + metadata));
         }
         return metadata;
     }
