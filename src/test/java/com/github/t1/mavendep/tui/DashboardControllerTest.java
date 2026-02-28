@@ -34,13 +34,15 @@ class DashboardControllerTest {
     private final AtomicBoolean updateCalled = new AtomicBoolean();
     private final AtomicBoolean buildCalled = new AtomicBoolean();
     private final AtomicBoolean rescanCalled = new AtomicBoolean();
+    private final AtomicBoolean diffCalled = new AtomicBoolean();
     private DashboardController controller;
 
     @BeforeEach void setUp() {
         controller = new DashboardController(model,
                 () -> updateCalled.set(true),
                 () -> buildCalled.set(true),
-                () -> rescanCalled.set(true));
+                () -> rescanCalled.set(true),
+                () -> diffCalled.set(true));
         setUpReady();
     }
 
@@ -100,20 +102,29 @@ class DashboardControllerTest {
         then(rescanCalled).isTrue();
     }
 
+    @Test void shouldJumpToDiffTabAndRefresh() {
+        controller.handle(KeyEvent.ofChar('d'), runner);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.DIFF);
+        then(diffCalled).isTrue();
+    }
+
     @Test void shouldSwitchTabs() {
         controller.handle(KeyEvent.ofKey(KeyCode.TAB), runner);
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);
+        then(diffCalled).isFalse();
     }
 
     @Test void shouldSwitchTabsBackwardWithShiftTab() {
         controller.handle(KeyEvent.ofKey(KeyCode.TAB, dev.tamboui.tui.event.KeyModifiers.SHIFT), runner);
-        then(model.activeTab()).isEqualTo(DashboardModel.Tab.BUILD);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.DIFF);
+        then(diffCalled).isTrue();
     }
 
     @Test void shouldSwitchTabsBackwardWithBackTabWorkaround() {
         // BackTabBackendWrapper translates ESC [ Z into UNKNOWN + SHIFT
         controller.handle(KeyEvent.ofKey(KeyCode.UNKNOWN, dev.tamboui.tui.event.KeyModifiers.SHIFT), runner);
-        then(model.activeTab()).isEqualTo(DashboardModel.Tab.BUILD);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.DIFF);
+        then(diffCalled).isTrue();
     }
 
     @Test void shouldSwitchTabsForwardWithBracket() {
@@ -123,7 +134,7 @@ class DashboardControllerTest {
 
     @Test void shouldSwitchTabsBackwardWithBracket() {
         controller.handle(KeyEvent.ofChar('['), runner);
-        then(model.activeTab()).isEqualTo(DashboardModel.Tab.BUILD);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.DIFF);
     }
 
     @Test void shouldOpenVersionPicker() {

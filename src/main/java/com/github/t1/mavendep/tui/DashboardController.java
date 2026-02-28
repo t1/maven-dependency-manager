@@ -14,12 +14,15 @@ public class DashboardController {
     private final Runnable onUpdate;
     private final Runnable onBuild;
     private final Runnable onRescan;
+    private final Runnable onDiff;
 
-    public DashboardController(DashboardModel model, Runnable onUpdate, Runnable onBuild, Runnable onRescan) {
+    public DashboardController(DashboardModel model, Runnable onUpdate, Runnable onBuild, Runnable onRescan,
+                               Runnable onDiff) {
         this.model = model;
         this.onUpdate = onUpdate;
         this.onBuild = onBuild;
         this.onRescan = onRescan;
+        this.onDiff = onDiff;
     }
 
     /// Handles an event. Returns true if a redraw is needed.
@@ -69,10 +72,12 @@ public class DashboardController {
 
         if (key.isFocusPrevious() || isBackTab(key) || key.isChar('[')) {
             model.previousTab();
+            refreshDiffIfActive();
             return true;
         }
         if (key.isFocusNext() || key.isChar(']')) {
             model.nextTab();
+            refreshDiffIfActive();
             return true;
         }
 
@@ -108,8 +113,17 @@ public class DashboardController {
             onRescan.run();
             return true;
         }
+        if (key.isChar('d')) {
+            model.setActiveTab(DashboardModel.Tab.DIFF);
+            refreshDiffIfActive();
+            return true;
+        }
 
         return false;
+    }
+
+    private void refreshDiffIfActive() {
+        if (model.activeTab() == DashboardModel.Tab.DIFF) onDiff.run();
     }
 
     /// Detects Shift+Tab via the [BackTabBackendWrapper] workaround.

@@ -85,6 +85,8 @@ class TuiDashboardIT {
         tui.awaitText("selected", ofSeconds(10));
         tui.type("]");
         tui.awaitText("Plugins", ofSeconds(2));
+        tui.type("]]");
+        tui.awaitText("Git Diff", ofSeconds(2));
     }
 
     @Test void quitExitsCleanly() {

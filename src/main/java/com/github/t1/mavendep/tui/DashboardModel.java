@@ -19,7 +19,7 @@ public class DashboardModel {
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
-    public enum Tab {DEPENDENCIES, PLUGINS, BUILD}
+    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF}
 
     private Phase phase = Phase.SCANNING;
     private Tab activeTab = Tab.DEPENDENCIES;
@@ -37,6 +37,8 @@ public class DashboardModel {
 
     private final List<String> buildOutputLines = new ArrayList<>();
     private Integer buildExitCode;
+
+    private final List<String> diffOutputLines = new ArrayList<>();
 
     private boolean needsRedraw;
 
@@ -108,7 +110,7 @@ public class DashboardModel {
                 .flatMap(r -> switch (activeTab) {
                     case DEPENDENCIES -> r.dependencyUpdates().stream();
                     case PLUGINS -> r.pluginUpdates().stream();
-                    case BUILD -> Stream.of();
+                    case BUILD, DIFF -> Stream.of();
                 });
         if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none);
         return stream.toList();
@@ -250,6 +252,16 @@ public class DashboardModel {
     public void clearBuildOutput() {
         buildOutputLines.clear();
         buildExitCode = null;
+    }
+
+    // --- Diff output ---
+
+    public List<String> diffOutputLines() {return diffOutputLines;}
+
+    public void setDiffOutput(List<String> lines) {
+        diffOutputLines.clear();
+        diffOutputLines.addAll(lines);
+        setNeedsRedraw();
     }
 
     // --- Version picker ---

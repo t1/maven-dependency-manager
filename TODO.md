@@ -1,7 +1,4 @@
-## Clean Code Findings
-
-### Code Smells
-
+* in the TUI, changes to the dependencies should automatically update the pom
 * telescoping constructors in `MavenRepository` (5 chained constructors) — use a builder or reduce to two
 * `System.exit(1)` in `UpdateCommand.filterAndValidate` — untestable, use PicoCLI exit codes instead
 * `System.exit` in `TuiCommand.run` — same issue
@@ -10,31 +7,16 @@
 * duplicated default Maven Central URL in `MavenRepository` and `RepositoryOptions`
 * `Dependency.toUpdate` normalizes nulls to empty strings — fix at parse time in `Pom.DependencyParser` instead
 * `DashboardModel` is ~300 lines with many responsibilities — comment sections hint at natural split points
-
-### SOLID
-
 * DIP/Bug: `UpdateCommand` ignores `RepositoryOptions` — its no-arg constructor creates `new MavenRepository()`
   bypassing CLI options like `--cache-ttl`, `--local-repo`
-
-### Method Design
-
 * `ReportOutputHandler.writeReport` has 4 parameters — group the last 3 into a config object
 * `DependencyAnalyzer` has 3 telescoping constructors with nullable `progressListener` — use a no-op default
 * boolean `showAll` passed through multiple layers as flag argument -- let's discuss our options
-
-### Exception Handling
-
 * broad `catch (Exception e)` in `MavenRepository.getAvailableVersions` — catch specific exceptions to avoid masking
   bugs
 * `Pom.writeToDisk` wraps `IOException` in bare `RuntimeException` — use `UncheckedIOException`
 * `MavenRepository.isCacheFresh` same issue — use `UncheckedIOException`
-
-### Structure
-
 * `MavenDepManagerCli.run()` manually wires `CheckCommand` via setters — use PicoCLI's `defaultCommand` instead
-
-### Java Code Style
-
 * setter injection in `CheckCommand` (`setCommonOptions`, `setRepositoryOptions`) used by `MavenDepManagerCli.run()` —
   prefer constructor injection
 * `DashboardModelTest` uses `when().thenReturn()` instead of `given().willReturn()` (lines 274, 291)
@@ -44,9 +26,6 @@
   `ScanProgressPanel`, `BuildOutputPanel`, `VersionPickerPanel`, `DependencyTablePanel`) — only used within `tui`
   package
 * no `package-info.java` files anywhere in the project
-
-
-* new TUI tab with git diff
 * get smarter about the menu:
     * right-align
     * use a single model for handling and displaying key bindings; show only when available on a tab

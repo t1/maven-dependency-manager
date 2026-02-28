@@ -2,6 +2,7 @@ package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.tui.action.ApplyUpdatesAction;
+import com.github.t1.mavendep.tui.action.GitDiffAction;
 import com.github.t1.mavendep.tui.action.MavenBuildAction;
 import com.github.t1.mavendep.tui.action.ScanAction;
 import dev.tamboui.terminal.BackendFactory;
@@ -38,13 +39,16 @@ public class DashboardApp {
             var applyAction = new ApplyUpdatesAction(model);
             var workingDir = pomFiles.getFirst().toAbsolutePath().getParent();
             var buildAction = new MavenBuildAction(model, tui, workingDir, buildGoals);
+            var diffAction = new GitDiffAction(model, tui, workingDir, pomFiles);
 
             var controller = new DashboardController(model,
-                    applyAction::run,
+                    () -> { applyAction.run(); diffAction.refresh(); },
                     buildAction::start,
-                    scanAction::start);
+                    scanAction::start,
+                    diffAction::refresh);
 
             scanAction.start();
+            diffAction.refresh();
 
             tui.run(controller::handle, view::render);
         }

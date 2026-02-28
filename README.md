@@ -144,7 +144,7 @@ The TUI provides a full interactive dashboard where you can:
 - Apply selected updates (`u`)
 - Run a Maven build and see output in a scrollable panel (`b`)
 - Rescan after applying updates (`r`)
-- Switch between Dependencies/Plugins/Build tabs (Tab/`]` forward, `[` backward)
+- Switch between Dependencies/Plugins/Build/Git Diff tabs (Tab/`]` forward, `[` backward)
 - View scan errors and warnings inline below the dependency table
 - Quit (`q`)
 

@@ -37,6 +37,9 @@ class DashboardModelTest {
         then(model.activeTab()).isEqualTo(Tab.BUILD);
 
         model.nextTab();
+        then(model.activeTab()).isEqualTo(Tab.DIFF);
+
+        model.nextTab();
         then(model.activeTab()).isEqualTo(Tab.DEPENDENCIES);
     }
 
@@ -166,6 +169,9 @@ class DashboardModelTest {
 
     @Test void shouldCycleTabsBackward() {
         model.previousTab();
+        then(model.activeTab()).isEqualTo(Tab.DIFF);
+
+        model.previousTab();
         then(model.activeTab()).isEqualTo(Tab.BUILD);
 
         model.previousTab();
@@ -233,6 +239,18 @@ class DashboardModelTest {
 
         model.selectAll();
         then(model.selectedCount()).isEqualTo(1);
+    }
+
+    @Test void shouldSetDiffOutput() {
+        model.setDiffOutput(List.of("line 1", "line 2"));
+
+        then(model.diffOutputLines()).containsExactly("line 1", "line 2");
+    }
+
+    @Test void shouldBeDirtyAfterSetDiffOutput() {
+        model.clearNeedsRedraw();
+        model.setDiffOutput(List.of("diff"));
+        then(model.needsRedraw()).isTrue();
     }
 
     @Test void shouldDefaultShowAllToFalse() {

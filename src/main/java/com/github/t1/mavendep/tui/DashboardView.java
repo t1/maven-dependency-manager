@@ -3,6 +3,7 @@ package com.github.t1.mavendep.tui;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import com.github.t1.mavendep.tui.panel.BuildOutputPanel;
 import com.github.t1.mavendep.tui.panel.DependencyTablePanel;
+import com.github.t1.mavendep.tui.panel.GitDiffPanel;
 import com.github.t1.mavendep.tui.panel.ScanProgressPanel;
 import com.github.t1.mavendep.tui.panel.VersionPickerPanel;
 import dev.tamboui.layout.Constraint;
@@ -26,6 +27,7 @@ public class DashboardView {
     private final DependencyTablePanel dependencyTablePanel = new DependencyTablePanel();
     private final VersionPickerPanel versionPickerPanel = new VersionPickerPanel();
     private final BuildOutputPanel buildOutputPanel = new BuildOutputPanel();
+    private final GitDiffPanel gitDiffPanel = new GitDiffPanel();
     private final TabsState tabsState = new TabsState(0);
 
     public DashboardView(DashboardModel model) {
@@ -59,7 +61,7 @@ public class DashboardView {
     private void renderTabs(Frame frame, Rect area) {
         tabsState.select(model.activeTab().ordinal());
         var tabs = Tabs.builder()
-                .titles("Dependencies", "Plugins", "Build Output")
+                .titles("Dependencies", "Plugins", "Build Output", "Git Diff")
                 .highlightStyle(Style.EMPTY.bold().fg(Color.YELLOW))
                 .divider(" | ")
                 .block(Block.builder().borders(Borders.ALL).build())
@@ -75,6 +77,8 @@ public class DashboardView {
 
         if (model.activeTab() == DashboardModel.Tab.BUILD) {
             buildOutputPanel.render(frame, area, model);
+        } else if (model.activeTab() == DashboardModel.Tab.DIFF) {
+            gitDiffPanel.render(frame, area, model);
         } else {
             renderDependencyTabWithErrors(frame, area);
         }
@@ -124,7 +128,7 @@ public class DashboardView {
                 var logCount = model.logMessages().size();
                 var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
                 yield model.selectedCount() + " selected" + logHint + " | " +
-                        "[Space] toggle [Enter] pick version [s]how all [u]pdate [b]uild [r]escan Tab/[ ] tabs [q]uit";
+                        "[Space] toggle [Enter] pick version [s]how all [u]pdate [b]uild [r]escan [d]iff Tab/[ ] tabs [q]uit";
             }
         };
 
