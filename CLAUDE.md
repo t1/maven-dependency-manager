@@ -50,5 +50,7 @@ When working with code:
 
 - **README.md** - Project documentation, setup, testing, coding conventions
 - **package-info.java files** - Package-level architecture and patterns
-    - `com.ionos.rocket.backtron.domain` - Domain layer overview
-    - Individual domain packages (profiles, sources, backups, restores, credentials)
+    - `cli` - PicoCLI command layer
+    - `domain` - Core domain model and services
+    - `report` - Report formatting and output
+    - `tui` - Interactive TUI dashboard

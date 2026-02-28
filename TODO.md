@@ -1,6 +1,4 @@
-* `TuiCommand.runDashboard` wraps exception in bare `new RuntimeException(e)` — blocked by
-  `TuiRunner.create()` declaring `throws Exception`
-* no `package-info.java` files anywhere in the project
+* TUI: when I'm on the DIFF tab, pressing `d` should jump to the DEPENDENCIES tab; this should be visible in the menu
 * get smarter about the menu:
     * right-align
     * use a single model for handling and displaying key bindings; show only when available on a tab
@@ -11,6 +9,6 @@
     * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`
     * connect logs to the dependency they belong to, so we can associate them in the TUI (and maybe in the Table output)
     * ignore "Fetching metadata" logs in the TUI... those are harmless
-* TUI: when I'm on the DIFF tab, pressing `d` should jump to the DEPENDENCIES tab; this should be visible in the menu
 * TUI: put header of the version picker **into** the box, so it's easier to see; and wrap it into three lines:
   "Pick version for", "groupId", and "artifactId"
+* Add yaml and xml output format
