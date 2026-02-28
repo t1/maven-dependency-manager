@@ -96,6 +96,67 @@ class TuiDashboardIT {
         assertTrue(tui.waitForExit(ofSeconds(5)));
     }
 
+    @Test void selectionTogglesWithSpaceKey() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("0 selected", ofSeconds(10));
+        tui.type(" ");
+        tui.awaitText("1 selected", ofSeconds(2));
+    }
+
+    @Test void selectAllAndDeselectAll() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("0 selected", ofSeconds(10));
+        tui.type("a");
+        tui.awaitText("2 selected", ofSeconds(2));
+        tui.type("a");
+        tui.awaitText("0 selected", ofSeconds(2));
+    }
+
+    @Test void deselectAllWithN() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("0 selected", ofSeconds(10));
+        tui.type("a");
+        tui.awaitText("2 selected", ofSeconds(2));
+        tui.type("n");
+        tui.awaitText("0 selected", ofSeconds(2));
+    }
+
+    @Test void cursorNavigationWithArrowKeys() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("0 selected", ofSeconds(10));
+        // cursor starts on first item; select it
+        tui.type(" ");
+        tui.awaitText("1 selected", ofSeconds(2));
+        // move down and select second item
+        tui.pressKey(Key.DOWN);
+        tui.type(" ");
+        tui.awaitText("2 selected", ofSeconds(2));
+        // move back up and deselect first item
+        tui.pressKey(Key.UP);
+        tui.type(" ");
+        tui.awaitText("1 selected", ofSeconds(2));
+    }
+
+    @Test void versionPickerOpensAndCloses() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("0 selected", ofSeconds(10));
+        tui.pressKey(Key.ENTER);
+        tui.awaitText("3.27.7", ofSeconds(2));
+        tui.awaitText("3.25.0", ofSeconds(2));
+        tui.pressKey(Key.ESCAPE);
+        tui.awaitText("0 selected", ofSeconds(2));
+    }
+
     @Test void scanCompletesEvenWhenVersionLookupFails() {
         givenVersions("org.assertj", "assertj-core", "3.25.0", "3.27.7");
         // junit-jupiter metadata is missing — will get 404

@@ -93,11 +93,6 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
         }
     }
 
-    @Override public String getLine(int row) {
-        if (row < 0 || row >= ROWS) throw new IndexOutOfBoundsException("Row " + row + " out of range [0, " + ROWS + ")");
-        return textBuffer.getLine(row).getText();
-    }
-
     @Override public boolean hasText(String text) {
         return textBuffer.getScreenLines().contains(text);
     }

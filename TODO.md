@@ -1,14 +1,3 @@
-* complete the TUI test suite
-* get smarter about the menu:
-    * right-align
-    * use a single model for handling and displaying key bindings; show only when available on a tab
-* plugins doesn't display anything
-* reduce flashing when scanning... don't paint everything in cyan
-* more structured logging, so we can
-    * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`
-    * connect logs to the dependency they belong to, so we can associate them in the TUI (and maybe in the Table output)
-    * ignore "Fetching metadata" logs in the TUI... those are harmless
-
 ## Clean Code Findings
 
 ### Code Smells
@@ -55,3 +44,15 @@
   `ScanProgressPanel`, `BuildOutputPanel`, `VersionPickerPanel`, `DependencyTablePanel`) — only used within `tui`
   package
 * no `package-info.java` files anywhere in the project
+
+
+* new TUI tab with git diff
+* get smarter about the menu:
+    * right-align
+    * use a single model for handling and displaying key bindings; show only when available on a tab
+* plugins doesn't display anything
+* reduce flashing when scanning... don't paint everything in cyan
+* more structured logging, so we can
+    * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`
+    * connect logs to the dependency they belong to, so we can associate them in the TUI (and maybe in the Table output)
+    * ignore "Fetching metadata" logs in the TUI... those are harmless

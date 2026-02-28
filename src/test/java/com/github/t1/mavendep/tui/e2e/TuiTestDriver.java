@@ -7,8 +7,6 @@ interface TuiTestDriver extends AutoCloseable {
 
     void pressKey(Key key);
 
-    String getLine(int row);
-
     boolean hasText(String text);
 
     void awaitText(String text, Duration timeout);
