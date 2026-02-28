@@ -317,6 +317,58 @@ class PomTest {
     }
 
     @Test
+    void shouldParseEmptyGroupIdWhenMissing() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <artifactId>some-lib</artifactId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        var dep = pom.dependencies().getFirst();
+        then(dep.groupId()).isEmpty();
+        then(dep.artifactId()).isEqualTo("some-lib");
+    }
+
+    @Test
+    void shouldParseEmptyArtifactIdWhenMissing() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>com.example</groupId>
+                            <version>1.0.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        var dep = pom.dependencies().getFirst();
+        then(dep.groupId()).isEqualTo("com.example");
+        then(dep.artifactId()).isEmpty();
+    }
+
+    @Test
     void shouldParseUnresolvablePropertyVersionAsNull() {
         var pomFile = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>

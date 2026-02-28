@@ -199,8 +199,8 @@ public class Pom {
         private Dependency parse(Node depNode) {
             var children = depNode.getChildNodes();
 
-            String groupId = null;
-            String artifactId = null;
+            String groupId = "";
+            String artifactId = "";
             Version version = null;
             Scope scope = Scope.DEFAULT;
             String versionProperty = null;
@@ -219,14 +219,14 @@ public class Pom {
                 }
             }
 
-            if (groupId == null && type == plugin) {
+            if (groupId.isEmpty() && type == plugin) {
                 log().log("Warning: missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
                 groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
 
             var dependency = new Dependency(type, groupId, artifactId, version, scope, versionProperty);
-            if (groupId == null) log().log("Warning: missing groupId in " + dependency);
-            if (artifactId == null) log().log("Warning: missing artifactId in " + dependency);
+            if (groupId.isEmpty()) log().log("Warning: missing groupId in " + dependency);
+            if (artifactId.isEmpty()) log().log("Warning: missing artifactId in " + dependency);
             return dependency;
         }
 

@@ -37,8 +37,8 @@ When working with code:
 - **Always read the relevant `package-info.java` files** to understand the architecture, patterns, and conventions for
   that package
 - Use `package-info.java` to understand package responsibilities, dependencies, and relationships
-- See `README.md` for project overview, tech stack, setup instructions, development guidelines, and coding style
-    - that Code Style is **VERY IMPORTANT**
+- **Always read `README.md` before starting any work** for project overview, tech stack, setup instructions,
+  development guidelines, and coding style. Esp. the Code Style is **VERY IMPORTANT**
 - For package-specific details, refer to the co-located `package-info.java` files
 
 ## Key Resources

@@ -13,8 +13,7 @@ class RepositoryOptions {
 
     @Option(
             names = {"--maven-central-url"},
-            description = "Maven Central URL (default: ${DEFAULT-VALUE})",
-            defaultValue = DEFAULT_MAVEN_CENTRAL_URL
+            description = "Maven Central URL (default: " + DEFAULT_MAVEN_CENTRAL_URL + ")"
     )
     String mavenCentralUrl;
 

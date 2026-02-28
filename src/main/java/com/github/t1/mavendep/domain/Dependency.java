@@ -6,10 +6,11 @@ import java.util.List;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 
-public record Dependency(DependencyType type,
-                         Coordinates coordinates,
-                         Scope scope,
-                         String versionProperty) {
+public record Dependency(
+        DependencyType type,
+        Coordinates coordinates,
+        Scope scope,
+        String versionProperty) {
     public enum DependencyType {
         parent,
         dependency,
@@ -27,12 +28,16 @@ public record Dependency(DependencyType type,
     public Version version() {return coordinates.version();}
 
     public boolean isValid() {
-        return groupId() != null && artifactId() != null && version() != null;
+        return hasGroupId() && hasArtifactId() && version() != null;
     }
 
     public boolean isManaged() {
-        return groupId() != null && artifactId() != null && version() == null;
+        return hasGroupId() && hasArtifactId() && version() == null;
     }
+
+    private boolean hasGroupId() {return groupId() != null && !groupId().isEmpty();}
+
+    private boolean hasArtifactId() {return artifactId() != null && !artifactId().isEmpty();}
 
     @Override
     public String toString() {
@@ -50,13 +55,6 @@ public record Dependency(DependencyType type,
             Version latestVersion,
             List<Version> availableVersions,
             UpdateType updateType) {
-        var normalized = new Dependency(
-                type(),
-                groupId() != null ? groupId() : "",
-                artifactId() != null ? artifactId() : "",
-                version(),
-                scope(),
-                versionProperty());
-        return new DependencyUpdate(normalized, latestVersion, availableVersions, updateType);
+        return new DependencyUpdate(this, latestVersion, availableVersions, updateType);
     }
 }

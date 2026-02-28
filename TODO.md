@@ -1,4 +1,3 @@
-* `Dependency.toUpdate` normalizes nulls to empty strings — fix at parse time in `Pom.DependencyParser` instead
 * `DashboardModel` is ~300 lines with many responsibilities — comment sections hint at natural split points
 * DIP/Bug: `UpdateCommand` ignores `RepositoryOptions` — its no-arg constructor creates `new MavenRepository()`
   bypassing CLI options like `--cache-ttl`, `--local-repo`

@@ -7,7 +7,9 @@ caching using the local Maven repository.
 
 - **Dependency Version Checking**: Queries Maven Central for the latest versions of your dependencies
 - **Parent POM Version Checking**: Also checks and updates parent POM versions
-- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with `--force-cache-update` to bypass the cache. The local repo path can be overridden via the `maven.repo.local` system property or the `--local-repo` CLI option.
+- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with
+  `--force-cache-update` to bypass the cache. The local repo path can be overridden via the `maven.repo.local` system
+  property or the `--local-repo` CLI option.
 - **Multi-Project Support**: Scan single or multiple Maven projects at once
 - **Multiple Output Formats**: JSON and human-readable text reports
 - **Show Available Versions**: Query all available versions for a specific artifact by `groupId:artifactId`, `groupId`,
@@ -138,6 +140,7 @@ mdm tui --force-cache-update
 ```
 
 The TUI provides a full interactive dashboard where you can:
+
 - Browse dependencies and plugins with live scan progress
 - Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none) — POM is updated automatically
 - Pick specific target versions (Enter to open version picker) — POM is updated on confirm
@@ -235,9 +238,17 @@ This project was developed using Test-Driven Development (TDD) with strict Red-G
 
 ### Running Tests
 
-To run all unit tests: `mvn test`
-To run a specific unit test: `mvn test -Dtest=VersionTest`
-To run a specific integration test (but no unit test): `mvn -Dskip.surefire.tests -Dit.test=CheckCommandIT`
+To run *all* test, i.e. unit *and* ITs: `mvn verify`
+
+To run all unit tests (but not the ITs): `mvn test`
+To run a specific unit test class: `mvn test -Dtest=VersionTest`
+To run a specific unit test method: `mvn test -Dtest="DependencyTest#shouldFormatPluginDependencyToString"`
+
+To run all unit tests: `mvn verify -Dskip.surefire.tests`
+To run a specific integration test class (but no unit test): `mvn verify -Dskip.surefire.tests -Dit.test=CheckCommandIT`
+To run a specific integration test method (but no unit test):
+`mvn -Dskip.surefire.tests -Dit.test="CheckCommandIT#shouldHandlePropertyBasedVersions"`
+**IMPORTANT** note the quotes in some of these commands, as this string contains a `#` character!
 
 ### Code Style
 
