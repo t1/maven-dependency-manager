@@ -1,19 +1,18 @@
-package com.github.t1.mavendep.tui.action;
+package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
-import com.github.t1.mavendep.tui.DashboardModel;
 
 /// Applies selected updates via [Pom#apply] and writes modified POMs to disk.
-public class ApplyUpdatesAction {
+class ApplyUpdatesAction {
 
     private final DashboardModel model;
 
-    public ApplyUpdatesAction(DashboardModel model) {
+    ApplyUpdatesAction(DashboardModel model) {
         this.model = model;
     }
 
-    public void run() {
+    void run() {
         // Reset all POMs to original state before re-applying current selection
         model.reports().stream()
                 .map(ProjectReport::pom)

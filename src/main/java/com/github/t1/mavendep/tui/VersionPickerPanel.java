@@ -1,6 +1,4 @@
-package com.github.t1.mavendep.tui.panel;
-
-import com.github.t1.mavendep.tui.DashboardModel;
+package com.github.t1.mavendep.tui;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
@@ -14,7 +12,7 @@ import static dev.tamboui.widgets.Clear.clear;
 import static dev.tamboui.widgets.block.Borders.ALL;
 
 /// Renders an overlay list for choosing a target version.
-public class VersionPickerPanel {
+class VersionPickerPanel {
 
     private final ListState listState = new ListState();
 

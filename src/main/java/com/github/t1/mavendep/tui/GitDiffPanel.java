@@ -1,6 +1,4 @@
-package com.github.t1.mavendep.tui.panel;
-
-import com.github.t1.mavendep.tui.DashboardModel;
+package com.github.t1.mavendep.tui;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
@@ -8,7 +6,7 @@ import dev.tamboui.widgets.block.Borders;
 import dev.tamboui.widgets.paragraph.Paragraph;
 
 /// Renders scrollable git diff output.
-public class GitDiffPanel {
+class GitDiffPanel {
 
     public void render(Frame frame, Rect area, DashboardModel model) {
         var lines = model.diffOutputLines();

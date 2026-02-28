@@ -1,8 +1,5 @@
 * `TuiCommand.runDashboard` wraps exception in bare `new RuntimeException(e)` — blocked by
   `TuiRunner.create()` declaring `throws Exception`
-* excessive `public` visibility on TUI internals (`ScanAction`, `ApplyUpdatesAction`, `MavenBuildAction`,
-  `ScanProgressPanel`, `BuildOutputPanel`, `VersionPickerPanel`, `DependencyTablePanel`) — only used within `tui`
-  package
 * no `package-info.java` files anywhere in the project
 * get smarter about the menu:
     * right-align

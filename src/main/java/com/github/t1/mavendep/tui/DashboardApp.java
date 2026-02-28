@@ -1,9 +1,5 @@
 package com.github.t1.mavendep.tui;
 
-import com.github.t1.mavendep.tui.action.ApplyUpdatesAction;
-import com.github.t1.mavendep.tui.action.GitDiffAction;
-import com.github.t1.mavendep.tui.action.MavenBuildAction;
-import com.github.t1.mavendep.tui.action.ScanAction;
 import dev.tamboui.terminal.BackendFactory;
 import dev.tamboui.tui.TuiConfig;
 import dev.tamboui.tui.TuiRunner;

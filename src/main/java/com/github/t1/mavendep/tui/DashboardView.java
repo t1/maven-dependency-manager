@@ -1,11 +1,6 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
-import com.github.t1.mavendep.tui.panel.BuildOutputPanel;
-import com.github.t1.mavendep.tui.panel.DependencyTablePanel;
-import com.github.t1.mavendep.tui.panel.GitDiffPanel;
-import com.github.t1.mavendep.tui.panel.ScanProgressPanel;
-import com.github.t1.mavendep.tui.panel.VersionPickerPanel;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Layout;
 import dev.tamboui.layout.Rect;

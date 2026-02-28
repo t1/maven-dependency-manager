@@ -1,7 +1,6 @@
-package com.github.t1.mavendep.tui.panel;
+package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.DependencyUpdate;
-import com.github.t1.mavendep.tui.DashboardModel;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
@@ -14,7 +13,7 @@ import dev.tamboui.widgets.table.Table;
 import dev.tamboui.widgets.table.TableState;
 
 /// Renders the dependency/plugin table with selection checkboxes.
-public class DependencyTablePanel {
+class DependencyTablePanel {
 
     private final TableState tableState = new TableState();
 

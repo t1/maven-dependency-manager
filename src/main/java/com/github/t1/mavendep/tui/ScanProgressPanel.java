@@ -1,6 +1,4 @@
-package com.github.t1.mavendep.tui.panel;
-
-import com.github.t1.mavendep.tui.DashboardModel;
+package com.github.t1.mavendep.tui;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
@@ -10,7 +8,7 @@ import dev.tamboui.widgets.block.Borders;
 import dev.tamboui.widgets.gauge.Gauge;
 
 /// Renders a progress gauge during dependency scanning.
-public class ScanProgressPanel {
+class ScanProgressPanel {
 
     public void render(Frame frame, Rect area, DashboardModel model) {
         var total = model.scanTotal();

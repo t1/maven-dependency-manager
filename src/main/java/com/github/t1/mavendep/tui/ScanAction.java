@@ -1,9 +1,8 @@
-package com.github.t1.mavendep.tui.action;
+package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
 import com.github.t1.mavendep.domain.Logger;
 import com.github.t1.mavendep.domain.MavenRepository;
-import com.github.t1.mavendep.tui.DashboardModel;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.tui.TuiRunner;
 
@@ -13,21 +12,21 @@ import java.util.List;
 import static com.github.t1.mavendep.domain.Logger.with;
 
 /// Runs [DependencyAnalyzer] on a virtual thread with progress reporting.
-public class ScanAction {
+class ScanAction {
 
     private final DashboardModel model;
     private final MavenRepository repository;
     private final List<Path> pomFiles;
     private final TuiRunner runner;
 
-    public ScanAction(DashboardModel model, MavenRepository repository, List<Path> pomFiles, TuiRunner runner) {
+    ScanAction(DashboardModel model, MavenRepository repository, List<Path> pomFiles, TuiRunner runner) {
         this.model = model;
         this.repository = repository;
         this.pomFiles = pomFiles;
         this.runner = runner;
     }
 
-    public void start() {
+    void start() {
         model.setPhase(Phase.SCANNING);
         Thread.startVirtualThread(this::scan);
     }

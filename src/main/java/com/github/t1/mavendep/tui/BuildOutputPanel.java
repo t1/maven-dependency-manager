@@ -1,6 +1,4 @@
-package com.github.t1.mavendep.tui.panel;
-
-import com.github.t1.mavendep.tui.DashboardModel;
+package com.github.t1.mavendep.tui;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
@@ -10,7 +8,7 @@ import dev.tamboui.widgets.block.Borders;
 import dev.tamboui.widgets.paragraph.Paragraph;
 
 /// Renders scrollable maven build output.
-public class BuildOutputPanel {
+class BuildOutputPanel {
 
     public void render(Frame frame, Rect area, DashboardModel model) {
         var lines = model.buildOutputLines();

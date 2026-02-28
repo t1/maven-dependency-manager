@@ -1,6 +1,5 @@
-package com.github.t1.mavendep.tui.action;
+package com.github.t1.mavendep.tui;
 
-import com.github.t1.mavendep.tui.DashboardModel;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import com.github.t1.mavendep.tui.DashboardModel.Tab;
 import dev.tamboui.tui.TuiRunner;
@@ -12,21 +11,21 @@ import java.nio.file.Path;
 import java.util.List;
 
 /// Runs a Maven build subprocess, streaming output to the [DashboardModel].
-public class MavenBuildAction {
+class MavenBuildAction {
 
     private final DashboardModel model;
     private final TuiRunner runner;
     private final Path workingDir;
     private final List<String> goals;
 
-    public MavenBuildAction(DashboardModel model, TuiRunner runner, Path workingDir, List<String> goals) {
+    MavenBuildAction(DashboardModel model, TuiRunner runner, Path workingDir, List<String> goals) {
         this.model = model;
         this.runner = runner;
         this.workingDir = workingDir;
         this.goals = goals;
     }
 
-    public void start() {
+    void start() {
         model.setPhase(Phase.BUILDING);
         model.setActiveTab(Tab.BUILD);
         model.clearBuildOutput();

@@ -1,6 +1,5 @@
-package com.github.t1.mavendep.tui.action;
+package com.github.t1.mavendep.tui;
 
-import com.github.t1.mavendep.tui.DashboardModel;
 import dev.tamboui.tui.TuiRunner;
 
 import java.io.BufferedReader;
@@ -11,21 +10,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 /// Runs `git diff` and stores the output in the [DashboardModel].
-public class GitDiffAction {
+class GitDiffAction {
 
     private final DashboardModel model;
     private final TuiRunner runner;
     private final Path workingDir;
     private final List<Path> pomFiles;
 
-    public GitDiffAction(DashboardModel model, TuiRunner runner, Path workingDir, List<Path> pomFiles) {
+    GitDiffAction(DashboardModel model, TuiRunner runner, Path workingDir, List<Path> pomFiles) {
         this.model = model;
         this.runner = runner;
         this.workingDir = workingDir;
         this.pomFiles = pomFiles;
     }
 
-    public void refresh() {
+    void refresh() {
         Thread.startVirtualThread(this::run);
     }
 
