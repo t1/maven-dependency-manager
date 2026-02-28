@@ -91,9 +91,9 @@ public class VersionTreeTableFormatter {
     private void appendHeader(StringBuilder output) {
         var spanWidth = versionColumns * versionWidth + (versionColumns - 1) * COLUMN_OVERHEAD;
         output.append(border("┌─", "─┬─", "─┐", new int[]{columnWidths[0], columnWidths[1], spanWidth}));
-        output.append("│ ").append(padRight(MAJOR_HEADER, columnWidths[0])).append(" │ ");
-        output.append(padRight(MINOR_HEADER, columnWidths[1])).append(" │ ");
-        output.append(padRight(VERSION_HEADER, spanWidth)).append(" │\n");
+        output.append("│ ").append(TableFormat.padRight(MAJOR_HEADER, columnWidths[0])).append(" │ ");
+        output.append(TableFormat.padRight(MINOR_HEADER, columnWidths[1])).append(" │ ");
+        output.append(TableFormat.padRight(VERSION_HEADER, spanWidth)).append(" │\n");
         output.append(headerSeparator());
     }
 
@@ -169,19 +169,16 @@ public class VersionTreeTableFormatter {
 
     private String row(String majorCell, String minorCell, List<Version> versions) {
         var sb = new StringBuilder();
-        sb.append("│ ").append(padRight(majorCell, columnWidths[0])).append(" │ ");
-        sb.append(padRight(minorCell, columnWidths[1])).append(" │");
+        sb.append("│ ").append(TableFormat.padRight(majorCell, columnWidths[0])).append(" │ ");
+        sb.append(TableFormat.padRight(minorCell, columnWidths[1])).append(" │");
         for (var i = 0; i < versionColumns; i++) {
             sb.append(" ");
             var cell = i < versions.size() ? versions.get(i).toString() : "";
-            sb.append(padRight(cell, columnWidths[2 + i]));
+            sb.append(TableFormat.padRight(cell, columnWidths[2 + i]));
             sb.append(" │");
         }
         sb.append("\n");
         return sb.toString();
     }
 
-    private static String padRight(String text, int width) {
-        return text + " ".repeat(Math.max(0, width - text.length()));
-    }
 }

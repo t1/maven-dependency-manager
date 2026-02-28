@@ -1,4 +1,3 @@
-* duplicated `padRight` in `TextReportWriter` and `VersionTreeTableFormatter`
 * duplicated `totalDependencies` calculation in `DependencyAnalyzer.run()` and `analyze()` — extract to `Pom`
 * duplicated default Maven Central URL in `MavenRepository` and `RepositoryOptions`
 * `Dependency.toUpdate` normalizes nulls to empty strings — fix at parse time in `Pom.DependencyParser` instead

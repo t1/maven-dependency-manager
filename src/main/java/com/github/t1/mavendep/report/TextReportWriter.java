@@ -142,17 +142,13 @@ public class TextReportWriter implements ReportWriter {
     private void printTableRow(int[] widths, String... cells) {
         out.print("│ ");
         for (var i = 0; i < cells.length; i++) {
-            out.print(padRight(cells[i], widths[i]));
+            out.print(TableFormat.padRight(cells[i], widths[i]));
             out.print(" │");
             if (i < cells.length - 1) {
                 out.print(" ");
             }
         }
         out.println();
-    }
-
-    private String padRight(String text, int width) {
-        return text + " ".repeat(Math.max(0, width - text.length()));
     }
 
     private String formatTypeScope(DependencyUpdate update) {
