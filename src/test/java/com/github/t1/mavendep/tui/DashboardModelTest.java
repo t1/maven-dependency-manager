@@ -314,6 +314,53 @@ class DashboardModelTest {
         then(model.menuText()).contains("[d]ependencies");
     }
 
+    @Test void shouldReturnNoUpdatesMessageWhenAllUpToDate() {
+        setReportsWithNoUpdates();
+
+        then(model.emptyMessage()).isEqualTo("no updates available");
+    }
+
+    @Test void shouldReturnNullEmptyMessageWhenUpdatesExist() {
+        setReportsWithTwoDependencyUpdates();
+
+        then(model.emptyMessage()).isNull();
+    }
+
+    @Test void shouldReturnNoDependenciesMessageWhenShowAllAndNone() {
+        setEmptyReports();
+        model.setShowAll(true);
+
+        then(model.emptyMessage()).isEqualTo("no dependencies");
+    }
+
+    @Test void shouldReturnNoPluginsMessageWhenShowAllAndNone() {
+        setEmptyReports();
+        model.setShowAll(true);
+        model.setActiveTab(Tab.PLUGINS);
+
+        then(model.emptyMessage()).isEqualTo("no plugins");
+    }
+
+    private void setReportsWithNoUpdates() {
+        var dep = new Dependency(dependency, "com.example", "up-to-date",
+                Version.fromString("1.0.0"), DEFAULT, null);
+        var update = dep.toUpdate(Version.fromString("1.0.0"),
+                List.of(Version.fromString("1.0.0")), UpdateType.none);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update), List.of(), 1);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setEmptyReports() {
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(), List.of(), 0);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
     private void setReportsWithMixedUpdates() {
         var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
                 Version.fromString("5.10.0"), DEFAULT, null);

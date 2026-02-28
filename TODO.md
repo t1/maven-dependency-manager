@@ -1,5 +1,3 @@
-* TUI: if there are no updates (dependencies as well as plugins), show "no updates available",
-  or if showing all and there are none "no dependencies/plugins"
 * reduce flashing when scanning... don't paint everything in cyan
 * more structured logging, so we can
     * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`

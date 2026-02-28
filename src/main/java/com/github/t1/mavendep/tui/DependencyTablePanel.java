@@ -8,6 +8,7 @@ import dev.tamboui.style.Style;
 import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
 import dev.tamboui.widgets.block.Borders;
+import dev.tamboui.widgets.paragraph.Paragraph;
 import dev.tamboui.widgets.table.Row;
 import dev.tamboui.widgets.table.Table;
 import dev.tamboui.widgets.table.TableState;
@@ -18,6 +19,14 @@ class DependencyTablePanel {
     private final TableState tableState = new TableState();
 
     public void render(Frame frame, Rect area, DashboardModel model) {
+        var emptyMessage = model.emptyMessage();
+        if (emptyMessage != null) {
+            var block = Block.builder().borders(Borders.ALL).title(model.activeTab().name()).build();
+            var paragraph = Paragraph.builder().text("\n  " + emptyMessage).block(block).build();
+            frame.renderWidget(paragraph, area);
+            return;
+        }
+
         var updates = model.activeUpdates();
         tableState.select(model.cursor());
 

@@ -79,6 +79,14 @@ public class DashboardModel {
                 .collect(Collectors.joining(" "));
     }
 
+    /// Returns a message to display when the dependency/plugin list is empty, or null if there are items.
+    public String emptyMessage() {
+        var updates = activeUpdates();
+        if (!updates.isEmpty()) return null;
+        if (showAll) return activeTab == PLUGINS ? "no plugins" : "no dependencies";
+        return "no updates available";
+    }
+
     // --- needs redraw flag ---
 
     /// Returns true if the model has been modified since the last [#clearNeedsRedraw] call.
