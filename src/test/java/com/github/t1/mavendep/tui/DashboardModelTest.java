@@ -14,8 +14,8 @@ import java.util.Optional;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 class DashboardModelTest {
 
@@ -289,7 +289,7 @@ class DashboardModelTest {
                 List.of(Version.fromString("1.0.0")), UpdateType.none);
 
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
-        when(pom.path()).thenReturn(java.nio.file.Path.of("pom.xml"));
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
@@ -306,7 +306,7 @@ class DashboardModelTest {
                 List.of(Version.fromString("2.20.0"), Version.fromString("2.21.0")), UpdateType.minor);
 
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
-        when(pom.path()).thenReturn(java.nio.file.Path.of("pom.xml"));
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);

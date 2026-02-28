@@ -1,4 +1,3 @@
-* `DashboardModelTest` uses `when().thenReturn()` instead of `given().willReturn()` (lines 274, 291)
 * `TuiCommand.runDashboard` wraps exception in bare `new RuntimeException(e)` — blocked by
   `TuiRunner.create()` declaring `throws Exception`
 * excessive `public` visibility on TUI internals (`ScanAction`, `ApplyUpdatesAction`, `MavenBuildAction`,
