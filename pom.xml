@@ -10,7 +10,7 @@
     <packaging>jar</packaging>
 
     <name>Maven Dependency Manager</name>
-    <description>CLI tool to manage version updates of Maven dependencies</description>
+    <description>CLI tool to check for newer versions of Maven dependencies</description>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>

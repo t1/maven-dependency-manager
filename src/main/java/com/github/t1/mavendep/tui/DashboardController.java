@@ -87,22 +87,21 @@ public class DashboardController {
         }
         if (key.isChar(' ')) {
             model.toggleSelection();
+            onUpdate.run();
             return true;
         }
         if (key.isChar('a')) {
             model.toggleSelectAll();
+            onUpdate.run();
             return true;
         }
         if (key.isChar('n')) {
             model.selectNone();
+            onUpdate.run();
             return true;
         }
         if (key.isChar('s')) {
             model.toggleShowAll();
-            return true;
-        }
-        if (key.isChar('u')) {
-            onUpdate.run();
             return true;
         }
         if (key.isChar('b')) {
@@ -145,6 +144,7 @@ public class DashboardController {
         }
         if (key.isConfirm()) {
             model.confirmVersionPick();
+            onUpdate.run();
             return true;
         }
         if (key.isCancel()) {

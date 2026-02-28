@@ -128,7 +128,7 @@ public class DashboardView {
                 var logCount = model.logMessages().size();
                 var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
                 yield model.selectedCount() + " selected" + logHint + " | " +
-                        "[Space] toggle [Enter] pick version [s]how all [u]pdate [b]uild [r]escan [d]iff Tab/[ ] tabs [q]uit";
+                        "[Space] toggle [Enter] pick version [s]how all [b]uild [r]escan [d]iff Tab/[ ] tabs [q]uit";
             }
         };
 

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,8 +25,12 @@ class TuiDashboardIT {
     private HttpServer fakeRepo;
     private final Map<String, String> repoResponses = new ConcurrentHashMap<>();
     private TuiTestDriver tui;
+    private Path pomCopy;
 
     @BeforeEach void setUp() throws IOException {
+        pomCopy = tempDir.resolve("pom.xml");
+        Files.copy(FIXTURE_POM, pomCopy);
+
         fakeRepo = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         fakeRepo.createContext("/", exchange -> {
             try (exchange) {
@@ -50,7 +55,8 @@ class TuiDashboardIT {
 
     private void startTui() {
         var repoUrl = "http://localhost:" + fakeRepo.getAddress().getPort();
-        tui = new Pty4jTuiTestDriver(FIXTURE_POM, repoUrl, tempDir);
+        var localRepo = tempDir.resolve("local-repo");
+        tui = new Pty4jTuiTestDriver(pomCopy, repoUrl, localRepo);
     }
 
     private void givenAllVersions() {

@@ -1,4 +1,3 @@
-* in the TUI, changes to the dependencies should automatically update the pom
 * telescoping constructors in `MavenRepository` (5 chained constructors) — use a builder or reduce to two
 * `System.exit(1)` in `UpdateCommand.filterAndValidate` — untestable, use PicoCLI exit codes instead
 * `System.exit` in `TuiCommand.run` — same issue
@@ -35,3 +34,4 @@
     * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`
     * connect logs to the dependency they belong to, so we can associate them in the TUI (and maybe in the Table output)
     * ignore "Fetching metadata" logs in the TUI... those are harmless
+* TUI: when I'm on the DIFF tab, pressing `d` should jump to the DEPENDENCIES tab; this should be visible in the menu

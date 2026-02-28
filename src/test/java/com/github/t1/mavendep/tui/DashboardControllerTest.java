@@ -64,31 +64,30 @@ class DashboardControllerTest {
         then(model.cursor()).isEqualTo(0);
     }
 
-    @Test void shouldToggleSelection() {
+    @Test void shouldToggleSelectionAndAutoApply() {
         var result = controller.handle(KeyEvent.ofChar(' '), runner);
         then(result).isTrue();
         then(model.isSelected(model.activeUpdates().getFirst())).isTrue();
+        then(updateCalled).isTrue();
     }
 
-    @Test void shouldSelectAll() {
+    @Test void shouldSelectAllAndAutoApply() {
         controller.handle(KeyEvent.ofChar('a'), runner);
         then(model.selectedCount()).isEqualTo(2);
+        then(updateCalled).isTrue();
     }
 
-    @Test void shouldDeselectAllWhenAllSelected() {
+    @Test void shouldDeselectAllWhenAllSelectedAndAutoApply() {
         model.selectAll();
         controller.handle(KeyEvent.ofChar('a'), runner);
         then(model.selectedCount()).isEqualTo(0);
+        then(updateCalled).isTrue();
     }
 
-    @Test void shouldSelectNone() {
+    @Test void shouldSelectNoneAndAutoApply() {
         model.selectAll();
         controller.handle(KeyEvent.ofChar('n'), runner);
         then(model.selectedCount()).isEqualTo(0);
-    }
-
-    @Test void shouldTriggerUpdate() {
-        controller.handle(KeyEvent.ofChar('u'), runner);
         then(updateCalled).isTrue();
     }
 
@@ -165,6 +164,13 @@ class DashboardControllerTest {
         model.clearNeedsRedraw(); // setUp sets reports which marks dirty
         var result = controller.handle(new TickEvent(0, java.time.Duration.ZERO), runner);
         then(result).isFalse();
+    }
+
+    @Test void shouldAutoApplyOnVersionPickerConfirm() {
+        model.openVersionPicker();
+        controller.handle(KeyEvent.ofKey(KeyCode.ENTER), runner);
+        then(model.isVersionPickerOpen()).isFalse();
+        then(updateCalled).isTrue();
     }
 
     @Test void shouldCloseVersionPickerOnEscape() {

@@ -3,7 +3,6 @@ package com.github.t1.mavendep.tui.action;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.tui.DashboardModel;
-import com.github.t1.mavendep.tui.DashboardModel.Phase;
 
 /// Applies selected updates via [Pom#apply] and writes modified POMs to disk.
 public class ApplyUpdatesAction {
@@ -15,7 +14,10 @@ public class ApplyUpdatesAction {
     }
 
     public void run() {
-        model.setPhase(Phase.APPLYING);
+        // Reset all POMs to original state before re-applying current selection
+        model.reports().stream()
+                .map(ProjectReport::pom)
+                .forEach(Pom::reset);
 
         var selectedUpdates = model.selectedUpdates().toList();
         model.reports().stream()
@@ -27,9 +29,6 @@ public class ApplyUpdatesAction {
 
         model.reports().stream()
                 .map(ProjectReport::pom)
-                .filter(Pom::isDirty)
                 .forEach(Pom::writeToDisk);
-
-        model.setPhase(Phase.READY);
     }
 }

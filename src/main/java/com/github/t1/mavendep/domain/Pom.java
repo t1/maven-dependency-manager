@@ -238,6 +238,7 @@ public class Pom {
 
     private boolean dirty;
     private String content;
+    private final String originalContent;
     private final Path path;
     private final Coordinates coordinates;
     private final Optional<Dependency> parent;
@@ -257,6 +258,7 @@ public class Pom {
             Map<String, String> properties,
             List<String> modules) {
         this.content = content;
+        this.originalContent = content;
         this.path = path;
         this.coordinates = coordinates;
         this.parent = parent;
@@ -297,6 +299,12 @@ public class Pom {
     }
 
     public boolean isDirty() {return dirty;}
+
+    /// Resets the POM content to its original parsed state, discarding any in-memory changes.
+    public void reset() {
+        content = originalContent;
+        dirty = false;
+    }
 
     public void apply(Stream<DependencyUpdate> updates) {updates.filter(DependencyUpdate::isUpdatable).forEach(new Updater()::apply);}
 

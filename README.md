@@ -139,9 +139,8 @@ mdm tui --force-cache-update
 
 The TUI provides a full interactive dashboard where you can:
 - Browse dependencies and plugins with live scan progress
-- Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none)
-- Pick specific target versions (Enter to open version picker)
-- Apply selected updates (`u`)
+- Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none) — POM is updated automatically
+- Pick specific target versions (Enter to open version picker) — POM is updated on confirm
 - Run a Maven build and see output in a scrollable panel (`b`)
 - Rescan after applying updates (`r`)
 - Switch between Dependencies/Plugins/Build/Git Diff tabs (Tab/`]` forward, `[` backward)

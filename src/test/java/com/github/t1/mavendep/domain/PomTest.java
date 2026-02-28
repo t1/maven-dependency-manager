@@ -923,6 +923,45 @@ class PomTest {
     }
 
     @Test
+    void shouldResetToOriginalContent() throws IOException {
+        var pomContent = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                            <scope>test</scope>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+        var pomFile = writePom(pomContent);
+        var pom = Pom.parse(pomFile).orElseThrow();
+        var update = new DependencyUpdate(
+                pom.dependencies().getFirst(),
+                Version.fromString("5.11.0"),
+                List.of(),
+                UpdateType.minor
+        );
+
+        pom.apply(Stream.of(update));
+        then(pom.isDirty()).isTrue();
+
+        pom.reset();
+        pom.writeToDisk();
+
+        then(pom.isDirty()).isFalse();
+        then(readString(pomFile)).isEqualTo(pomContent);
+    }
+
+    @Test
     void shouldUpdateCorrectPropertyWhenMultiplePropertiesHaveSameVersion() throws IOException {
         var pomFile = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>
