@@ -1,4 +1,3 @@
-* telescoping constructors in `MavenRepository` (5 chained constructors) — use a builder or reduce to two
 * `System.exit(1)` in `UpdateCommand.filterAndValidate` — untestable, use PicoCLI exit codes instead
 * `System.exit` in `TuiCommand.run` — same issue
 * duplicated `padRight` in `TextReportWriter` and `VersionTreeTableFormatter`
@@ -28,7 +27,8 @@
 * get smarter about the menu:
     * right-align
     * use a single model for handling and displaying key bindings; show only when available on a tab
-* plugins doesn't display anything
+* TUI: if there are no updates (dependencies as well as plugins), show "no updates available",
+  or if showing all and there are none "no dependencies/plugins"
 * reduce flashing when scanning... don't paint everything in cyan
 * more structured logging, so we can
     * have log levels `info`, `warning`, and `error` as method names, e.g. `log().warning("...")`

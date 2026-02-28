@@ -39,7 +39,7 @@ class MavenRepositoryTest {
                   </versioning>
                 </metadata>
                 """);
-        var repository = new MavenRepository(tempDir);
+        var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions("org.springframework.boot", "spring-boot");
 
@@ -51,7 +51,7 @@ class MavenRepositoryTest {
     @Test
     void shouldReturnEmptyListForInvalidMetadata() {
         writeCache("org.example", "invalid", "<invalid>xml</invalid>");
-        var repository = new MavenRepository(tempDir);
+        var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions("org.example", "invalid");
 
@@ -83,7 +83,7 @@ class MavenRepositoryTest {
                   </versioning>
                 </metadata>
                 """);
-        var repository = new MavenRepository(tempDir);
+        var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions("org.example", "example");
 
@@ -107,7 +107,7 @@ class MavenRepositoryTest {
                   </versioning>
                 </metadata>
                 """);
-        var repository = new MavenRepository(tempDir);
+        var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions("com.example", "some-lib");
 
@@ -147,7 +147,11 @@ class MavenRepositoryTest {
                 """);
         var twoDaysAgo = Instant.now().minus(Duration.ofDays(2));
         setLastModifiedTime(cacheFile, FileTime.from(twoDaysAgo));
-        var repository = new MavenRepository(tempDir, Duration.ofHours(24), "http://localhost:9999");
+        var repository = MavenRepository.builder()
+                .localRepositoryDir(tempDir)
+                .ttl(Duration.ofHours(24))
+                .mavenCentralUrl("http://localhost:9999")
+                .build();
 
         var versions = repository.getAvailableVersions("com.example", "old-lib");
 
@@ -167,7 +171,12 @@ class MavenRepositoryTest {
                   </versioning>
                 </metadata>
                 """);
-        var repository = new MavenRepository(tempDir, Duration.ofHours(9999), "http://localhost:9999", true);
+        var repository = MavenRepository.builder()
+                .localRepositoryDir(tempDir)
+                .ttl(Duration.ofHours(9999))
+                .mavenCentralUrl("http://localhost:9999")
+                .forceCacheUpdate(true)
+                .build();
 
         var versions = repository.getAvailableVersions("com.example", "cached-lib");
 
@@ -179,7 +188,7 @@ class MavenRepositoryTest {
         var customPath = tempDir.resolve("custom-repo");
         System.setProperty("maven.repo.local", customPath.toString());
         try {
-            var repository = new MavenRepository();
+            var repository = MavenRepository.builder().build();
 
             var path = repository.metadataFilePath("org.example", "test");
 
@@ -192,10 +201,16 @@ class MavenRepositoryTest {
     @Test
     void shouldReturnEmptyListForMalformedXml() {
         writeCache("org.example", "malformed", "not xml at all <");
-        var repository = new MavenRepository(tempDir);
+        var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions("org.example", "malformed");
 
         then(versions).isEmpty();
+    }
+
+    private MavenRepository repositoryWithLocalTempDir() {
+        return MavenRepository.builder()
+                .localRepositoryDir(tempDir)
+                .build();
     }
 }

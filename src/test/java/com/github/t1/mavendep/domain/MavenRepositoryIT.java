@@ -13,7 +13,7 @@ class MavenRepositoryIT {
 
     @Test
     void shouldFetchAvailableVersions() throws IOException {
-        var repository = new MavenRepository();
+        var repository = MavenRepository.builder().build();
         // force a reload of metadata:
         deleteIfExists(repository.metadataFilePath("org.junit.jupiter", "junit-jupiter"));
 

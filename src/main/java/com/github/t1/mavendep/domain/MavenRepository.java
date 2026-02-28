@@ -28,40 +28,49 @@ import static java.util.Collections.sort;
 ///
 /// Implements local caching with configurable TTL to minimize network requests.
 public class MavenRepository {
-    private static final String DEFAULT_MAVEN_CENTRAL_URL = "https://repo1.maven.org/maven2";
-    private static final Duration DEFAULT_TTL = Duration.ofHours(24);
-
-    private final HttpClient httpClient;
+    private final HttpClient httpClient = HttpClient.newHttpClient();
     private final Path localRepositoryDir;
     private final Duration ttl;
     private final String mavenCentralUrl;
     private final boolean forceCacheUpdate;
 
-    public MavenRepository() {this(defaultLocalRepository());}
+    private MavenRepository(Builder builder) {
+        this.localRepositoryDir = builder.localRepositoryDir;
+        this.ttl = builder.ttl;
+        this.mavenCentralUrl = builder.mavenCentralUrl;
+        this.forceCacheUpdate = builder.forceCacheUpdate;
+    }
 
-    public static Path defaultLocalRepository() {
-        return Path.of(System.getProperty("maven.repo.local",
+    public static Builder builder() {return new Builder();}
+
+    public static class Builder {
+        private Path localRepositoryDir = Path.of(System.getProperty("maven.repo.local",
                 System.getProperty("user.home") + "/.m2/repository"));
-    }
+        private Duration ttl = Duration.ofHours(24);
+        private String mavenCentralUrl = System.getProperty("maven.central.url", "https://repo1.maven.org/maven2");
+        private boolean forceCacheUpdate = false;
 
-    public MavenRepository(Path localRepositoryDir) {
-        this(localRepositoryDir, DEFAULT_TTL, System.getProperty("maven.central.url", DEFAULT_MAVEN_CENTRAL_URL));
-    }
+        public Builder localRepositoryDir(Path localRepositoryDir) {
+            this.localRepositoryDir = localRepositoryDir;
+            return this;
+        }
 
-    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl) {
-        this(localRepositoryDir, ttl, mavenCentralUrl, false);
-    }
+        public Builder ttl(Duration ttl) {
+            this.ttl = ttl;
+            return this;
+        }
 
-    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl, boolean forceCacheUpdate) {
-        this(localRepositoryDir, ttl, mavenCentralUrl, forceCacheUpdate, HttpClient.newHttpClient());
-    }
+        public Builder mavenCentralUrl(String mavenCentralUrl) {
+            this.mavenCentralUrl = mavenCentralUrl;
+            return this;
+        }
 
-    public MavenRepository(Path localRepositoryDir, Duration ttl, String mavenCentralUrl, boolean forceCacheUpdate, HttpClient httpClient) {
-        this.httpClient = httpClient;
-        this.localRepositoryDir = localRepositoryDir;
-        this.ttl = ttl;
-        this.mavenCentralUrl = mavenCentralUrl;
-        this.forceCacheUpdate = forceCacheUpdate;
+        public Builder forceCacheUpdate(boolean forceCacheUpdate) {
+            this.forceCacheUpdate = forceCacheUpdate;
+            return this;
+        }
+
+        public MavenRepository build() {return new MavenRepository(this);}
     }
 
     /// Retrieves all available versions for the specified Maven artifact.

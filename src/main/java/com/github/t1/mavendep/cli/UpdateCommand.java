@@ -55,7 +55,7 @@ public class UpdateCommand implements Runnable {
 
     @SuppressWarnings("unused") // Used by Picocli
     public UpdateCommand() {
-        this(new MavenRepository());
+        this(MavenRepository.builder().build());
     }
 
     UpdateCommand(MavenRepository repository) {

@@ -34,18 +34,13 @@ class RepositoryOptions {
     boolean forceCacheUpdate;
 
     MavenRepository createMavenRepository() {
-        var localRepo = localRepository != null
-                ? Path.of(localRepository)
-                : MavenRepository.defaultLocalRepository();
+        var builder = MavenRepository.builder()
+                .forceCacheUpdate(forceCacheUpdate);
 
-        var ttl = cacheTtlHours != null
-                ? Duration.ofHours(cacheTtlHours)
-                : Duration.ofHours(24);
+        if (localRepository != null) builder.localRepositoryDir(Path.of(localRepository));
+        if (cacheTtlHours != null) builder.ttl(Duration.ofHours(cacheTtlHours));
+        if (mavenCentralUrl != null) builder.mavenCentralUrl(mavenCentralUrl);
 
-        var url = mavenCentralUrl != null
-                ? mavenCentralUrl
-                : System.getProperty("maven.central.url", "https://repo1.maven.org/maven2");
-
-        return new MavenRepository(localRepo, ttl, url, forceCacheUpdate);
+        return builder.build();
     }
 }
