@@ -55,7 +55,7 @@ public class DependencyAnalyzer {
         resolveParentProperties(allPoms);
         localArtifacts = allPoms.stream().map(Pom::coordinates).collect(toSet());
         totalDependencyCount = allPoms.stream()
-                .mapToInt(pom -> pom.dependencies().size() + pom.plugins().size() + (pom.parent().isPresent() ? 1 : 0))
+                .mapToInt(Pom::totalDependencyCount)
                 .sum();
         try (var scope = StructuredTaskScope.<ProjectReport>open()) {
             var tasks = allPoms.stream()
@@ -138,9 +138,7 @@ public class DependencyAnalyzer {
             var parentUpdate = await(parentUpdateTask).stream().findAny()
                     .or(() -> localParentUpdate(pom));
 
-            var totalDependencies = pom.dependencies().size() + pom.plugins().size() + (pom.parent().isPresent() ? 1 : 0);
-
-            return new ProjectReport(pom, parentUpdate, dependencyUpdates, pluginUpdates, totalDependencies);
+            return new ProjectReport(pom, parentUpdate, dependencyUpdates, pluginUpdates, pom.totalDependencyCount());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Analysis was interrupted", e);

@@ -280,6 +280,10 @@ public class Pom {
 
     public Optional<Dependency> parent() {return parent;}
 
+    public int totalDependencyCount() {
+        return dependencies.size() + plugins.size() + (parent.isPresent() ? 1 : 0);
+    }
+
     public Map<String, String> properties() {return properties;}
 
     public List<String> modules() {return modules;}
