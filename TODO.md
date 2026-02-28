@@ -1,6 +1,3 @@
-* `MavenDepManagerCli.run()` manually wires `CheckCommand` via setters — use PicoCLI's `defaultCommand` instead
-* setter injection in `CheckCommand` (`setCommonOptions`, `setRepositoryOptions`) used by `MavenDepManagerCli.run()` —
-  prefer constructor injection
 * `DashboardModelTest` uses `when().thenReturn()` instead of `given().willReturn()` (lines 274, 291)
 * `TuiCommand.runDashboard` wraps exception in bare `new RuntimeException(e)` — blocked by
   `TuiRunner.create()` declaring `throws Exception`

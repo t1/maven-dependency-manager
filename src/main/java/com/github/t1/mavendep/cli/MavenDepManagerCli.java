@@ -27,12 +27,7 @@ public class MavenDepManagerCli implements Runnable {
         System.exit(exitCode);
     }
 
-    @Override
-    public void run() {
-        // If no subcommand is specified, run the check command with the parsed options
-        var checkCommand = new CheckCommand();
-        checkCommand.setCommonOptions(commonOptions);
-        checkCommand.setRepositoryOptions(repositoryOptions);
-        checkCommand.run();
-    }
+    /// PicoCLI has no built-in "default subcommand" feature; the parent's `run()` is called
+    /// when no subcommand is specified, so we delegate to `check` manually.
+    @Override public void run() {new CheckCommand(commonOptions, repositoryOptions).run();}
 }

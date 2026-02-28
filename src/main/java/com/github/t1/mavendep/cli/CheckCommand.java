@@ -19,11 +19,11 @@ public class CheckCommand implements Runnable {
     @Mixin
     private RepositoryOptions repositoryOptions;
 
-    void setCommonOptions(CommonOptions commonOptions) {
-        this.commonOptions = commonOptions;
-    }
+    @SuppressWarnings("unused") // Used by Picocli
+    public CheckCommand() {}
 
-    void setRepositoryOptions(RepositoryOptions repositoryOptions) {
+    CheckCommand(CommonOptions commonOptions, RepositoryOptions repositoryOptions) {
+        this.commonOptions = commonOptions;
         this.repositoryOptions = repositoryOptions;
     }
 
