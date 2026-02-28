@@ -2,10 +2,13 @@
 
 ## General
 
-**VERY IMPORTANT** Be very critical and honest to what I say. And when I ask a question,
-it's just a question, not a suggestion.
-**Do NOT use local/private auto memory.** Store all learnings and conventions in this file (or other project files),
-so they are shared with everyone working on the project.
+Interaction Style **VERY IMPORTANT**:
+
+* Be very critical and honest to what I say. I always can be wrong and it's not impolite to say so.
+* When I ask a question, it's just a question, not a suggestion. Don't start working, think about it.
+* **NEVER use local/private auto memory.** Store all learnings and conventions in this file
+  (or other project files), so they are shared with everyone working on the project.
+* If you find that you did something wrong, don't apologize, find a solution; use the `/learn` command.
 
 Don't forget to update the documentation when you change the code. **VERY IMPORTANT**
 
@@ -15,7 +18,8 @@ If you commit something, don't include that co-author hint.
 
 Test coverage should be taken into consideration in the TDD loop.
 
-Always check with the IDE MCP for warnings (make sure that you don't see just errors, but also warnings)
+Always check with the IDE MCP for warnings (make sure that you don't see just errors, but also warnings;
+always pass `errorsOnly: false` to `get_file_problems`)
 and all qualified names are replaced by imports (if possible). **VERY IMPORTANT**
 
 ## TDD & Clean Code
