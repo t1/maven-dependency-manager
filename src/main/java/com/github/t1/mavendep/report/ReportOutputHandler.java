@@ -4,6 +4,7 @@ import com.github.t1.mavendep.domain.ProjectReport;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 /// Handles formatting and outputting dependency reports.
@@ -24,7 +25,7 @@ public class ReportOutputHandler {
             };
             reportWriter.run();
         } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 }

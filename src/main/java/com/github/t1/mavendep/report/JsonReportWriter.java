@@ -9,6 +9,7 @@ import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.Version;
 
 import java.io.PrintStream;
+import java.io.UncheckedIOException;
 import java.util.List;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.parent;
@@ -41,7 +42,7 @@ public class JsonReportWriter implements ReportWriter {
         try {
             out.print(OBJECT_MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(root));
         } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 

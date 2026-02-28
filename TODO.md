@@ -1,11 +1,9 @@
-* `Pom.writeToDisk` wraps `IOException` in bare `RuntimeException` — use `UncheckedIOException`
-* `MavenRepository.isCacheFresh` same issue — use `UncheckedIOException`
 * `MavenDepManagerCli.run()` manually wires `CheckCommand` via setters — use PicoCLI's `defaultCommand` instead
 * setter injection in `CheckCommand` (`setCommonOptions`, `setRepositoryOptions`) used by `MavenDepManagerCli.run()` —
   prefer constructor injection
 * `DashboardModelTest` uses `when().thenReturn()` instead of `given().willReturn()` (lines 274, 291)
-* 4 places wrap exceptions in bare `new RuntimeException(e)` without a helpful message: `Pom.writeToDisk`,
-  `MavenRepository.isCacheFresh`, `ReportOutputHandler.writeReport`, `JsonReportWriter.run`
+* `TuiCommand.runDashboard` wraps exception in bare `new RuntimeException(e)` — blocked by
+  `TuiRunner.create()` declaring `throws Exception`
 * excessive `public` visibility on TUI internals (`ScanAction`, `ApplyUpdatesAction`, `MavenBuildAction`,
   `ScanProgressPanel`, `BuildOutputPanel`, `VersionPickerPanel`, `DependencyTablePanel`) — only used within `tui`
   package

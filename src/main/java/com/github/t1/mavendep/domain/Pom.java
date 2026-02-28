@@ -9,6 +9,7 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -316,7 +317,7 @@ public class Pom {
         try {
             writeString(path, content);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new UncheckedIOException(e);
         }
     }
 
