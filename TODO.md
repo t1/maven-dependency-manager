@@ -1,4 +1,3 @@
-* `DashboardModel` is ~300 lines with many responsibilities — comment sections hint at natural split points
 * DIP/Bug: `UpdateCommand` ignores `RepositoryOptions` — its no-arg constructor creates `new MavenRepository()`
   bypassing CLI options like `--cache-ttl`, `--local-repo`
 * `ReportOutputHandler.writeReport` has 4 parameters — group the last 3 into a config object

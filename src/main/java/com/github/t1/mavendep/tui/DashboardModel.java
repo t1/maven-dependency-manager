@@ -44,8 +44,7 @@ public class DashboardModel {
 
     private boolean showAll;
 
-    private boolean versionPickerOpen;
-    private int versionPickerCursor;
+    private final VersionPickerModel versionPicker = new VersionPickerModel(this::rawFocusedUpdate);
 
     // --- needs redraw flag ---
 
@@ -266,54 +265,36 @@ public class DashboardModel {
 
     // --- Version picker ---
 
-    public boolean isVersionPickerOpen() {return versionPickerOpen;}
+    public boolean isVersionPickerOpen() {return versionPicker.isOpen();}
 
-    public void openVersionPicker() {
-        var updates = activeUpdates();
-        if (cursor >= 0 && cursor < updates.size()) {
-            versionPickerOpen = true;
-            versionPickerCursor = 0;
-        }
-    }
+    public void openVersionPicker() {versionPicker.open();}
 
-    public void closeVersionPicker() {
-        versionPickerOpen = false;
-    }
+    public void closeVersionPicker() {versionPicker.close();}
 
-    public int versionPickerCursor() {return versionPickerCursor;}
+    public int versionPickerCursor() {return versionPicker.cursor();}
 
-    public void versionPickerUp() {
-        if (versionPickerCursor > 0) versionPickerCursor--;
-    }
+    public void versionPickerUp() {versionPicker.cursorUp();}
 
-    public void versionPickerDown() {
-        var versions = currentVersionPickerVersions();
-        if (versionPickerCursor < versions.size() - 1) versionPickerCursor++;
-    }
+    public void versionPickerDown() {versionPicker.cursorDown();}
 
-    public List<Version> currentVersionPickerVersions() {
-        var updates = activeUpdates();
-        if (cursor < 0 || cursor >= updates.size()) return List.of();
-        return updates.get(cursor).availableVersions().reversed().stream()
-                .filter(v -> v.isReleased("version picker"))
-                .toList();
-    }
+    public List<Version> currentVersionPickerVersions() {return versionPicker.availableVersions();}
 
     public void confirmVersionPick() {
-        var updates = activeUpdates();
-        if (cursor < 0 || cursor >= updates.size()) return;
-        var versions = currentVersionPickerVersions();
-        if (versionPickerCursor < 0 || versionPickerCursor >= versions.size()) return;
-        var original = updates.get(cursor);
-        var picked = versions.get(versionPickerCursor);
-        setCustomVersion(original, picked);
-        versionPickerOpen = false;
+        var picked = versionPicker.confirmAndClose();
+        if (picked != null) {
+            setCustomVersion(rawFocusedUpdate(), picked);
+        }
     }
 
     /// Returns the focused [DependencyUpdate] or null if none.
     public DependencyUpdate focusedUpdate() {
+        var raw = rawFocusedUpdate();
+        return (raw != null) ? effectiveUpdate(raw) : null;
+    }
+
+    private DependencyUpdate rawFocusedUpdate() {
         var updates = activeUpdates();
         if (cursor < 0 || cursor >= updates.size()) return null;
-        return effectiveUpdate(updates.get(cursor));
+        return updates.get(cursor);
     }
 }
