@@ -141,7 +141,7 @@ public class DashboardView {
 
         var text = messages.stream()
                 .map(m -> "[" + m.level() + "] "
-                        + (m.artifact() != null ? m.artifact() + ": " : "")
+                        + (m.artifact() != null ? "<" + m.artifact() + "> " : "")
                         + m.message())
                 .collect(Collectors.joining("\n"));
         var visibleLines = Math.max(1, area.height() - 2);
