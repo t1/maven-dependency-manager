@@ -21,11 +21,11 @@ public record Dependency(
         this(type, new Coordinates(groupId, artifactId, version), scope, versionProperty);
     }
 
+    public ArtifactRef artifactRef() {return coordinates.artifactRef();}
+
     public String groupId() {return coordinates.groupId();}
 
     public String artifactId() {return coordinates.artifactId();}
-
-    public ArtifactRef artifactRef() {return new ArtifactRef(groupId(), artifactId());}
 
     public Version version() {return coordinates.version();}
 
