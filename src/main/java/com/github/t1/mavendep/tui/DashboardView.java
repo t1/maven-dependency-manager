@@ -91,19 +91,16 @@ public class DashboardView {
     }
 
     private void renderDependencyTabWithErrors(Frame frame, Rect area) {
-        var allMessages = model.logMessages().stream()
+        var focused = model.focusedUpdate();
+        var focusedArtifact = focused != null ? focused.groupId() + ":" + focused.artifactId() : null;
+        var messages = model.logMessages().stream()
                 .filter(m -> m.level() != INFO)
+                .filter(m -> focusedArtifact != null ? focusedArtifact.equals(m.artifact()) : m.artifact() == null)
                 .toList();
-        if (allMessages.isEmpty()) {
+        if (messages.isEmpty()) {
             dependencyTablePanel.render(frame, area, model);
             return;
         }
-
-        var focused = model.focusedUpdate();
-        var focusedArtifact = focused != null ? focused.groupId() + ":" + focused.artifactId() : null;
-        var messages = focusedArtifact != null && model.hasLogMessagesFor(focusedArtifact)
-                ? allMessages.stream().filter(m -> focusedArtifact.equals(m.artifact())).toList()
-                : allMessages;
 
         var innerWidth = Math.max(1, area.width() - 2); // account for borders
         var wrappedLineCount = messages.stream()

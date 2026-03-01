@@ -343,6 +343,7 @@ public class DashboardModel {
     }
 
     private DependencyUpdate rawFocusedUpdate() {
-        return activeUpdates().get(cursor);
+        var updates = activeUpdates();
+        return updates.isEmpty() ? null : updates.get(cursor);
     }
 }
