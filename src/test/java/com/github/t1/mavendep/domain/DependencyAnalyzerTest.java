@@ -49,7 +49,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(
                         Version.fromString("5.10.0"),
                         Version.fromString("5.10.1"),
@@ -100,7 +100,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(
                         Version.fromString("5.10.0"),
                         Version.fromString("5.10.1")
@@ -134,7 +134,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter")))
                 .willReturn(List.of(
                         Version.fromString("3.0.0-M1"),
                         Version.fromString("3.0.0")
@@ -169,7 +169,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter")))
                 .willReturn(List.of(
                         Version.fromString("3.0.0"),
                         Version.fromString("3.1.0-M1"),
@@ -216,14 +216,14 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.1")));
-        given(mockRepository.getAvailableVersions("org.springframework", "spring-core"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework", "spring-core")))
                 .willReturn(List.of(
                         Version.fromString("5.3.0"),
                         Version.fromString("6.0.0")
                 ));
-        given(mockRepository.getAvailableVersions("com.google.guava", "guava"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("com.google.guava", "guava")))
                 .willReturn(List.of(Version.fromString("32.0.0")));
 
         var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
@@ -258,7 +258,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter")))
                 .willReturn(List.of(
                         Version.fromString("3.0.0"),
                         Version.fromString("3.1.0"),
@@ -299,9 +299,9 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.1")));
-        given(mockRepository.getAvailableVersions("org.springframework", "spring-core"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework", "spring-core")))
                 .willReturn(List.of(
                         Version.fromString("5.3.0"),
                         Version.fromString("6.0.0")
@@ -340,7 +340,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(
                         Version.fromString("5.10.0"),
                         Version.fromString("5.10.1")
@@ -387,9 +387,9 @@ class DependencyAnalyzerTest {
                     </dependencies>
                 </project>
                 """, "pom2.xml");
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
-        given(mockRepository.getAvailableVersions("org.springframework", "spring-core"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework", "spring-core")))
                 .willReturn(List.of(Version.fromString("5.3.0"), Version.fromString("6.0.0")));
 
         var reports = new DependencyAnalyzer(mockRepository, pom1, pom2).run();
@@ -430,7 +430,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(
                         Version.fromString("5.10.0"),
                         Version.fromString("5.10.1"),
@@ -503,7 +503,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter")))
                 .willReturn(List.of(
                         Version.fromString("3.0.0-SNAPSHOT"),
                         Version.fromString("3.1.0-M1"),
@@ -538,7 +538,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter")))
                 .willReturn(List.of(
                         Version.fromString("3.1.0"),
                         Version.fromString("3.2.0")
@@ -578,7 +578,7 @@ class DependencyAnalyzerTest {
                 """;
         var validPomFile = writePom(validPomContent);
         var nonExistentPomFile = tempDir.resolve("non-existent-pom.xml");
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(
                         Version.fromString("5.10.0"),
                         Version.fromString("5.10.1")
@@ -614,7 +614,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter-parent"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter-parent")))
                 .willReturn(List.of(
                         Version.fromString("3.1.0"),
                         Version.fromString("3.2.0")
@@ -677,7 +677,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("org.springframework.boot", "spring-boot-starter-parent"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter-parent")))
                 .willReturn(List.of(Version.fromString("3.2.0")));
 
         var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
@@ -711,7 +711,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("com.example", "unknown-artifact"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("com.example", "unknown-artifact")))
                 .willReturn(List.of());
 
         var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
@@ -746,7 +746,7 @@ class DependencyAnalyzerTest {
                 </project>
                 """;
         var pomFile = writePom(pomContent);
-        given(mockRepository.getAvailableVersions("com.example", "private-parent"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("com.example", "private-parent")))
                 .willReturn(List.of());
 
         var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
@@ -832,7 +832,7 @@ class DependencyAnalyzerTest {
 
         new DependencyAnalyzer(mockRepository, parentPomPath).run();
 
-        verify(mockRepository, never()).getAvailableVersions("com.example", "parent-project");
+        verify(mockRepository, never()).getAvailableVersions(new ArtifactRef("com.example", "parent-project"));
     }
 
     @Test
@@ -936,7 +936,7 @@ class DependencyAnalyzerTest {
 
         new DependencyAnalyzer(mockRepository, parentPomPath).run();
 
-        verify(mockRepository, never()).getAvailableVersions("com.example", "module-b");
+        verify(mockRepository, never()).getAvailableVersions(new ArtifactRef("com.example", "module-b"));
     }
 
     @Test
@@ -988,12 +988,12 @@ class DependencyAnalyzerTest {
                     <version>1.0.0</version>
                 </project>
                 """);
-        given(mockRepository.getAvailableVersions("com.example", "module-b"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("com.example", "module-b")))
                 .willReturn(List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")));
 
         new DependencyAnalyzer(mockRepository, parentPomPath).run();
 
-        verify(mockRepository).getAvailableVersions("com.example", "module-b");
+        verify(mockRepository).getAvailableVersions(new ArtifactRef("com.example", "module-b"));
     }
 
     private record MultiModuleFixture(Path parentPomPath, Path modulePomPath) {}
@@ -1043,7 +1043,7 @@ class DependencyAnalyzerTest {
                     </dependencies>
                 </project>
                 """);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.11.0")));
         return new MultiModuleFixture(parentPomPath, moduleDir.resolve("pom.xml"));
     }
@@ -1102,7 +1102,7 @@ class DependencyAnalyzerTest {
                     </dependencies>
                 </project>
                 """);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
         var originalHome = System.getProperty("user.home");
         System.setProperty("user.home", tempDir.toString());
@@ -1139,7 +1139,7 @@ class DependencyAnalyzerTest {
                     </dependencies>
                 </project>
                 """);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
 
         var reports = new DependencyAnalyzer(mockRepository, subDir).run();
@@ -1209,9 +1209,9 @@ class DependencyAnalyzerTest {
         writeString(parentPomFile, parentPomContent);
         writeString(moduleADir.resolve("pom.xml"), moduleAPomContent);
         writeString(moduleBDir.resolve("pom.xml"), moduleBPomContent);
-        given(mockRepository.getAvailableVersions("org.junit.jupiter", "junit-jupiter"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
                 .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("5.10.1")));
-        given(mockRepository.getAvailableVersions("org.springframework", "spring-core"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework", "spring-core")))
                 .willReturn(List.of(Version.fromString("5.3.0"), Version.fromString("6.0.0")));
 
         var reports = new DependencyAnalyzer(mockRepository, parentPomFile).run();

@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.cli;
 
+import com.github.t1.mavendep.domain.ArtifactRef;
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
@@ -26,8 +27,8 @@ class UpdateCommandTest {
 
     @Test
     void shouldReturnOneWhenFilterMatchesNoDependency() throws Exception {
-        var pomFile = createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
-        given(repository.getAvailableVersions("org.assertj", "assertj-core"))
+        var pomFile = createPomWithDependency();
+        given(repository.getAvailableVersions(new ArtifactRef("org.assertj", "assertj-core")))
                 .willReturn(List.of(Version.fromString("3.25.1"), Version.fromString("3.27.7")));
         var stderr = new StringWriter();
         var cmd = new CommandLine(new UpdateCommand(repository));
@@ -41,8 +42,8 @@ class UpdateCommandTest {
 
     @Test
     void shouldReturnZeroOnSuccessfulRun() throws Exception {
-        var pomFile = createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
-        given(repository.getAvailableVersions("org.assertj", "assertj-core"))
+        var pomFile = createPomWithDependency();
+        given(repository.getAvailableVersions(new ArtifactRef("org.assertj", "assertj-core")))
                 .willReturn(List.of(Version.fromString("3.25.1"), Version.fromString("3.27.7")));
 
         var exitCode = new CommandLine(new UpdateCommand(repository))
@@ -51,7 +52,7 @@ class UpdateCommandTest {
         then(exitCode).isEqualTo(0);
     }
 
-    private Path createPomWithDependency(String groupId, String artifactId, String version) throws Exception {
+    private Path createPomWithDependency() throws Exception {
         var pomFile = tempDir.resolve("pom.xml");
         writeString(pomFile, """
                 <?xml version="1.0" encoding="UTF-8"?>
@@ -60,16 +61,16 @@ class UpdateCommandTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
-                            <groupId>%s</groupId>
-                            <artifactId>%s</artifactId>
-                            <version>%s</version>
+                            <groupId>org.assertj</groupId>
+                            <artifactId>assertj-core</artifactId>
+                            <version>3.25.1</version>
                         </dependency>
                     </dependencies>
                 </project>
-                """.formatted(groupId, artifactId, version));
+                """);
         return pomFile;
     }
 }

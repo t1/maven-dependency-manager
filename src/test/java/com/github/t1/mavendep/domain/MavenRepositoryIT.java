@@ -15,9 +15,9 @@ class MavenRepositoryIT {
     void shouldFetchAvailableVersions() throws IOException {
         var repository = MavenRepository.builder().build();
         // force a reload of metadata:
-        deleteIfExists(repository.metadataFilePath("org.junit.jupiter", "junit-jupiter"));
+        deleteIfExists(repository.metadataFilePath(new ArtifactRef("org.junit.jupiter", "junit-jupiter")));
 
-        var versions = repository.getAvailableVersions("org.junit.jupiter", "junit-jupiter");
+        var versions = repository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter"));
 
         then(versions).isNotNull().contains(Version.fromString("5.4.0"));
     }

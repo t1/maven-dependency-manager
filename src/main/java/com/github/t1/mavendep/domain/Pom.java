@@ -9,8 +9,8 @@ import org.xml.sax.SAXException;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -68,7 +68,7 @@ public class Pom {
             String content = readString(pomPath);
             return Optional.of(parse(pomPath, content));
         } catch (IOException e) {
-            log().warning("can't read POM file " + pomPath + ": " + e.getClass().getSimpleName(), e);
+            log().warning("can't read POM file " + pomPath + ": " + e, e);
             return Optional.empty();
         } catch (PomParsingException e) {
             log().warning("Can't parse POM file: " + pomPath + ": " + e, e);
@@ -221,13 +221,13 @@ public class Pom {
             }
 
             if (groupId.isEmpty() && type == plugin) {
-                log().warning("missing groupId in plugin " + artifactId + "; assuming " + DEFAULT_PLUGIN_GROUP_ID);
+                log().warning(new ArtifactRef(DEFAULT_PLUGIN_GROUP_ID, artifactId), "missing groupId; assuming " + DEFAULT_PLUGIN_GROUP_ID);
                 groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
 
             var dependency = new Dependency(type, groupId, artifactId, version, scope, versionProperty);
-            if (groupId.isEmpty()) log().warning("missing groupId in " + dependency);
-            if (artifactId.isEmpty()) log().warning("missing artifactId in " + dependency);
+            if (groupId.isEmpty()) log().warning(dependency.artifactRef(), "missing groupId");
+            if (artifactId.isEmpty()) log().warning(dependency.artifactRef(), "missing artifactId");
             return dependency;
         }
 

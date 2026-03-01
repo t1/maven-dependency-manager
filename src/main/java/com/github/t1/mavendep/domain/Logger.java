@@ -9,15 +9,11 @@ public interface Logger {
 
     void log(LogMessage message);
 
-    default void info(String message) {log(new LogMessage(INFO, message));}
-
-    default void warning(String message) {log(new LogMessage(WARNING, message));}
+    default void info(ArtifactRef artifact, String message) {log(new LogMessage(INFO, message, artifact, null));}
 
     default void warning(ArtifactRef artifact, String message) {log(new LogMessage(WARNING, message, artifact, null));}
 
     default void warning(String message, Exception e) {log(new LogMessage(WARNING, message, e));}
-
-    default void error(String message, Exception e) {log(new LogMessage(ERROR, message, e));}
 
     default void error(ArtifactRef artifact, String message, Exception e) {log(new LogMessage(ERROR, message, artifact, e));}
 
@@ -34,9 +30,7 @@ public interface Logger {
 
     record LogMessage(LogLevel level, String message, ArtifactRef artifact, Exception exception) {
 
-        public LogMessage(LogLevel level, String message) {
-            this(level, message, null, null);
-        }
+        public LogMessage(LogLevel level, String message) {this(level, message, null, null);}
 
         public LogMessage(LogLevel level, String message, Exception exception) {
             this(level, message, null, exception);

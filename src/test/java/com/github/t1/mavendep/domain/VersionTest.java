@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.domain;
 
+import com.github.t1.mavendep.domain.Logger.LogMessage;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -96,102 +97,104 @@ class VersionTest {
 
     @Nested
     class IsReleased {
+        final ArtifactRef artifactRef = new ArtifactRef("com.example", "my-artifact");
+
         @Test
         void shouldIdentifyPlainVersionAsReleased() {
-            then(Version.fromString("3.0.0").isReleased("test")).isTrue();
+            then(Version.fromString("3.0.0").isReleased(artifactRef)).isTrue();
         }
 
         @Test
         void shouldIdentifyNumericQualifierAsReleased() {
-            then(Version.fromString("0.7.7.201606060606").isReleased("test")).isTrue();
+            then(Version.fromString("0.7.7.201606060606").isReleased(artifactRef)).isTrue();
         }
 
         @Test
         void shouldIdentifyFinalQualifierAsReleased() {
-            then(Version.fromString("5.1.5.Final").isReleased("test")).isTrue();
+            then(Version.fromString("5.1.5.Final").isReleased(artifactRef)).isTrue();
         }
 
         @Test
         void shouldIdentifyGaQualifierAsReleased() {
-            then(Version.fromString("3.0.0-GA").isReleased("test")).isTrue();
+            then(Version.fromString("3.0.0-GA").isReleased(artifactRef)).isTrue();
         }
 
         @Test
         void shouldIdentifyReleaseQualifierAsReleased() {
-            then(Version.fromString("4.3.0.RELEASE").isReleased("test")).isTrue();
+            then(Version.fromString("4.3.0.RELEASE").isReleased(artifactRef)).isTrue();
         }
 
         @Test
         void shouldIdentifySpQualifierAsReleased() {
-            then(Version.fromString("16.0-SP1").isReleased("test")).isTrue();
+            then(Version.fromString("16.0-SP1").isReleased(artifactRef)).isTrue();
         }
 
         @Test
         void shouldIdentifySnapshotAsNotReleased() {
-            then(Version.fromString("3.0.0-SNAPSHOT").isReleased("test")).isFalse();
+            then(Version.fromString("3.0.0-SNAPSHOT").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIdentifyAlphaAsNotReleased() {
-            then(Version.fromString("2.0.0-alpha0").isReleased("test")).isFalse();
+            then(Version.fromString("2.0.0-alpha0").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIdentifyBetaAsNotReleased() {
-            then(Version.fromString("2.0.0-beta1").isReleased("test")).isFalse();
+            then(Version.fromString("2.0.0-beta1").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIdentifyRcAsNotReleased() {
-            then(Version.fromString("3.0.0-RC1").isReleased("test")).isFalse();
+            then(Version.fromString("3.0.0-RC1").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIdentifyCrAsNotReleased() {
-            then(Version.fromString("3.0.0-CR1").isReleased("test")).isFalse();
+            then(Version.fromString("3.0.0-CR1").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIdentifyMilestoneAsNotReleased() {
-            then(Version.fromString("3.0.0-M1").isReleased("test")).isFalse();
-            then(Version.fromString("3.0.0-M2").isReleased("test")).isFalse();
-            then(Version.fromString("3.0.0-m3").isReleased("test")).isFalse();
+            then(Version.fromString("3.0.0-M1").isReleased(artifactRef)).isFalse();
+            then(Version.fromString("3.0.0-M2").isReleased(artifactRef)).isFalse();
+            then(Version.fromString("3.0.0-m3").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIdentifyOtherPreReleaseQualifiersAsNotReleased() {
-            then(Version.fromString("2.0.0-preview1").isReleased("test")).isFalse();
-            then(Version.fromString("2.0.0-dev1").isReleased("test")).isFalse();
-            then(Version.fromString("2.0.0-incubating").isReleased("test")).isFalse();
-            then(Version.fromString("2.0.0-pr1").isReleased("test")).isFalse();
+            then(Version.fromString("2.0.0-preview1").isReleased(artifactRef)).isFalse();
+            then(Version.fromString("2.0.0-dev1").isReleased(artifactRef)).isFalse();
+            then(Version.fromString("2.0.0-incubating").isReleased(artifactRef)).isFalse();
+            then(Version.fromString("2.0.0-pr1").isReleased(artifactRef)).isFalse();
         }
 
         @Test
         void shouldIncludeContextInUnknownQualifierWarning() {
             var version = Version.fromString("1.0.0-unknownQualifier");
-            var messages = new ArrayList<String>();
+            List<LogMessage> messages = new ArrayList<>();
 
-            with(collectingLogger(messages)).run(() -> {
-                var released = version.isReleased("com.example:my-artifact");
+            with(messages::add).run(() -> {
+                var released = version.isReleased(artifactRef);
 
                 then(released).isFalse();
             });
 
-            then(messages).anyMatch(msg -> msg.contains("com.example:my-artifact"));
+            then(messages).hasSize(1).first().extracting(LogMessage::artifact).isEqualTo(artifactRef);
         }
 
         @Test
         void shouldHandleNullContext() {
             var version = Version.fromString("1.0.0-unknownQualifier");
-            var messages = new ArrayList<String>();
+            List<LogMessage> messages = new ArrayList<>();
 
-            with(collectingLogger(messages)).run(() -> {
+            with(messages::add).run(() -> {
                 var released = version.isReleased(null);
 
                 then(released).isFalse();
             });
 
-            then(messages).noneMatch(msg -> msg.contains("["));
+            then(messages).hasSize(1).first().extracting(LogMessage::artifact).isNull();
         }
     }
 
@@ -420,9 +423,5 @@ class VersionTest {
 
             then(UpdateType.between(current, same)).isEqualTo(UpdateType.none);
         }
-    }
-
-    private static Logger collectingLogger(List<String> messages) {
-        return logMessage -> messages.add(logMessage.message());
     }
 }

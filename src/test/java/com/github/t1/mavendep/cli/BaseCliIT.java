@@ -68,15 +68,8 @@ abstract class BaseCliIT {
         }
 
         void givenMavenRepoVersions(String groupId, String artifactId, List<Version> versions) {
-            var metadataXml = generateMetadataXml(groupId, artifactId, versions);
-            var urlPath = "/" + groupId.replace('.', '/') + "/" + artifactId + "/maven-metadata.xml";
-            responses.put(urlPath, metadataXml);
-        }
-
-        private String generateMetadataXml(String groupId, String artifactId, List<Version> versions) {
             var versionsXml = versions.stream().map(v -> "    <version>" + v + "</version>").collect(Collectors.joining("\n"));
-
-            return """
+            var metadataXml = """
                     <?xml version="1.0" encoding="UTF-8"?>
                     <metadata>
                       <groupId>%s</groupId>
@@ -88,6 +81,8 @@ abstract class BaseCliIT {
                       </versioning>
                     </metadata>
                     """.formatted(groupId, artifactId, versionsXml);
+            var urlPath = "/" + groupId.replace('.', '/') + "/" + artifactId + "/maven-metadata.xml";
+            responses.put(urlPath, metadataXml);
         }
 
         public int port() {return httpServer.getAddress().getPort();}

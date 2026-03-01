@@ -43,7 +43,7 @@ public class ShowAvailableCommand implements Runnable {
         var dep = resolved.get();
 
         var versions = repositoryOptions.createMavenRepository()
-                .getAvailableVersions(dep.groupId(), dep.artifactId());
+                .getAvailableVersions(dep.artifactRef());
 
         if (versions.isEmpty()) {
             System.out.println("No versions found for " + coordinate);

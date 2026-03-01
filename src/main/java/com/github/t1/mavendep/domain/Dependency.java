@@ -1,6 +1,5 @@
 package com.github.t1.mavendep.domain;
 
-
 import java.util.List;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
@@ -29,13 +28,9 @@ public record Dependency(
 
     public Version version() {return coordinates.version();}
 
-    public boolean isValid() {
-        return hasGroupId() && hasArtifactId() && version() != null;
-    }
+    public boolean isValid() {return hasGroupId() && hasArtifactId() && version() != null;}
 
-    public boolean isManaged() {
-        return hasGroupId() && hasArtifactId() && version() == null;
-    }
+    public boolean isManaged() {return hasGroupId() && hasArtifactId() && version() == null;}
 
     private boolean hasGroupId() {return groupId() != null && !groupId().isEmpty();}
 

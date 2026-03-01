@@ -10,6 +10,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import static java.nio.file.Files.writeString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -44,7 +45,7 @@ class AnalysisProgressListenerTest {
                 </project>
                 """);
 
-        given(mockRepository.getAvailableVersions("org.junit", "junit"))
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit", "junit")))
                 .willReturn(List.of(Version.fromString("5.0.0"), Version.fromString("5.1.0")));
 
         var analyzer = new DependencyAnalyzer(mockRepository, List.of(pomFile), listener);
@@ -77,7 +78,7 @@ class AnalysisProgressListenerTest {
                 </project>
                 """);
 
-        given(mockRepository.getAvailableVersions(anyString(), anyString()))
+        given(mockRepository.getAvailableVersions(any(ArtifactRef.class)))
                 .willReturn(List.of(Version.fromString("1.0"), Version.fromString("2.0")));
 
         var analyzer = new DependencyAnalyzer(mockRepository, List.of(pomFile), listener);

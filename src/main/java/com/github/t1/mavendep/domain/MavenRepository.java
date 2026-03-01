@@ -80,22 +80,18 @@ public class MavenRepository {
     ///
     /// Uses local cache if available and fresh, otherwise fetches from Maven Central.
     /// Returns empty list if the artifact cannot be found or any error occurs.
-    ///
-    /// @param groupId    the Maven group ID (e.g., "org.junit.jupiter")
-    /// @param artifactId the Maven artifact ID (e.g., "junit-jupiter")
-    /// @return sorted list of all available versions, or empty list if unavailable
-    public List<Version> getAvailableVersions(String groupId, String artifactId) {
+    public List<Version> getAvailableVersions(ArtifactRef artifact) {
         try {
-            var cacheFile = metadataFilePath(groupId, artifactId);
+            var cacheFile = metadataFilePath(artifact);
 
             String metadata;
             metadata = exists(cacheFile) && isCacheFresh(cacheFile)
                     ? readString(cacheFile)
-                    : writeCache(cacheFile, fetchMetadata(groupId, artifactId));
+                    : writeCache(cacheFile, fetchMetadata(artifact));
 
             return parseMetadata(metadata);
         } catch (IOException | InterruptedException | ParserConfigurationException | SAXException e) {
-            log().error(new ArtifactRef(groupId, artifactId), "Failed to get available versions, assuming none available: " + e, e);
+            log().error(artifact, "Failed to get available versions, assuming none available: " + e, e);
             return List.of();
         }
     }
@@ -120,9 +116,9 @@ public class MavenRepository {
         return metadata;
     }
 
-    private String fetchMetadata(String groupId, String artifactId) throws IOException, InterruptedException {
-        var uri = metadataUri(groupId, artifactId);
-        log().info("Fetching metadata for " + groupId + ":" + artifactId + " from " + uri.getAuthority());
+    private String fetchMetadata(ArtifactRef artifact) throws IOException, InterruptedException {
+        var uri = metadataUri(artifact);
+        log().info(artifact, "Fetching metadata from " + uri.getAuthority());
         var request = HttpRequest.newBuilder()
                 .uri(uri)
                 .GET()
@@ -168,13 +164,13 @@ public class MavenRepository {
         return versions;
     }
 
-    private URI metadataUri(String groupId, String artifactId) {
-        var groupPath = groupId.replace('.', '/');
-        return URI.create(String.format("%s/%s/%s/maven-metadata.xml", mavenCentralUrl, groupPath, artifactId));
+    private URI metadataUri(ArtifactRef artifact) {
+        var groupPath = artifact.groupId().replace('.', '/');
+        return URI.create(String.format("%s/%s/%s/maven-metadata.xml", mavenCentralUrl, groupPath, artifact.artifactId()));
     }
 
-    Path metadataFilePath(String groupId, String artifactId) {
-        var groupPath = groupId.replace('.', '/');
-        return localRepositoryDir.resolve(groupPath).resolve(artifactId).resolve("maven-metadata.xml");
+    Path metadataFilePath(ArtifactRef artifact) {
+        var groupPath = artifact.groupId().replace('.', '/');
+        return localRepositoryDir.resolve(groupPath).resolve(artifact.artifactId()).resolve("maven-metadata.xml");
     }
 }

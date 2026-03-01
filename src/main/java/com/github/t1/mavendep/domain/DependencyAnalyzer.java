@@ -173,17 +173,16 @@ public class DependencyAnalyzer {
     }
 
     private DependencyUpdate analyze(Dependency dependency) {
+        var artifact = dependency.artifactRef();
         var availableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<Version>of()
-                : repository.getAvailableVersions(dependency.groupId(), dependency.artifactId());
-        var context = "scanning available versions of " + dependency.groupId() + ":" + dependency.artifactId();
+                : repository.getAvailableVersions(artifact);
         var releasedVersions = availableVersions.stream()
-                .filter(version -> version.isReleased(context))
+                .filter(version -> version.isReleased(artifact))
                 .toList();
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
         var updateType = UpdateType.between(dependency.version(), latestVersion);
         var result = dependency.toUpdate(latestVersion, availableVersions, updateType);
-        var artifactName = dependency.groupId() + ":" + dependency.artifactId();
-        progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifactName);
+        progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifact.toString());
         return result;
     }
 }

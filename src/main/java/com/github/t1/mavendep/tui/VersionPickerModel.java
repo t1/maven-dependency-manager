@@ -43,7 +43,7 @@ class VersionPickerModel {
         var focused = focusedUpdateSupplier.get();
         if (focused == null) return List.of();
         return focused.availableVersions().reversed().stream()
-                .filter(v -> v.isReleased("version picker"))
+                .filter(v -> v.isReleased(focused.artifactRef()))
                 .toList();
     }
 

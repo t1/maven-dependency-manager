@@ -41,7 +41,7 @@ class MavenRepositoryTest {
                 """);
         var repository = repositoryWithLocalTempDir();
 
-        var versions = repository.getAvailableVersions("org.springframework.boot", "spring-boot");
+        var versions = repository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot"));
 
         then(versions).hasSize(4);
         then(versions.get(0)).isEqualTo(Version.fromString("2.0.0"));
@@ -53,13 +53,13 @@ class MavenRepositoryTest {
         writeCache("org.example", "invalid", "<invalid>xml</invalid>");
         var repository = repositoryWithLocalTempDir();
 
-        var versions = repository.getAvailableVersions("org.example", "invalid");
+        var versions = repository.getAvailableVersions(new ArtifactRef("org.example", "invalid"));
 
         then(versions).isEmpty();
     }
 
     private void writeCache(String groupId, String artifactId, String metadataXml) {
-        var cacheFile = createCacheFile(groupId, artifactId);
+        var cacheFile = createCacheFile(new ArtifactRef(groupId, artifactId));
         try {
             writeString(cacheFile, metadataXml);
         } catch (IOException e) {
@@ -85,7 +85,7 @@ class MavenRepositoryTest {
                 """);
         var repository = repositoryWithLocalTempDir();
 
-        var versions = repository.getAvailableVersions("org.example", "example");
+        var versions = repository.getAvailableVersions(new ArtifactRef("org.example", "example"));
 
         then(versions).hasSize(3);
         then(versions.get(0)).isEqualTo(Version.fromString("1.0.0"));
@@ -95,7 +95,7 @@ class MavenRepositoryTest {
 
     @Test
     void shouldUseCacheWhenFresh() throws IOException {
-        var cacheFile = createCacheFile("com.example", "some-lib");
+        var cacheFile = createCacheFile(new ArtifactRef("com.example", "some-lib"));
         writeString(cacheFile, """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <metadata>
@@ -109,7 +109,7 @@ class MavenRepositoryTest {
                 """);
         var repository = repositoryWithLocalTempDir();
 
-        var versions = repository.getAvailableVersions("com.example", "some-lib");
+        var versions = repository.getAvailableVersions(new ArtifactRef("com.example", "some-lib"));
 
         then(versions).hasSize(2);
         then(versions.getFirst()).isEqualTo(Version.fromString("1.0.0"));
@@ -117,8 +117,9 @@ class MavenRepositoryTest {
     }
 
 
-    private Path createCacheFile(String groupId, String artifactId) {
-        var cacheFile = metadataFilePath(groupId, artifactId);
+    private Path createCacheFile(ArtifactRef artifact) {
+        var groupPath = artifact.groupId().replace('.', '/');
+        var cacheFile = tempDir.resolve(groupPath).resolve(artifact.artifactId()).resolve("maven-metadata.xml");
         try {
             createDirectories(cacheFile.getParent());
         } catch (IOException e) {
@@ -127,14 +128,9 @@ class MavenRepositoryTest {
         return cacheFile;
     }
 
-    private Path metadataFilePath(String groupId, String artifactId) {
-        var groupPath = groupId.replace('.', '/');
-        return tempDir.resolve(groupPath).resolve(artifactId).resolve("maven-metadata.xml");
-    }
-
     @Test
     void shouldNotUseCacheWhenStale() throws IOException {
-        var cacheFile = createCacheFile("com.example", "old-lib");
+        var cacheFile = createCacheFile(new ArtifactRef("com.example", "old-lib"));
         writeString(cacheFile, """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <metadata>
@@ -153,14 +149,14 @@ class MavenRepositoryTest {
                 .mavenCentralUrl("http://localhost:9999")
                 .build();
 
-        var versions = repository.getAvailableVersions("com.example", "old-lib");
+        var versions = repository.getAvailableVersions(new ArtifactRef("com.example", "old-lib"));
 
         then(versions).isEmpty();
     }
 
     @Test
     void shouldBypassCacheWhenForceCacheUpdateIsEnabled() throws IOException {
-        var cacheFile = createCacheFile("com.example", "cached-lib");
+        var cacheFile = createCacheFile(new ArtifactRef("com.example", "cached-lib"));
         writeString(cacheFile, """
                 <?xml version="1.0" encoding="UTF-8"?>
                 <metadata>
@@ -178,7 +174,7 @@ class MavenRepositoryTest {
                 .forceCacheUpdate(true)
                 .build();
 
-        var versions = repository.getAvailableVersions("com.example", "cached-lib");
+        var versions = repository.getAvailableVersions(new ArtifactRef("com.example", "cached-lib"));
 
         then(versions).isEmpty();
     }
@@ -190,7 +186,7 @@ class MavenRepositoryTest {
         try {
             var repository = MavenRepository.builder().build();
 
-            var path = repository.metadataFilePath("org.example", "test");
+            var path = repository.metadataFilePath(new ArtifactRef("org.example", "test"));
 
             then(path.toString()).startsWith(customPath.toString());
         } finally {
@@ -203,7 +199,7 @@ class MavenRepositoryTest {
         writeCache("org.example", "malformed", "not xml at all <");
         var repository = repositoryWithLocalTempDir();
 
-        var versions = repository.getAvailableVersions("org.example", "malformed");
+        var versions = repository.getAvailableVersions(new ArtifactRef("org.example", "malformed"));
 
         then(versions).isEmpty();
     }
