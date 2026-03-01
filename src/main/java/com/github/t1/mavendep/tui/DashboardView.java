@@ -10,6 +10,9 @@ import dev.tamboui.terminal.Frame;
 import dev.tamboui.widgets.block.Block;
 import dev.tamboui.widgets.block.Borders;
 import dev.tamboui.widgets.paragraph.Paragraph;
+import dev.tamboui.text.Line;
+import dev.tamboui.text.Span;
+import dev.tamboui.text.Text;
 import dev.tamboui.widgets.tabs.Tabs;
 import dev.tamboui.widgets.tabs.TabsState;
 
@@ -139,15 +142,23 @@ public class DashboardView {
             return;
         }
 
-        var text = messages.stream()
-                .map(m -> "[" + m.level() + "] "
-                        + (m.artifact() != null ? "<" + m.artifact() + "> " : "")
-                        + m.message())
-                .collect(Collectors.joining("\n"));
+        var lines = messages.stream()
+                .map(m -> {
+                    var style = switch (m.level()) {
+                        case ERROR -> Style.EMPTY.fg(Color.RED);
+                        case WARNING -> Style.EMPTY.fg(Color.YELLOW);
+                        case INFO -> Style.EMPTY.fg(Color.DARK_GRAY);
+                    };
+                    var content = "[" + m.level() + "] "
+                            + (m.artifact() != null ? "<" + m.artifact() + "> " : "")
+                            + m.message();
+                    return Line.from(Span.styled(content, style));
+                })
+                .toList();
         var visibleLines = Math.max(1, area.height() - 2);
         var scroll = Math.max(0, messages.size() - visibleLines);
         var paragraph = Paragraph.builder()
-                .text(text)
+                .text(new Text(lines, null))
                 .overflow(WRAP_WORD)
                 .scroll(scroll)
                 .block(Block.builder().borders(Borders.ALL)

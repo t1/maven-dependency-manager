@@ -1,4 +1,3 @@
-* TUI: add color to the logs tab
 * TUI: rename the logs tab to messages
 * TUI: remove the "log messages" count
 * TUI: when rescanning, clear the messages first
