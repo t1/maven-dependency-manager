@@ -13,10 +13,12 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.github.t1.mavendep.domain.Logger.LogLevel;
 import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.tui.DashboardModel.Phase.SCANNING;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DEPENDENCIES;
@@ -282,6 +284,13 @@ public class DashboardModel {
 
     public List<LogMessage> logMessagesFor(ArtifactRef artifact) {
         return logMessages.stream().filter(m -> artifact.equals(m.artifact())).toList();
+    }
+
+    public Optional<LogLevel> worstLogLevelFor(ArtifactRef artifact) {
+        return logMessagesFor(artifact).stream()
+                .map(LogMessage::level)
+                .filter(l -> l != LogLevel.INFO)
+                .max(Enum::compareTo);
     }
 
     public void addLogMessage(LogMessage message) {

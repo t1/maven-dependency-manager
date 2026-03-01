@@ -35,12 +35,13 @@ class DependencyTablePanel {
                 .toList();
 
         var table = Table.builder()
-                .header(Row.from("", "Group:Artifact", "Current", "Latest", "Type")
+                .header(Row.from("", "Group:Artifact", "", "Current", "Latest", "Type")
                         .style(Style.EMPTY.bold()))
                 .rows(rows)
                 .widths(
                         Constraint.length(3),
                         Constraint.fill(),
+                        Constraint.length(2),
                         Constraint.length(14),
                         Constraint.length(14),
                         Constraint.length(7))
@@ -55,8 +56,14 @@ class DependencyTablePanel {
     private static Row toRow(DependencyUpdate update, DashboardModel model) {
         var effective = model.effectiveUpdate(update);
         var checkbox = !update.isUpdatable() ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
-        var icon = model.hasLogMessagesFor(update.artifactRef()) ? "! " : "";
-        var coords = icon + update.artifactRef();
+        var coords = String.valueOf(update.artifactRef());
+        var icon = model.worstLogLevelFor(update.artifactRef())
+                .map(level -> switch (level) {
+                    case ERROR -> "❌";
+                    case WARNING -> "⚠️";
+                    case INFO -> "";
+                })
+                .orElse("");
         var current = String.valueOf(update.currentVersion());
         var latest = String.valueOf(effective.latestVersion());
         var type = effective.updateType().name();
@@ -68,6 +75,6 @@ class DependencyTablePanel {
             case none -> Style.EMPTY;
         };
 
-        return Row.from(checkbox, coords, current, latest, type).style(style);
+        return Row.from(checkbox, coords, icon, current, latest, type).style(style);
     }
 }

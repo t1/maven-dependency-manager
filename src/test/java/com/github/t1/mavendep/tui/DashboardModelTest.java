@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Logger.LogLevel.ERROR;
+import static com.github.t1.mavendep.domain.Logger.LogLevel.INFO;
 import static com.github.t1.mavendep.domain.Logger.LogLevel.WARNING;
 import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
@@ -236,6 +238,41 @@ class DashboardModelTest {
         model.addLogMessage(new LogMessage(WARNING, "msg2"));
 
         then(model.logMessages()).extracting(LogMessage::message).containsExactly("msg1", "msg2");
+    }
+
+    @Test void shouldReturnEmptyForArtifactWithoutMessages() {
+        var lib = new ArtifactRef("org.example", "lib");
+
+        then(model.worstLogLevelFor(lib)).isEmpty();
+    }
+
+    @Test void shouldReturnWarningForArtifactWithWarning() {
+        var lib = new ArtifactRef("org.example", "lib");
+        model.addLogMessage(new LogMessage(WARNING, "warn", lib, null));
+
+        then(model.worstLogLevelFor(lib)).hasValue(WARNING);
+    }
+
+    @Test void shouldReturnErrorForArtifactWithError() {
+        var lib = new ArtifactRef("org.example", "lib");
+        model.addLogMessage(new LogMessage(ERROR, "err", lib, null));
+
+        then(model.worstLogLevelFor(lib)).hasValue(ERROR);
+    }
+
+    @Test void shouldReturnErrorWhenBothWarningAndError() {
+        var lib = new ArtifactRef("org.example", "lib");
+        model.addLogMessage(new LogMessage(WARNING, "warn", lib, null));
+        model.addLogMessage(new LogMessage(ERROR, "err", lib, null));
+
+        then(model.worstLogLevelFor(lib)).hasValue(ERROR);
+    }
+
+    @Test void shouldIgnoreInfoMessagesInWorstLevel() {
+        var lib = new ArtifactRef("org.example", "lib");
+        model.addLogMessage(new LogMessage(INFO, "info", lib, null));
+
+        then(model.worstLogLevelFor(lib)).isEmpty();
     }
 
     @Test void shouldDetectLogMessagesForArtifact() {

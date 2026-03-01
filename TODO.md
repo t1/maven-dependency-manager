@@ -1,5 +1,3 @@
-* TUI: use appropriate emojis for the warnings/errors about dependencies; and place it just before the current version
-  column
 * TUI: always display dependencies if there are errors/warnings for them
 * TUI: changing tabs should also work via left/right arrow keys
 * TUI: if a version is defined via a property that is also used by other dependencies,
