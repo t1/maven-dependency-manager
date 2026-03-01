@@ -420,6 +420,29 @@ class DashboardModelTest {
         then(model.needsRedraw()).isTrue();
     }
 
+    @Test void shouldKeepCursorOnSameDependencyWhenTogglingShowAllOff() {
+        setReportsWithNoneMajorNone();
+        model.setShowAll(true);
+        model.cursorDown(); // cursor at 1 = major update
+
+        model.toggleShowAll(); // show-all off → filtered list has only the major update at index 0
+
+        then(model.cursor()).isEqualTo(0);
+        then(model.activeUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
+    }
+
+    @Test void shouldMoveCursorToPreviousWhenFocusedItemFilteredOut() {
+        setReportsWithNoneMajorNone();
+        model.setShowAll(true);
+        model.cursorDown();
+        model.cursorDown(); // cursor at 2 = up-to-date-b (none)
+
+        model.toggleShowAll(); // show-all off → filtered list has only junit-jupiter at index 0
+
+        then(model.cursor()).isEqualTo(0);
+        then(model.activeUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
+    }
+
     @Test void shouldDefaultShowAllToFalse() {
         then(model.showAll()).isFalse();
     }
@@ -619,6 +642,26 @@ class DashboardModelTest {
         var update3 = dep3.toUpdate(Version.fromString("2.0.0"),
                 List.of(Version.fromString("2.0.0")), UpdateType.none);
 
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2, update3), List.of(), 3);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setReportsWithNoneMajorNone() {
+        var dep1 = new Dependency(dependency, "com.example", "up-to-date-a",
+                Version.fromString("1.0.0"), DEFAULT, null);
+        var dep2 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var dep3 = new Dependency(dependency, "com.example", "up-to-date-b",
+                Version.fromString("2.0.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("1.0.0"),
+                List.of(Version.fromString("1.0.0")), UpdateType.none);
+        var update2 = dep2.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major);
+        var update3 = dep3.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("2.0.0")), UpdateType.none);
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
         given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2, update3), List.of(), 3);

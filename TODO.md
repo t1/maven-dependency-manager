@@ -1,4 +1,3 @@
-* TUI: when switching off show-all, the cursor should stay at the same dependency or the one before
 * TUI: `p` to go to the plugins tab
 * TUI: add color to the logs tab
 * TUI: rename the logs tab to messages
