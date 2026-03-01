@@ -431,16 +431,25 @@ class DashboardModelTest {
         then(model.activeUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
     }
 
-    @Test void shouldMoveCursorToPreviousWhenFocusedItemFilteredOut() {
-        setReportsWithNoneMajorNone();
+    @Test void shouldMoveCursorToPrecedingVisibleDependencyWhenFilteredOut() {
+        setReportsWithMajorNoneNoneMajor();
         model.setShowAll(true);
-        model.cursorDown();
-        model.cursorDown(); // cursor at 2 = up-to-date-b (none)
+        model.cursorDown(); // cursor at 1 = first none
 
-        model.toggleShowAll(); // show-all off → filtered list has only junit-jupiter at index 0
+        model.toggleShowAll(); // filtered list = [major1, major2]; preceding visible = major1 at 0
 
         then(model.cursor()).isEqualTo(0);
-        then(model.activeUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
+        then(model.activeUpdates().get(0).artifactId()).isEqualTo("junit-jupiter");
+    }
+
+    @Test void shouldMoveCursorToFirstWhenNoPrecedingVisibleDependency() {
+        setReportsWithNoneMajorNone();
+        model.setShowAll(true);
+        // cursor at 0 = up-to-date-a (none), no preceding visible item
+
+        model.toggleShowAll();
+
+        then(model.cursor()).isEqualTo(0);
     }
 
     @Test void shouldDefaultShowAllToFalse() {
@@ -544,6 +553,30 @@ class DashboardModelTest {
         model.setActiveTab(Tab.PLUGINS);
 
         then(model.emptyMessage()).isEqualTo("no plugins");
+    }
+
+    private void setReportsWithMajorNoneNoneMajor() {
+        var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var dep2 = new Dependency(dependency, "com.example", "up-to-date-a",
+                Version.fromString("1.0.0"), DEFAULT, null);
+        var dep3 = new Dependency(dependency, "com.example", "up-to-date-b",
+                Version.fromString("2.0.0"), DEFAULT, null);
+        var dep4 = new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind",
+                Version.fromString("2.20.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major);
+        var update2 = dep2.toUpdate(Version.fromString("1.0.0"),
+                List.of(Version.fromString("1.0.0")), UpdateType.none);
+        var update3 = dep3.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("2.0.0")), UpdateType.none);
+        var update4 = dep4.toUpdate(Version.fromString("2.21.0"),
+                List.of(Version.fromString("2.20.0"), Version.fromString("2.21.0")), UpdateType.minor);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2, update3, update4), List.of(), 4);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
     }
 
     private void setReportsWithNoUpdates() {

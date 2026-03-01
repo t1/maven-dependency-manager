@@ -115,14 +115,22 @@ public class DashboardModel {
     public void setShowAll(boolean showAll) {this.showAll = showAll;}
 
     public void toggleShowAll() {
-        var focused = rawFocusedUpdate();
+        var oldUpdates = activeUpdates();
+        var oldCursor = cursor();
         showAll = !showAll;
-        if (focused != null) {
-            var newUpdates = activeUpdates();
-            var newIndex = newUpdates.indexOf(focused);
-            if (newIndex >= 0) setCursor(newIndex);
-            else setCursor(Math.max(0, Math.min(cursor(), newUpdates.size() - 1)));
+        var newUpdates = activeUpdates();
+        if (newUpdates.isEmpty()) {
+            setCursor(0);
+            return;
         }
+        for (int i = oldCursor; i >= 0; i--) {
+            var newIndex = newUpdates.indexOf(oldUpdates.get(i));
+            if (newIndex >= 0) {
+                setCursor(newIndex);
+                return;
+            }
+        }
+        setCursor(0);
     }
 
     // --- Phase ---
