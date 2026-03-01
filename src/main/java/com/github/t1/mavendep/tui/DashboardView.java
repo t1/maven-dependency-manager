@@ -183,9 +183,7 @@ public class DashboardView {
             return;
         }
 
-        var logCount = model.logMessages().size();
-        var logHint = logCount > 0 ? " | " + logCount + " log message" + (logCount > 1 ? "s" : "") : "";
-        var left = model.selectedCount() + " selected" + logHint;
+        var left = model.selectedCount() + " selected";
         var right = model.menuText();
 
         var gap = area.width() - left.length() - right.length();
