@@ -339,6 +339,14 @@ class DashboardModelTest {
         then(model.activeUpdates().getFirst().updateType()).isEqualTo(UpdateType.major);
     }
 
+    @Test void shouldShowNoneUpdateWithWarnings() {
+        setReportsWithMixedUpdates();
+        var upToDate = new ArtifactRef("com.example", "up-to-date");
+        model.addLogMessage(new LogMessage(WARNING, "problem", upToDate, null));
+
+        then(model.activeUpdates()).hasSize(2);
+    }
+
     @Test void shouldShowAllAfterToggle() {
         setReportsWithMixedUpdates();
 

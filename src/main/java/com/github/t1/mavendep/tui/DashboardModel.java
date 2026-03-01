@@ -157,7 +157,8 @@ public class DashboardModel {
                     case PLUGINS -> r.pluginUpdates().stream();
                     case BUILD, DIFF, LOGS -> Stream.of();
                 });
-        if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none);
+        if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none
+                || worstLogLevelFor(u.artifactRef()).isPresent());
         return stream.toList();
     }
 
