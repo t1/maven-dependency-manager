@@ -31,7 +31,7 @@ public class DashboardModel {
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
-    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF, LOGS}
+    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF, MESSAGES}
 
     private Phase phase = SCANNING;
     private Tab activeTab = DEPENDENCIES;
@@ -39,6 +39,7 @@ public class DashboardModel {
     private List<ProjectReport> reports = List.of();
     private final Map<Tab, Integer> cursors = new EnumMap<>(Tab.class);
     private final Set<ArtifactRef> selectedKeys = new HashSet<>();
+
     private record VersionPick(Version target, UpdateType type) {}
 
     private final Map<ArtifactRef, VersionPick> customVersions = new HashMap<>();
@@ -176,10 +177,10 @@ public class DashboardModel {
                 .flatMap(r -> switch (activeTab) {
                     case DEPENDENCIES -> r.dependencyUpdates().stream();
                     case PLUGINS -> r.pluginUpdates().stream();
-                    case BUILD, DIFF, LOGS -> Stream.of();
+                    case BUILD, DIFF, MESSAGES -> Stream.of();
                 });
         if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none
-                || worstLogLevelFor(u.artifactRef()).isPresent());
+                                                  || worstLogLevelFor(u.artifactRef()).isPresent());
         return stream.toList();
     }
 
@@ -213,7 +214,7 @@ public class DashboardModel {
         var prop = update.versionProperty();
         if (prop == null) return false;
         return allUpdates().anyMatch(u -> prop.equals(u.versionProperty())
-                && selectedKeys.contains(selectionKey(u)));
+                                          && selectedKeys.contains(selectionKey(u)));
     }
 
     public void toggleSelection() {

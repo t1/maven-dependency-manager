@@ -1,4 +1,3 @@
-* TUI: rename the logs tab to messages
 * TUI: remove the "log messages" count
 * TUI: when rescanning, clear the messages first
 * TUI: when there are multiple poms involved, group dependencies by the pom

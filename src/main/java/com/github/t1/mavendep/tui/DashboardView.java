@@ -7,12 +7,12 @@ import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
 import dev.tamboui.style.Style;
 import dev.tamboui.terminal.Frame;
-import dev.tamboui.widgets.block.Block;
-import dev.tamboui.widgets.block.Borders;
-import dev.tamboui.widgets.paragraph.Paragraph;
 import dev.tamboui.text.Line;
 import dev.tamboui.text.Span;
 import dev.tamboui.text.Text;
+import dev.tamboui.widgets.block.Block;
+import dev.tamboui.widgets.block.Borders;
+import dev.tamboui.widgets.paragraph.Paragraph;
 import dev.tamboui.widgets.tabs.Tabs;
 import dev.tamboui.widgets.tabs.TabsState;
 
@@ -22,7 +22,7 @@ import static com.github.t1.mavendep.domain.Logger.LogLevel.INFO;
 import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.BUILD;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
-import static com.github.t1.mavendep.tui.DashboardModel.Tab.LOGS;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.MESSAGES;
 import static dev.tamboui.style.Overflow.WRAP_WORD;
 
 /// Renders the [DashboardModel] into TamboUI widgets.
@@ -67,7 +67,7 @@ public class DashboardView {
     private void renderTabs(Frame frame, Rect area) {
         tabsState.select(model.activeTab().ordinal());
         var tabs = Tabs.builder()
-                .titles("Dependencies", "Plugins", "Build Output", "Git Diff", "Logs")
+                .titles("Dependencies", "Plugins", "Build Output", "Git Diff", "Messages")
                 .highlightStyle(Style.EMPTY.bold().fg(Color.YELLOW))
                 .divider(" | ")
                 .block(Block.builder().borders(Borders.ALL).build())
@@ -85,8 +85,8 @@ public class DashboardView {
             buildOutputPanel.render(frame, area, model);
         } else if (model.activeTab() == DIFF) {
             gitDiffPanel.render(frame, area, model);
-        } else if (model.activeTab() == LOGS) {
-            renderLogsTab(frame, area);
+        } else if (model.activeTab() == MESSAGES) {
+            renderMessagesTab(frame, area);
         } else {
             renderDependencyTabWithErrors(frame, area);
         }
@@ -134,11 +134,11 @@ public class DashboardView {
         frame.renderWidget(paragraph, split.get(1));
     }
 
-    private void renderLogsTab(Frame frame, Rect area) {
+    private void renderMessagesTab(Frame frame, Rect area) {
         var messages = model.logMessages();
         if (messages.isEmpty()) {
-            var block = Block.builder().borders(Borders.ALL).title("Logs").build();
-            frame.renderWidget(Paragraph.builder().text("\n  no log messages").block(block).build(), area);
+            var block = Block.builder().borders(Borders.ALL).title("Messages").build();
+            frame.renderWidget(Paragraph.builder().text("\n  no messages").block(block).build(), area);
             return;
         }
 
@@ -150,8 +150,8 @@ public class DashboardView {
                         case INFO -> Style.EMPTY.fg(Color.DARK_GRAY);
                     };
                     var content = "[" + m.level() + "] "
-                            + (m.artifact() != null ? "<" + m.artifact() + "> " : "")
-                            + m.message();
+                                  + (m.artifact() != null ? "<" + m.artifact() + "> " : "")
+                                  + m.message();
                     return Line.from(Span.styled(content, style));
                 })
                 .toList();
@@ -162,7 +162,7 @@ public class DashboardView {
                 .overflow(WRAP_WORD)
                 .scroll(scroll)
                 .block(Block.builder().borders(Borders.ALL)
-                        .title("Logs (" + messages.size() + ")")
+                        .title("Messages (" + messages.size() + ")")
                         .build())
                 .build();
         frame.renderWidget(paragraph, area);
