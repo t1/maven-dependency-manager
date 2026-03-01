@@ -13,13 +13,13 @@ public interface Logger {
 
     default void warning(String message) {log(new LogMessage(WARNING, message));}
 
-    default void warning(String artifact, String message) {log(new LogMessage(WARNING, message, artifact, null));}
+    default void warning(ArtifactRef artifact, String message) {log(new LogMessage(WARNING, message, artifact, null));}
 
     default void warning(String message, Exception e) {log(new LogMessage(WARNING, message, e));}
 
     default void error(String message, Exception e) {log(new LogMessage(ERROR, message, e));}
 
-    default void error(String artifact, String message, Exception e) {log(new LogMessage(ERROR, message, artifact, e));}
+    default void error(ArtifactRef artifact, String message, Exception e) {log(new LogMessage(ERROR, message, artifact, e));}
 
     /// Returns the [Logger] bound to the current scope, or a no-op default.
     static Logger log() {return CURRENT.orElse(NO_OP);}
@@ -32,7 +32,7 @@ public interface Logger {
         INFO, WARNING, ERROR
     }
 
-    record LogMessage(LogLevel level, String message, String artifact, Exception exception) {
+    record LogMessage(LogLevel level, String message, ArtifactRef artifact, Exception exception) {
 
         public LogMessage(LogLevel level, String message) {
             this(level, message, null, null);

@@ -44,10 +44,12 @@ class LoggerTest {
     }
 
     @Test void shouldLogWarningForArtifact() {
-        with(collectingLogger()).run(() -> log().warning("org.example:lib", "something odd"));
+        var artifact = new ArtifactRef("org.example", "lib");
+
+        with(collectingLogger()).run(() -> log().warning(artifact, "something odd"));
 
         then(messages).hasSize(1);
-        then(messages.getFirst().artifact()).isEqualTo("org.example:lib");
+        then(messages.getFirst().artifact()).isEqualTo(artifact);
         then(messages.getFirst().message()).isEqualTo("something odd");
     }
 

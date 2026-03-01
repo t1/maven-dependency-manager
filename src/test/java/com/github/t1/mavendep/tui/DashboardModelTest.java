@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.tui;
 
+import com.github.t1.mavendep.domain.ArtifactRef;
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.UpdateType;
@@ -227,18 +228,20 @@ class DashboardModelTest {
     }
 
     @Test void shouldDetectLogMessagesForArtifact() {
-        model.addLogMessage(new LogMessage(WARNING, "problem", "org.example:lib", null));
+        var lib = new ArtifactRef("org.example", "lib");
+        model.addLogMessage(new LogMessage(WARNING, "problem", lib, null));
 
-        then(model.hasLogMessagesFor("org.example:lib")).isTrue();
-        then(model.hasLogMessagesFor("org.example:other")).isFalse();
+        then(model.hasLogMessagesFor(lib)).isTrue();
+        then(model.hasLogMessagesFor(new ArtifactRef("org.example", "other"))).isFalse();
     }
 
     @Test void shouldFilterLogMessagesByArtifact() {
-        model.addLogMessage(new LogMessage(WARNING, "problem1", "org.example:lib", null));
-        model.addLogMessage(new LogMessage(WARNING, "problem2", "org.example:other", null));
+        var lib = new ArtifactRef("org.example", "lib");
+        model.addLogMessage(new LogMessage(WARNING, "problem1", lib, null));
+        model.addLogMessage(new LogMessage(WARNING, "problem2", new ArtifactRef("org.example", "other"), null));
         model.addLogMessage(new LogMessage(WARNING, "general problem"));
 
-        then(model.logMessagesFor("org.example:lib"))
+        then(model.logMessagesFor(lib))
                 .extracting(LogMessage::message).containsExactly("problem1");
     }
 

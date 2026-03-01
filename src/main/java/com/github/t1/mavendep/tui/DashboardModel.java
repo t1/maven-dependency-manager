@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.tui;
 
+import com.github.t1.mavendep.domain.ArtifactRef;
 import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.UpdateType;
@@ -34,8 +35,8 @@ public class DashboardModel {
 
     private List<ProjectReport> reports = List.of();
     private int cursor;
-    private final Set<String> selectedKeys = new HashSet<>();
-    private final Map<String, DependencyUpdate> customVersions = new HashMap<>();
+    private final Set<ArtifactRef> selectedKeys = new HashSet<>();
+    private final Map<ArtifactRef, DependencyUpdate> customVersions = new HashMap<>();
 
     private int scanCompleted;
     private int scanTotal;
@@ -232,7 +233,7 @@ public class DashboardModel {
         return (custom != null) ? custom : update;
     }
 
-    private static String selectionKey(DependencyUpdate u) {return u.groupId() + ":" + u.artifactId();}
+    private static ArtifactRef selectionKey(DependencyUpdate u) {return u.artifactRef();}
 
     // --- Custom version (version picker) ---
 
@@ -269,11 +270,11 @@ public class DashboardModel {
 
     public List<LogMessage> logMessages() {return logMessages;}
 
-    public boolean hasLogMessagesFor(String artifact) {
+    public boolean hasLogMessagesFor(ArtifactRef artifact) {
         return logMessages.stream().anyMatch(m -> artifact.equals(m.artifact()));
     }
 
-    public List<LogMessage> logMessagesFor(String artifact) {
+    public List<LogMessage> logMessagesFor(ArtifactRef artifact) {
         return logMessages.stream().filter(m -> artifact.equals(m.artifact())).toList();
     }
 

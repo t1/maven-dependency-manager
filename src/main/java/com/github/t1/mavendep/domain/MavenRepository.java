@@ -95,7 +95,7 @@ public class MavenRepository {
 
             return parseMetadata(metadata);
         } catch (IOException | InterruptedException | ParserConfigurationException | SAXException e) {
-            log().error(groupId + ":" + artifactId, "Failed to get available versions, assuming none available: " + e, e);
+            log().error(new ArtifactRef(groupId, artifactId), "Failed to get available versions, assuming none available: " + e, e);
             return List.of();
         }
     }

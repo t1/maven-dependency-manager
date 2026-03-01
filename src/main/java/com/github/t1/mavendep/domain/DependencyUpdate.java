@@ -22,6 +22,8 @@ public record DependencyUpdate(
 
     public String artifactId() {return dependency.artifactId();}
 
+    public ArtifactRef artifactRef() {return dependency.artifactRef();}
+
     public Version currentVersion() {return dependency.version();}
 
     public Scope scope() {return dependency.scope();}

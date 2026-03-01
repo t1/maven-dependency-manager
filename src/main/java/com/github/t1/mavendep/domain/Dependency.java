@@ -25,6 +25,8 @@ public record Dependency(
 
     public String artifactId() {return coordinates.artifactId();}
 
+    public ArtifactRef artifactRef() {return new ArtifactRef(groupId(), artifactId());}
+
     public Version version() {return coordinates.version();}
 
     public boolean isValid() {

@@ -95,7 +95,7 @@ public class DashboardView {
 
     private void renderDependencyTabWithErrors(Frame frame, Rect area) {
         var focused = model.focusedUpdate();
-        var focusedArtifact = focused != null ? focused.groupId() + ":" + focused.artifactId() : null;
+        var focusedArtifact = focused != null ? focused.artifactRef() : null;
         var messages = model.logMessages().stream()
                 .filter(m -> m.level() != INFO)
                 .filter(m -> focusedArtifact != null ? focusedArtifact.equals(m.artifact()) : m.artifact() == null)
