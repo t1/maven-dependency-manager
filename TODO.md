@@ -1,4 +1,3 @@
-* TUI: selecting a version should update the pom (and mark the checkbox)
 * TUI: `p` to go to the plugins tab
 * TUI: add color to the logs tab
 * TUI: rename the logs tab to messages

@@ -372,6 +372,7 @@ public class DashboardModel {
             var focusedUpdate = rawFocusedUpdate();
             if (focusedUpdate != null) {
                 setCustomVersion(focusedUpdate, picked);
+                selectedKeys.add(selectionKey(focusedUpdate));
             }
         }
     }

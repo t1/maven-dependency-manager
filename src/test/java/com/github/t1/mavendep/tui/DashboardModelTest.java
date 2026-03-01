@@ -171,6 +171,15 @@ class DashboardModelTest {
         then(effective.latestVersion()).isEqualTo(customVersion);
     }
 
+    @Test void shouldAutoSelectOnVersionPick() {
+        setReportsWithTwoDependencyUpdates();
+        model.openVersionPicker();
+
+        model.confirmVersionPick();
+
+        then(model.isSelected(model.activeUpdates().getFirst())).isTrue();
+    }
+
     @Test void shouldCursorHome() {
         setReportsWithTwoDependencyUpdates();
         model.cursorDown();
