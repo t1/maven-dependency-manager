@@ -159,7 +159,7 @@ class DashboardModelTest {
         then(model.isVersionPickerOpen()).isFalse();
     }
 
-    @Test void shouldSetCustomVersion() {
+    @Test void shouldSetCustomVersionAsCurrent() {
         setReportsWithTwoDependencyUpdates();
         var updates = model.activeUpdates();
         var original = updates.getFirst();
@@ -168,7 +168,8 @@ class DashboardModelTest {
         model.setCustomVersion(original, customVersion);
 
         var effective = model.effectiveUpdate(original);
-        then(effective.latestVersion()).isEqualTo(customVersion);
+        then(effective.currentVersion()).isEqualTo(customVersion);
+        then(effective.latestVersion()).isEqualTo(original.latestVersion());
     }
 
     @Test void shouldAutoSelectOnVersionPick() {

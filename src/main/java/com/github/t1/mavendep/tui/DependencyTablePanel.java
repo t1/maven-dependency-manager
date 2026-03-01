@@ -64,7 +64,7 @@ class DependencyTablePanel {
                     case INFO -> "";
                 })
                 .orElse("");
-        var current = String.valueOf(update.currentVersion());
+        var current = String.valueOf(effective.currentVersion());
         var latest = String.valueOf(effective.latestVersion());
         var type = effective.updateType().name();
 

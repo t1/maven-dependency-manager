@@ -267,10 +267,10 @@ public class DashboardModel {
     // --- Custom version (version picker) ---
 
     public void setCustomVersion(DependencyUpdate original, Version targetVersion) {
-        var newUpdateType = UpdateType.between(original.currentVersion(), targetVersion);
+        var newUpdateType = UpdateType.between(targetVersion, original.latestVersion());
         var custom = new DependencyUpdate(
-                original.dependency(),
-                targetVersion,
+                original.dependency().with(targetVersion),
+                original.latestVersion(),
                 original.availableVersions(),
                 newUpdateType);
         customVersions.put(selectionKey(original), custom);
