@@ -39,7 +39,9 @@ public class DashboardModel {
     private List<ProjectReport> reports = List.of();
     private final Map<Tab, Integer> cursors = new EnumMap<>(Tab.class);
     private final Set<ArtifactRef> selectedKeys = new HashSet<>();
-    private final Map<ArtifactRef, DependencyUpdate> customVersions = new HashMap<>();
+    private record VersionPick(Version target, UpdateType type) {}
+
+    private final Map<ArtifactRef, VersionPick> customVersions = new HashMap<>();
 
     private int scanCompleted;
     private int scanTotal;
@@ -200,9 +202,9 @@ public class DashboardModel {
         var c = cursor();
         if (c < 0 || c >= updates.size()) return;
         var update = updates.get(c);
-        if (!update.isUpdatable()) return;
+        if (!update.isChange()) return;
         if (isSelected(update)) {
-            propertySiblings(update).forEach(u -> selectedKeys.remove(selectionKey(u)));
+            deselect(propertySiblings(update));
         } else {
             selectedKeys.add(selectionKey(update));
         }
@@ -227,7 +229,7 @@ public class DashboardModel {
     }
 
     private Stream<DependencyUpdate> selectableUpdates() {
-        return activeUpdates().stream().filter(DependencyUpdate::isUpdatable);
+        return activeUpdates().stream().filter(DependencyUpdate::isChange);
     }
 
     private boolean allSelected() {
@@ -239,27 +241,38 @@ public class DashboardModel {
     }
 
     public void selectNone() {
-        activeUpdates().forEach(u -> selectedKeys.remove(selectionKey(u)));
+        deselect(activeUpdates().stream());
+    }
+
+    private void deselect(Stream<DependencyUpdate> updates) {
+        updates.forEach(u -> {
+            selectedKeys.remove(selectionKey(u));
+            customVersions.remove(selectionKey(u));
+        });
     }
 
     public long selectedCount() {
         return activeUpdates().stream().filter(this::isSelected).count();
     }
 
-    /// Returns the selected updates, applying any custom target versions.
+    /// Returns the selected updates, formatted for [com.github.t1.mavendep.domain.Pom#apply]:
+    /// `currentVersion` = original version (what to find in the POM),
+    /// `latestVersion` = target version (what to replace it with).
     public Stream<DependencyUpdate> selectedUpdates() {
-        return reports.stream()
-                .flatMap(r -> Stream.concat(
-                        r.dependencyUpdates().stream(),
-                        r.pluginUpdates().stream()))
-                .filter(DependencyUpdate::isUpdatable)
+        return allUpdates()
+                .filter(DependencyUpdate::isChange)
                 .filter(this::isSelected)
-                .map(this::applyCustomVersion);
+                .map(this::toPomUpdate);
     }
 
-    private DependencyUpdate applyCustomVersion(DependencyUpdate update) {
-        var custom = customVersions.get(selectionKey(update));
-        return (custom != null) ? custom : update;
+    private DependencyUpdate toPomUpdate(DependencyUpdate update) {
+        var pick = customVersions.get(selectionKey(update));
+        if (pick == null) return update;
+        return new DependencyUpdate(
+                update.dependency(),
+                pick.target(),
+                update.availableVersions(),
+                pick.type());
     }
 
     private static ArtifactRef selectionKey(DependencyUpdate u) {return u.artifactRef();}
@@ -269,27 +282,20 @@ public class DashboardModel {
     public void setCustomVersion(DependencyUpdate original, Version targetVersion) {
         var from = original.currentVersion();
         var downgrade = from != null && targetVersion.compareTo(from) < 0;
-        var newUpdateType = downgrade
+        var type = downgrade
                 ? UpdateType.between(targetVersion, from)
                 : UpdateType.between(from, targetVersion);
-        var custom = new DependencyUpdate(
-                original.dependency().with(targetVersion),
-                original.latestVersion(),
-                original.availableVersions(),
-                newUpdateType);
-        customVersions.put(selectionKey(original), custom);
-    }
-
-    public boolean isDowngrade(DependencyUpdate update) {
-        var effective = effectiveUpdate(update);
-        var originalVersion = update.currentVersion();
-        var effectiveVersion = effective.currentVersion();
-        return originalVersion != null && effectiveVersion != null
-                && effectiveVersion.compareTo(originalVersion) < 0;
+        customVersions.put(selectionKey(original), new VersionPick(targetVersion, type));
     }
 
     public DependencyUpdate effectiveUpdate(DependencyUpdate update) {
-        return applyCustomVersion(update);
+        var pick = customVersions.get(selectionKey(update));
+        if (pick == null) return update;
+        return new DependencyUpdate(
+                update.dependency().with(pick.target()),
+                update.latestVersion(),
+                update.availableVersions(),
+                pick.type());
     }
 
     // --- Scan progress ---

@@ -182,29 +182,31 @@ class DashboardModelTest {
         then(effective.updateType()).isEqualTo(UpdateType.minor); // 5.10.0 → 5.9.0
     }
 
-    @Test void shouldDetectDowngrade() {
+    @Test void shouldReturnPomCompatibleUpdateForCustomVersion() {
         setReportsWithTwoDependencyUpdates();
         var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
+        var picked = Version.fromString("5.9.0");
+        model.setCustomVersion(original, picked);
+        model.selectAll();
 
-        model.setCustomVersion(original, Version.fromString("5.9.0"));
+        var selected = model.selectedUpdates().toList();
 
-        then(model.isDowngrade(original)).isTrue();
+        var update = selected.stream()
+                .filter(u -> u.artifactId().equals("junit-jupiter"))
+                .findFirst().orElseThrow();
+        then(update.currentVersion()).isEqualTo(Version.fromString("5.10.0")); // original, for Pom.Updater to find
+        then(update.latestVersion()).isEqualTo(picked); // target, for Pom.Updater to replace with
     }
 
-    @Test void shouldNotDetectUpgradeAsDowngrade() {
-        setReportsWithTwoDependencyUpdates();
-        var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
-
-        model.setCustomVersion(original, Version.fromString("5.11.0"));
-
-        then(model.isDowngrade(original)).isFalse();
-    }
-
-    @Test void shouldNotDetectDowngradeWithoutCustomVersion() {
+    @Test void shouldRevertToOriginalVersionOnDeselect() {
         setReportsWithTwoDependencyUpdates();
         var original = model.activeUpdates().getFirst();
+        model.setCustomVersion(original, Version.fromString("5.9.0"));
+        model.toggleSelection(); // select
 
-        then(model.isDowngrade(original)).isFalse();
+        model.toggleSelection(); // deselect
+
+        then(model.effectiveUpdate(original)).isEqualTo(original);
     }
 
     @Test void shouldAutoSelectOnVersionPick() {
