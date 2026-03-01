@@ -77,6 +77,17 @@ class DashboardModelTest {
         then(model.cursor()).isEqualTo(0);
     }
 
+    @Test void shouldKeepSeparateCursorPerTab() {
+        setReportsWithDependenciesAndPlugins();
+        model.cursorDown(); // dependencies cursor = 1
+
+        model.setActiveTab(Tab.PLUGINS);
+        then(model.cursor()).isEqualTo(0); // plugins cursor starts at 0
+
+        model.setActiveTab(Tab.DEPENDENCIES);
+        then(model.cursor()).isEqualTo(1); // dependencies cursor preserved
+    }
+
     @Test void shouldToggleSelection() {
         setReportsWithTwoDependencyUpdates();
         var updates = model.activeUpdates();
@@ -401,6 +412,26 @@ class DashboardModelTest {
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
         given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setReportsWithDependenciesAndPlugins() {
+        var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var dep2 = new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind",
+                Version.fromString("2.20.0"), DEFAULT, null);
+        var plugin = new Dependency(Dependency.DependencyType.plugin, "org.apache.maven.plugins", "maven-compiler-plugin",
+                Version.fromString("3.12.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major);
+        var update2 = dep2.toUpdate(Version.fromString("2.21.0"),
+                List.of(Version.fromString("2.20.0"), Version.fromString("2.21.0")), UpdateType.minor);
+        var pluginUpdate = plugin.toUpdate(Version.fromString("3.13.0"),
+                List.of(Version.fromString("3.12.0"), Version.fromString("3.13.0")), UpdateType.minor);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(pluginUpdate), 3);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
     }

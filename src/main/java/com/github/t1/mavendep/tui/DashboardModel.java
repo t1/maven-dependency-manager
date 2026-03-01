@@ -7,6 +7,7 @@ import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -34,7 +35,7 @@ public class DashboardModel {
     private Tab activeTab = DEPENDENCIES;
 
     private List<ProjectReport> reports = List.of();
-    private int cursor;
+    private final Map<Tab, Integer> cursors = new EnumMap<>(Tab.class);
     private final Set<ArtifactRef> selectedKeys = new HashSet<>();
     private final Map<ArtifactRef, DependencyUpdate> customVersions = new HashMap<>();
 
@@ -140,7 +141,7 @@ public class DashboardModel {
 
     public void setReports(List<ProjectReport> reports) {
         this.reports = reports;
-        cursor = 0;
+        cursors.clear();
         selectedKeys.clear();
         customVersions.clear();
         setNeedsRedraw();
@@ -160,21 +161,25 @@ public class DashboardModel {
 
     // --- Cursor ---
 
-    public int cursor() {return cursor;}
+    public int cursor() {return cursors.getOrDefault(activeTab, 0);}
+
+    private void setCursor(int value) {cursors.put(activeTab, value);}
 
     public void cursorUp() {
-        if (cursor > 0) cursor--;
+        var c = cursor();
+        if (c > 0) setCursor(c - 1);
     }
 
     public void cursorDown() {
         var max = activeUpdates().size() - 1;
-        if (cursor < max) cursor++;
+        var c = cursor();
+        if (c < max) setCursor(c + 1);
     }
 
-    public void cursorHome() {cursor = 0;}
+    public void cursorHome() {setCursor(0);}
 
     public void cursorEnd() {
-        cursor = Math.max(0, activeUpdates().size() - 1);
+        setCursor(Math.max(0, activeUpdates().size() - 1));
     }
 
     // --- Selection ---
@@ -185,8 +190,9 @@ public class DashboardModel {
 
     public void toggleSelection() {
         var updates = activeUpdates();
-        if (cursor < 0 || cursor >= updates.size()) return;
-        var update = updates.get(cursor);
+        var c = cursor();
+        if (c < 0 || c >= updates.size()) return;
+        var update = updates.get(c);
         if (!update.isUpdatable()) return;
         var k = selectionKey(update);
         if (!selectedKeys.remove(k)) selectedKeys.add(k);
@@ -348,6 +354,6 @@ public class DashboardModel {
 
     private DependencyUpdate rawFocusedUpdate() {
         var updates = activeUpdates();
-        return updates.isEmpty() ? null : updates.get(cursor);
+        return updates.isEmpty() ? null : updates.get(cursor());
     }
 }
