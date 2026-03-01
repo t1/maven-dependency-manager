@@ -66,7 +66,8 @@ class DependencyTablePanel {
                 .orElse("");
         var current = String.valueOf(effective.currentVersion());
         var latest = String.valueOf(effective.latestVersion());
-        var type = effective.updateType().name();
+        var downgrade = model.isDowngrade(update);
+        var type = (downgrade ? "-" : "") + effective.updateType().name();
 
         var style = switch (effective.updateType()) {
             case major -> Style.EMPTY.fg(Color.RED);

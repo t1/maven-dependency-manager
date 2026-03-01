@@ -172,6 +172,41 @@ class DashboardModelTest {
         then(effective.latestVersion()).isEqualTo(original.latestVersion());
     }
 
+    @Test void shouldComputeDowngradeTypeFromOriginalCurrent() {
+        setReportsWithTwoDependencyUpdates();
+        var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
+
+        model.setCustomVersion(original, Version.fromString("5.9.0"));
+
+        var effective = model.effectiveUpdate(original);
+        then(effective.updateType()).isEqualTo(UpdateType.minor); // 5.10.0 → 5.9.0
+    }
+
+    @Test void shouldDetectDowngrade() {
+        setReportsWithTwoDependencyUpdates();
+        var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
+
+        model.setCustomVersion(original, Version.fromString("5.9.0"));
+
+        then(model.isDowngrade(original)).isTrue();
+    }
+
+    @Test void shouldNotDetectUpgradeAsDowngrade() {
+        setReportsWithTwoDependencyUpdates();
+        var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
+
+        model.setCustomVersion(original, Version.fromString("5.11.0"));
+
+        then(model.isDowngrade(original)).isFalse();
+    }
+
+    @Test void shouldNotDetectDowngradeWithoutCustomVersion() {
+        setReportsWithTwoDependencyUpdates();
+        var original = model.activeUpdates().getFirst();
+
+        then(model.isDowngrade(original)).isFalse();
+    }
+
     @Test void shouldAutoSelectOnVersionPick() {
         setReportsWithTwoDependencyUpdates();
         model.openVersionPicker();

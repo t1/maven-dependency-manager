@@ -267,13 +267,25 @@ public class DashboardModel {
     // --- Custom version (version picker) ---
 
     public void setCustomVersion(DependencyUpdate original, Version targetVersion) {
-        var newUpdateType = UpdateType.between(targetVersion, original.latestVersion());
+        var from = original.currentVersion();
+        var downgrade = from != null && targetVersion.compareTo(from) < 0;
+        var newUpdateType = downgrade
+                ? UpdateType.between(targetVersion, from)
+                : UpdateType.between(from, targetVersion);
         var custom = new DependencyUpdate(
                 original.dependency().with(targetVersion),
                 original.latestVersion(),
                 original.availableVersions(),
                 newUpdateType);
         customVersions.put(selectionKey(original), custom);
+    }
+
+    public boolean isDowngrade(DependencyUpdate update) {
+        var effective = effectiveUpdate(update);
+        var originalVersion = update.currentVersion();
+        var effectiveVersion = effective.currentVersion();
+        return originalVersion != null && effectiveVersion != null
+                && effectiveVersion.compareTo(originalVersion) < 0;
     }
 
     public DependencyUpdate effectiveUpdate(DependencyUpdate update) {

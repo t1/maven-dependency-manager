@@ -1,4 +1,3 @@
-* TUI: it should be possible to also downgrade any version; the type column should be prefixed `-` when downgrading
 * TUI: `p` to go to the plugins tab
 * TUI: add color to the logs tab
 * TUI: rename the logs tab to messages
