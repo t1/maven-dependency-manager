@@ -10,6 +10,7 @@ import static com.github.t1.mavendep.domain.Scope.runtime;
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.major;
 import static com.github.t1.mavendep.domain.UpdateType.minor;
+import static com.github.t1.mavendep.domain.UpdateType.none;
 import static com.github.t1.mavendep.domain.UpdateType.patch;
 import static org.assertj.core.api.BDDAssertions.then;
 
@@ -84,5 +85,42 @@ class DependencyUpdateTest {
         );
 
         then(update.versionProperty()).isEqualTo("lib.version");
+    }
+
+    @Test
+    void shouldBeChangeForUpgrade() {
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
+                Version.fromString("2.0.0"),
+                List.of(),
+                major
+        );
+
+        then(update.isChange()).isTrue();
+    }
+
+    @Test
+    void shouldBeChangeForDowngrade() {
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("2.0.0"), compile, null),
+                Version.fromString("1.0.0"),
+                List.of(),
+                major
+        );
+
+        then(update.isChange()).isTrue();
+    }
+
+    @Test
+    void shouldNotBeChangeWhenVersionsEqual() {
+        var version = Version.fromString("1.0.0");
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "com.example", "lib", version, compile, null),
+                version,
+                List.of(),
+                none
+        );
+
+        then(update.isChange()).isFalse();
     }
 }

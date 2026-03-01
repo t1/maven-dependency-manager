@@ -209,6 +209,51 @@ class DashboardModelTest {
         then(model.effectiveUpdate(original)).isEqualTo(original);
     }
 
+    @Test void shouldShowOriginalVersionAsIsWhenNotSelected() {
+        setReportsWithTwoDependencyUpdates();
+        var update = model.activeUpdates().getFirst();
+
+        then(model.isVersion(update)).isEqualTo(update.currentVersion());
+    }
+
+    @Test void shouldShowLatestVersionAsIsWhenSelected() {
+        setReportsWithTwoDependencyUpdates();
+        var update = model.activeUpdates().getFirst();
+        model.toggleSelection();
+
+        then(model.isVersion(update)).isEqualTo(update.latestVersion());
+    }
+
+    @Test void shouldShowPickedVersionAsIsWhenCustomSelected() {
+        setReportsWithTwoDependencyUpdates();
+        var update = model.activeUpdates().getFirst();
+        var picked = Version.fromString("5.9.0");
+        model.setCustomVersion(update, picked);
+        model.toggleSelection();
+
+        then(model.isVersion(update)).isEqualTo(picked);
+    }
+
+    @Test void shouldRevertIsToOriginalOnDeselect() {
+        setReportsWithTwoDependencyUpdates();
+        var update = model.activeUpdates().getFirst();
+        model.toggleSelection(); // select
+        model.toggleSelection(); // deselect
+
+        then(model.isVersion(update)).isEqualTo(update.currentVersion());
+    }
+
+    @Test void shouldDeselectWhenPickingOriginalVersion() {
+        setReportsWithTwoDependencyUpdates();
+        var original = model.activeUpdates().getFirst();
+        model.toggleSelection(); // select first
+
+        model.setCustomVersion(original, original.currentVersion());
+
+        then(model.isSelected(original)).isFalse();
+        then(model.effectiveUpdate(original)).isEqualTo(original);
+    }
+
     @Test void shouldAutoSelectOnVersionPick() {
         setReportsWithTwoDependencyUpdates();
         model.openVersionPicker();

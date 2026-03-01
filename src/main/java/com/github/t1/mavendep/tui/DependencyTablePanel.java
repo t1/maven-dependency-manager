@@ -35,15 +35,16 @@ class DependencyTablePanel {
                 .toList();
 
         var table = Table.builder()
-                .header(Row.from("", "Group:Artifact", "", "Current", "Latest", "Type")
+                .header(Row.from("", "Group:Artifact", "", "Was", "Is", "Latest", "Type")
                         .style(Style.EMPTY.bold()))
                 .rows(rows)
                 .widths(
                         Constraint.length(3),
                         Constraint.fill(),
                         Constraint.length(2),
-                        Constraint.length(14),
-                        Constraint.length(14),
+                        Constraint.length(12),
+                        Constraint.length(12),
+                        Constraint.length(12),
                         Constraint.length(7))
                 .highlightStyle(Style.EMPTY.bg(Color.DARK_GRAY))
                 .highlightSymbol("> ")
@@ -55,7 +56,7 @@ class DependencyTablePanel {
 
     private static Row toRow(DependencyUpdate update, DashboardModel model) {
         var effective = model.effectiveUpdate(update);
-        var checkbox = !update.isUpdatable() ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
+        var checkbox = !update.isChange() ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
         var coords = String.valueOf(update.artifactRef());
         var icon = model.worstLogLevelFor(update.artifactRef())
                 .map(level -> switch (level) {
@@ -64,9 +65,12 @@ class DependencyTablePanel {
                     case INFO -> "";
                 })
                 .orElse("");
-        var current = String.valueOf(effective.currentVersion());
-        var latest = String.valueOf(effective.latestVersion());
-        var downgrade = model.isDowngrade(update);
+        var was = String.valueOf(update.currentVersion());
+        var isVersion = model.isVersion(update);
+        var is = String.valueOf(isVersion);
+        var latest = String.valueOf(update.latestVersion());
+        var downgrade = update.currentVersion() != null && isVersion != null
+                && isVersion.compareTo(update.currentVersion()) < 0;
         var type = (downgrade ? "-" : "") + effective.updateType().name();
 
         var style = switch (effective.updateType()) {
@@ -76,6 +80,6 @@ class DependencyTablePanel {
             case none -> Style.EMPTY;
         };
 
-        return Row.from(checkbox, coords, icon, current, latest, type).style(style);
+        return Row.from(checkbox, coords, icon, was, is, latest, type).style(style);
     }
 }

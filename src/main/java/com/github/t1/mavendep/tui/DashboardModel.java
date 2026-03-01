@@ -280,12 +280,24 @@ public class DashboardModel {
     // --- Custom version (version picker) ---
 
     public void setCustomVersion(DependencyUpdate original, Version targetVersion) {
+        if (targetVersion.equals(original.currentVersion())) {
+            deselect(propertySiblings(original));
+            return;
+        }
         var from = original.currentVersion();
         var downgrade = from != null && targetVersion.compareTo(from) < 0;
         var type = downgrade
                 ? UpdateType.between(targetVersion, from)
                 : UpdateType.between(from, targetVersion);
         customVersions.put(selectionKey(original), new VersionPick(targetVersion, type));
+    }
+
+    /// Returns the version currently in the POM for this update:
+    /// original if not selected, latest or custom pick if selected.
+    public Version isVersion(DependencyUpdate update) {
+        if (!isSelected(update)) return update.currentVersion();
+        var pick = customVersions.get(selectionKey(update));
+        return pick != null ? pick.target() : update.latestVersion();
     }
 
     public DependencyUpdate effectiveUpdate(DependencyUpdate update) {
@@ -390,7 +402,9 @@ public class DashboardModel {
             var focusedUpdate = rawFocusedUpdate();
             if (focusedUpdate != null) {
                 setCustomVersion(focusedUpdate, picked);
-                selectedKeys.add(selectionKey(focusedUpdate));
+                if (customVersions.containsKey(selectionKey(focusedUpdate))) {
+                    selectedKeys.add(selectionKey(focusedUpdate));
+                }
             }
         }
     }

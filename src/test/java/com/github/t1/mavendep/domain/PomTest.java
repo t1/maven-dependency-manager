@@ -917,7 +917,7 @@ class PomTest {
     }
 
     @Test
-    void shouldSkipNonUpdates() {
+    void shouldSkipNonChanges() {
         var pomFile = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project xmlns="http://maven.apache.org/POM/4.0.0">
@@ -943,13 +943,6 @@ class PomTest {
                 List.of(),
                 none
         );
-        var olderVersion = new DependencyUpdate(
-                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.11.0"), test, null),
-                Version.fromString("5.10.0"),
-                List.of(),
-                none
-        );
-
         var nullCurrentVersion = new DependencyUpdate(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", null, test, null),
                 Version.fromString("5.11.0"),
@@ -969,7 +962,7 @@ class PomTest {
                 none
         );
 
-        pom.apply(Stream.of(sameVersion, olderVersion, nullCurrentVersion, nullLatestVersion, bothNull));
+        pom.apply(Stream.of(sameVersion, nullCurrentVersion, nullLatestVersion, bothNull));
 
         then(pom.isDirty()).isFalse();
     }
