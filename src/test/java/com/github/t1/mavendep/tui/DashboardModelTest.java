@@ -332,6 +332,14 @@ class DashboardModelTest {
         then(model.logMessages()).extracting(LogMessage::message).containsExactly("msg1", "msg2");
     }
 
+    @Test void shouldClearLogMessages() {
+        model.addLogMessage(new LogMessage(WARNING, "msg1"));
+
+        model.clearLogMessages();
+
+        then(model.logMessages()).isEmpty();
+    }
+
     @Test void shouldReturnEmptyForArtifactWithoutMessages() {
         var lib = new ArtifactRef("org.example", "lib");
 

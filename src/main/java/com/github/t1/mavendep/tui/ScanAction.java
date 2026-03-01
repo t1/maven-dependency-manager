@@ -26,6 +26,7 @@ class ScanAction {
     }
 
     void start() {
+        model.clearLogMessages();
         model.setPhase(Phase.SCANNING);
         Thread.startVirtualThread(this::scan);
     }

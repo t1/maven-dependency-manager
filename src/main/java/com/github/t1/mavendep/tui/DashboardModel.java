@@ -364,6 +364,8 @@ public class DashboardModel {
                 .max(Enum::compareTo);
     }
 
+    public void clearLogMessages() {logMessages.clear();}
+
     public void addLogMessage(LogMessage message) {
         logMessages.add(message);
         setNeedsRedraw();
