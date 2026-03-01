@@ -5,6 +5,7 @@ import dev.tamboui.tui.TuiRunner;
 
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DEPENDENCIES;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.PLUGINS;
 import dev.tamboui.tui.event.Event;
 import dev.tamboui.tui.event.KeyCode;
 import dev.tamboui.tui.event.KeyEvent;
@@ -113,6 +114,10 @@ public class DashboardController {
         }
         if (key.isChar('r')) {
             onRescan.run();
+            return true;
+        }
+        if (key.isChar('p')) {
+            model.setActiveTab(PLUGINS);
             return true;
         }
         if (key.isChar('d')) {

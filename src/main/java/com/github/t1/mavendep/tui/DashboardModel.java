@@ -76,11 +76,13 @@ public class DashboardModel {
 
     /// Returns the formatted menu text showing only bindings available on the active tab.
     public String menuText() {
-        var dBinding = (activeTab == DIFF)
+        var dynamicBindings = new ArrayList<MenuBinding>();
+        if (activeTab != PLUGINS) dynamicBindings.add(new MenuBinding("[p]lugins", ALL_TABS));
+        dynamicBindings.add((activeTab == DIFF)
                 ? new MenuBinding("[d]ependencies", ALL_TABS)
-                : new MenuBinding("[d]iff", ALL_TABS);
+                : new MenuBinding("[d]iff", ALL_TABS));
 
-        return Stream.concat(STATIC_BINDINGS.stream(), Stream.of(dBinding))
+        return Stream.concat(STATIC_BINDINGS.stream(), dynamicBindings.stream())
                 .filter(b -> b.isAvailableOn(activeTab))
                 .map(MenuBinding::display)
                 .collect(Collectors.joining(" "));

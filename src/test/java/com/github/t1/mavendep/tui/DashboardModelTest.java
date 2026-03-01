@@ -479,7 +479,14 @@ class DashboardModelTest {
     @Test void shouldShowDependencyMenuOnDependenciesTab() {
         setReportsWithTwoDependencyUpdates();
 
-        then(model.menuText()).contains("[Space] toggle", "[Enter] pick version", "[s]how all");
+        then(model.menuText()).contains("[Space] toggle", "[Enter] pick version", "[s]how all", "[p]lugins");
+    }
+
+    @Test void shouldHidePluginsHintOnPluginsTab() {
+        setReportsWithDependenciesAndPlugins();
+        model.setActiveTab(Tab.PLUGINS);
+
+        then(model.menuText()).doesNotContain("[p]lugins");
     }
 
     @Test void shouldHideDependencyActionsOnBuildTab() {

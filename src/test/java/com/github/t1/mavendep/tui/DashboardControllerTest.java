@@ -115,6 +115,11 @@ class DashboardControllerTest {
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.DEPENDENCIES);
     }
 
+    @Test void shouldJumpToPluginsTab() {
+        controller.handle(KeyEvent.ofChar('p'), runner);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);
+    }
+
     @Test void shouldSwitchTabs() {
         controller.handle(KeyEvent.ofKey(KeyCode.TAB), runner);
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);
