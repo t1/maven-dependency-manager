@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
@@ -98,13 +97,13 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
         return textBuffer.getScreenLines().contains(text);
     }
 
-    @Override public void awaitText(String text, Duration timeout) {
-        awaitAnyText(timeout, text);
+    @Override public void awaitText(String text) {
+        awaitAnyText(text);
     }
 
     @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
-    @Override public void awaitAnyText(Duration timeout, String... texts) {
-        var deadline = System.currentTimeMillis() + timeout.toMillis();
+    @Override public void awaitAnyText(String... texts) {
+        var deadline = System.currentTimeMillis() + TIMEOUT.toMillis();
         while (System.currentTimeMillis() < deadline) {
             for (var text : texts) {
                 if (hasText(text)) return;
@@ -116,13 +115,13 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
                 throw new RuntimeException("Interrupted while waiting for any of: " + Arrays.toString(texts), e);
             }
         }
-        throw new AssertionError("Timed out after " + timeout + " waiting for any of: " +
+        throw new AssertionError("Timed out after " + TIMEOUT + " waiting for any of: " +
                                  Arrays.toString(texts) + "\nScreen content:\n" + textBuffer.getScreenLines());
     }
 
-    @Override public boolean waitForExit(Duration timeout) {
+    @Override public boolean waitForExit() {
         try {
-            return process.waitFor(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            return process.waitFor(TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return false;
@@ -132,7 +131,7 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
     @Override public void close() {
         try {
             type("q");
-            if (!waitForExit(Duration.ofSeconds(3))) {
+            if (!waitForExit()) {
                 process.destroyForcibly();
             }
         } finally {

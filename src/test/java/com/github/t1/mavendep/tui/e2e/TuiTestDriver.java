@@ -3,17 +3,19 @@ package com.github.t1.mavendep.tui.e2e;
 import java.time.Duration;
 
 interface TuiTestDriver extends AutoCloseable {
+    Duration TIMEOUT = Duration.ofSeconds(10);
+
     void type(String text);
 
     void pressKey(Key key);
 
     boolean hasText(String text);
 
-    void awaitText(String text, Duration timeout);
+    void awaitText(String text);
 
-    void awaitAnyText(Duration timeout, String... texts);
+    void awaitAnyText(String... texts);
 
-    boolean waitForExit(Duration timeout);
+    boolean waitForExit();
 
     @Override void close();
 }

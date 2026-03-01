@@ -14,7 +14,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.time.Duration.ofSeconds;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TuiDashboardIT {
@@ -68,101 +67,101 @@ class TuiDashboardIT {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("Maven Dependency Manager", ofSeconds(10));
-        tui.awaitText("Dependencies", ofSeconds(2));
-        tui.awaitText("[s]how all", ofSeconds(5));
-        tui.awaitText("[q]uit", ofSeconds(2));
+        tui.awaitText("Maven Dependency Manager");
+        tui.awaitText("Dependencies");
+        tui.awaitText("[s]how all");
+        tui.awaitText("[q]uit");
     }
 
     @Test void scanCompletesAndShowsDependencies() {
         givenAllVersions();
         startTui();
 
-        tui.awaitAnyText(ofSeconds(10), "Scanning...", "selected");
-        tui.awaitText("selected", ofSeconds(10));
-        tui.awaitText("assertj-core", ofSeconds(2));
-        tui.awaitText("junit-jupiter", ofSeconds(2));
+        tui.awaitAnyText("Scanning...", "selected");
+        tui.awaitText("selected");
+        tui.awaitText("assertj-core");
+        tui.awaitText("junit-jupiter");
     }
 
     @Test void tabSwitching() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("selected", ofSeconds(10));
+        tui.awaitText("selected");
         tui.type("]");
-        tui.awaitText("Plugins", ofSeconds(2));
+        tui.awaitText("Plugins");
         tui.type("]]");
-        tui.awaitText("Git Diff", ofSeconds(2));
+        tui.awaitText("Git Diff");
     }
 
     @Test void quitExitsCleanly() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("Maven Dependency Manager", ofSeconds(10));
+        tui.awaitText("Maven Dependency Manager");
         tui.type("q");
-        assertTrue(tui.waitForExit(ofSeconds(5)));
+        assertTrue(tui.waitForExit());
     }
 
     @Test void selectionTogglesWithSpaceKey() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("0 selected", ofSeconds(10));
+        tui.awaitText("0 selected");
         tui.type(" ");
-        tui.awaitText("1 selected", ofSeconds(2));
+        tui.awaitText("1 selected");
     }
 
     @Test void selectAllAndDeselectAll() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("0 selected", ofSeconds(10));
+        tui.awaitText("0 selected");
         tui.type("a");
-        tui.awaitText("2 selected", ofSeconds(2));
+        tui.awaitText("2 selected");
         tui.type("a");
-        tui.awaitText("0 selected", ofSeconds(2));
+        tui.awaitText("0 selected");
     }
 
     @Test void deselectAllWithN() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("0 selected", ofSeconds(10));
+        tui.awaitText("0 selected");
         tui.type("a");
-        tui.awaitText("2 selected", ofSeconds(2));
+        tui.awaitText("2 selected");
         tui.type("n");
-        tui.awaitText("0 selected", ofSeconds(2));
+        tui.awaitText("0 selected");
     }
 
     @Test void cursorNavigationWithArrowKeys() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("0 selected", ofSeconds(10));
+        tui.awaitText("0 selected");
         // cursor starts on first item; select it
         tui.type(" ");
-        tui.awaitText("1 selected", ofSeconds(2));
+        tui.awaitText("1 selected");
         // move down and select second item
         tui.pressKey(Key.DOWN);
         tui.type(" ");
-        tui.awaitText("2 selected", ofSeconds(2));
+        tui.awaitText("2 selected");
         // move back up and deselect first item
         tui.pressKey(Key.UP);
         tui.type(" ");
-        tui.awaitText("1 selected", ofSeconds(2));
+        tui.awaitText("1 selected");
     }
 
     @Test void versionPickerOpensAndCloses() {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("0 selected", ofSeconds(10));
+        tui.awaitText("0 selected");
         tui.pressKey(Key.ENTER);
-        tui.awaitText("3.27.7", ofSeconds(2));
-        tui.awaitText("3.25.0", ofSeconds(2));
+        tui.awaitText("3.27.7");
+        tui.awaitText("3.25.0");
         tui.pressKey(Key.ESCAPE);
-        tui.awaitText("0 selected", ofSeconds(2));
+        tui.awaitText("0 selected");
     }
 
     @Test void scanCompletesEvenWhenVersionLookupFails() {
@@ -170,13 +169,13 @@ class TuiDashboardIT {
         // junit-jupiter metadata is missing — will get 404
         startTui();
 
-        tui.awaitText("selected", ofSeconds(10));
-        tui.awaitText("assertj-core", ofSeconds(2));
-        tui.awaitText("3.27.7", ofSeconds(2));
+        tui.awaitText("selected");
+        tui.awaitText("assertj-core");
+        tui.awaitText("3.27.7");
         // junit-jupiter has update type "none" and is hidden by default
         tui.type("s"); // toggle show-all
-        tui.awaitText("junit-jupiter", ofSeconds(2));
-        tui.awaitText("none", ofSeconds(2));
+        tui.awaitText("junit-jupiter");
+        tui.awaitText("none");
     }
 
     private void givenVersions(String groupId, String artifactId, String... versions) {
