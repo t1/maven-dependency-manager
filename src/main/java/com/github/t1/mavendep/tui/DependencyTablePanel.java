@@ -13,8 +13,15 @@ import dev.tamboui.widgets.table.Row;
 import dev.tamboui.widgets.table.Table;
 import dev.tamboui.widgets.table.TableState;
 
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 /// Renders the dependency/plugin table with selection checkboxes.
 class DependencyTablePanel {
+
+    private static final Style HEADER_STYLE = Style.EMPTY.bold().fg(Color.DARK_GRAY);
 
     private final TableState tableState = new TableState();
 
@@ -27,12 +34,11 @@ class DependencyTablePanel {
             return;
         }
 
-        var updates = model.activeUpdates();
-        tableState.select(model.cursor());
-
-        var rows = updates.stream()
-                .map(u -> toRow(u, model))
-                .toList();
+        var grouped = model.activeGroupedUpdates();
+        var multiPom = grouped.size() > 1;
+        var rows = multiPom ? buildGroupedRows(grouped, model) : buildFlatRows(model.activeUpdates(), model);
+        var visualIndex = multiPom ? toVisualIndex(model.cursor(), grouped) : model.cursor();
+        tableState.select(visualIndex);
 
         var table = Table.builder()
                 .header(Row.from("", "Group:Artifact", "", "Was", "Is", "Latest", "Type")
@@ -52,6 +58,42 @@ class DependencyTablePanel {
                 .build();
 
         frame.renderStatefulWidget(table, area, tableState);
+    }
+
+    private static List<Row> buildFlatRows(List<DependencyUpdate> updates, DashboardModel model) {
+        return updates.stream().map(u -> toRow(u, model)).toList();
+    }
+
+    private static List<Row> buildGroupedRows(List<Map.Entry<Path, List<DependencyUpdate>>> grouped, DashboardModel model) {
+        var rows = new ArrayList<Row>();
+        for (var entry : grouped) {
+            rows.add(toHeaderRow(entry.getKey()));
+            for (var update : entry.getValue()) {
+                rows.add(toRow(update, model));
+            }
+        }
+        return rows;
+    }
+
+    private static final Path CWD = Path.of("").toAbsolutePath();
+
+    private static Row toHeaderRow(Path pomPath) {
+        var display = pomPath.isAbsolute() ? CWD.relativize(pomPath) : pomPath;
+        return Row.from("", "── " + display + " ──", "", "", "", "", "")
+                .style(HEADER_STYLE);
+    }
+
+    /// Maps a flat data index to a visual row index by adding the count of header rows above.
+    static int toVisualIndex(int dataIndex, List<Map.Entry<Path, List<DependencyUpdate>>> grouped) {
+        var headersAbove = 0;
+        var remaining = dataIndex;
+        for (var entry : grouped) {
+            headersAbove++;
+            var groupSize = entry.getValue().size();
+            if (remaining < groupSize) return dataIndex + headersAbove;
+            remaining -= groupSize;
+        }
+        return dataIndex + headersAbove;
     }
 
     private static Row toRow(DependencyUpdate update, DashboardModel model) {

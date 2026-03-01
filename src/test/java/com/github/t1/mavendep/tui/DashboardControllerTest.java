@@ -15,6 +15,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -211,6 +213,7 @@ class DashboardControllerTest {
                 List.of(Version.fromString("2.20.0"), Version.fromString("2.21.0")), UpdateType.minor);
 
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        lenient().doReturn(Path.of("pom.xml")).when(pom).path();
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);

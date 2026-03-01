@@ -9,6 +9,7 @@ import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import com.github.t1.mavendep.tui.DashboardModel.Tab;
 import org.junit.jupiter.api.Test;
 
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
@@ -714,6 +715,98 @@ class DashboardModelTest {
         given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2, update3), List.of(), 3);
         model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
+    @Test void shouldGroupUpdatesByPom() {
+        setReportsFromTwoPoms();
+
+        var grouped = model.activeGroupedUpdates();
+
+        then(grouped).hasSize(2);
+        then(grouped.getFirst().getKey()).isEqualTo(Path.of("pom.xml"));
+        then(grouped.getFirst().getValue()).hasSize(1);
+        then(grouped.getFirst().getValue().getFirst().artifactId()).isEqualTo("junit-jupiter");
+        then(grouped.get(1).getKey()).isEqualTo(Path.of("sub/pom.xml"));
+        then(grouped.get(1).getValue()).hasSize(1);
+        then(grouped.get(1).getValue().getFirst().artifactId()).isEqualTo("jackson-databind");
+    }
+
+    @Test void shouldFilterGroupedUpdatesByShowAll() {
+        setReportsFromTwoPomsWithMixed();
+
+        var grouped = model.activeGroupedUpdates();
+
+        // only the pom with a real update should appear (show-all is off by default)
+        then(grouped).hasSize(1);
+        then(grouped.getFirst().getKey()).isEqualTo(Path.of("pom.xml"));
+    }
+
+    @Test void shouldIncludeAllGroupsWhenShowAllIsOn() {
+        setReportsFromTwoPomsWithMixed();
+        model.setShowAll(true);
+
+        var grouped = model.activeGroupedUpdates();
+
+        then(grouped).hasSize(2);
+    }
+
+    @Test void shouldReturnSingleGroupForSinglePom() {
+        setReportsWithTwoDependencyUpdates();
+
+        var grouped = model.activeGroupedUpdates();
+
+        then(grouped).hasSize(1);
+        then(grouped.getFirst().getValue()).hasSize(2);
+    }
+
+    @Test void shouldPreserveFlatIndexAcrossGroups() {
+        setReportsFromTwoPoms();
+
+        var flat = model.activeUpdates();
+
+        then(flat).hasSize(2);
+        then(flat.get(0).artifactId()).isEqualTo("junit-jupiter");
+        then(flat.get(1).artifactId()).isEqualTo("jackson-databind");
+    }
+
+    private void setReportsFromTwoPoms() {
+        var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var dep2 = new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind",
+                Version.fromString("2.20.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major);
+        var update2 = dep2.toUpdate(Version.fromString("2.21.0"),
+                List.of(Version.fromString("2.20.0"), Version.fromString("2.21.0")), UpdateType.minor);
+
+        var pom1 = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom1.path()).willReturn(Path.of("pom.xml"));
+        var pom2 = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom2.path()).willReturn(Path.of("sub/pom.xml"));
+        var report1 = new ProjectReport(pom1, Optional.empty(), List.of(update1), List.of(), 1);
+        var report2 = new ProjectReport(pom2, Optional.empty(), List.of(update2), List.of(), 1);
+        model.setReports(List.of(report1, report2));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setReportsFromTwoPomsWithMixed() {
+        var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var dep2 = new Dependency(dependency, "com.example", "up-to-date",
+                Version.fromString("1.0.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major);
+        var update2 = dep2.toUpdate(Version.fromString("1.0.0"),
+                List.of(Version.fromString("1.0.0")), UpdateType.none);
+
+        var pom1 = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom1.path()).willReturn(Path.of("pom.xml"));
+        var pom2 = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom2.path()).willReturn(Path.of("sub/pom.xml"));
+        var report1 = new ProjectReport(pom1, Optional.empty(), List.of(update1), List.of(), 1);
+        var report2 = new ProjectReport(pom2, Optional.empty(), List.of(update2), List.of(), 1);
+        model.setReports(List.of(report1, report2));
         model.setPhase(Phase.READY);
     }
 

@@ -6,6 +6,7 @@ import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.EnumSet;
@@ -173,15 +174,33 @@ public class DashboardModel {
 
     /// Returns the flat list of dependency updates for the active tab.
     public List<DependencyUpdate> activeUpdates() {
-        var stream = reports.stream()
-                .flatMap(r -> switch (activeTab) {
-                    case DEPENDENCIES -> r.dependencyUpdates().stream();
-                    case PLUGINS -> r.pluginUpdates().stream();
-                    case BUILD, DIFF, MESSAGES -> Stream.of();
-                });
-        if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none
-                                                  || worstLogLevelFor(u.artifactRef()).isPresent());
-        return stream.toList();
+        return activeGroupedUpdates().stream()
+                .flatMap(e -> e.getValue().stream())
+                .toList();
+    }
+
+    /// Returns updates grouped by POM file, with show-all filtering applied.
+    /// Each entry maps a POM path to its filtered updates for the active tab.
+    /// Only used by the table panel for rendering section headers.
+    public List<Map.Entry<Path, List<DependencyUpdate>>> activeGroupedUpdates() {
+        return reports.stream()
+                .map(r -> Map.entry(
+                        r.pom().path(),
+                        filterUpdates(switch (activeTab) {
+                            case DEPENDENCIES -> r.dependencyUpdates();
+                            case PLUGINS -> r.pluginUpdates();
+                            case BUILD, DIFF, MESSAGES -> List.of();
+                        })))
+                .filter(e -> !e.getValue().isEmpty())
+                .toList();
+    }
+
+    private List<DependencyUpdate> filterUpdates(List<DependencyUpdate> updates) {
+        if (showAll) return updates;
+        return updates.stream()
+                .filter(u -> u.updateType() != UpdateType.none
+                              || worstLogLevelFor(u.artifactRef()).isPresent())
+                .toList();
     }
 
     // --- Cursor ---
