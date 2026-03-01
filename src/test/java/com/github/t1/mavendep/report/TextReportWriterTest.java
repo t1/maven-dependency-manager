@@ -590,6 +590,36 @@ class TextReportWriterTest {
         then(dependencyTypeIndex).isGreaterThan(0);
     }
 
+    @Test void shouldShowCommittedVersionColumn() {
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.9.0"), compile, null),
+                Version.fromString("6.0.3"),
+                List.of(),
+                major
+        ).withCommittedVersion(Version.fromString("5.10.0"));
+        var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
+
+        var text = writeToString(List.of(report));
+
+        then(text).contains("│ Committed");
+        then(text).contains("│ 5.10.0");
+        then(text).contains("│ 5.9.0");
+    }
+
+    @Test void shouldNotShowCommittedColumnWhenNoCommittedVersions() {
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
+                Version.fromString("6.0.3"),
+                List.of(),
+                major
+        );
+        var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
+
+        var text = writeToString(List.of(report));
+
+        then(text).doesNotContain("Committed");
+    }
+
     @Test
     void shouldDisplayParentWithoutScope() {
         var parentUpdate = new DependencyUpdate(

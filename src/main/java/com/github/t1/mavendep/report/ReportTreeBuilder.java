@@ -72,6 +72,9 @@ class ReportTreeBuilder {
         depNode.put("groupId", update.groupId());
         depNode.put("artifactId", update.artifactId());
         depNode.put("scope", (update.type() == parent || update.type() == plugin) ? "" : update.scope().toString());
+        if (update.committedVersion() != null) {
+            putVersionField(depNode, "committedVersion", update.committedVersion());
+        }
         putVersionField(depNode, "currentVersion", update.currentVersion());
         putVersionField(depNode, "latestVersion", update.latestVersion());
         depNode.put("updateType", update.updateType().toString());

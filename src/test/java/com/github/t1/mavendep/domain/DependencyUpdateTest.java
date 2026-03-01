@@ -87,6 +87,29 @@ class DependencyUpdateTest {
         then(update.versionProperty()).isEqualTo("lib.version");
     }
 
+    @Test void shouldHaveNullCommittedVersionByDefault() {
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
+                Version.fromString("2.0.0"),
+                List.of(),
+                major
+        );
+
+        then(update.committedVersion()).isNull();
+    }
+
+    @Test void shouldHoldCommittedVersion() {
+        var committed = Version.fromString("1.5.0");
+        var update = new DependencyUpdate(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
+                Version.fromString("2.0.0"),
+                List.of(),
+                major
+        ).withCommittedVersion(committed);
+
+        then(update.committedVersion()).isEqualTo(committed);
+    }
+
     @Test
     void shouldBeChangeForUpgrade() {
         var update = new DependencyUpdate(

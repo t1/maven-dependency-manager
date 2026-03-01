@@ -80,7 +80,7 @@ public class Pom {
         public PomParsingException(String message, Exception cause) {super(message, cause);}
     }
 
-    private static Pom parse(Path pomPath, String content) {
+    static Pom parse(Path pomPath, String content) {
         var doc = parseDocument(content);
         var properties = parsePropertiesFromDocument(doc);
         var document = doc.getDocumentElement();

@@ -167,6 +167,28 @@ class JsonReportWriterTest {
         then(root.get("summary").get("patchUpdates").asInt()).isEqualTo(1);
     }
 
+    @Test void shouldIncludeCommittedVersionWhenPresent() {
+        var update = createUpdate("org.junit.jupiter", "junit-jupiter", "5.9.0", "6.0.3", major)
+                .withCommittedVersion(Version.fromString("5.10.0"));
+        var report = new ProjectReport(pom(), Optional.empty(), List.of(update), List.of(), 1);
+
+        var root = write(report);
+
+        var dep = root.get("projects").get(0).get("dependencies").get(0);
+        then(dep.get("committedVersion").asText()).isEqualTo("5.10.0");
+        then(dep.get("currentVersion").asText()).isEqualTo("5.9.0");
+    }
+
+    @Test void shouldOmitCommittedVersionWhenNull() {
+        var update = createUpdate("org.junit.jupiter", "junit-jupiter", "5.10.0", "6.0.3", major);
+        var report = new ProjectReport(pom(), Optional.empty(), List.of(update), List.of(), 1);
+
+        var root = write(report);
+
+        var dep = root.get("projects").get(0).get("dependencies").get(0);
+        then(dep.has("committedVersion")).isFalse();
+    }
+
     private Pom pom() {
         var pomFile = tempDir.resolve("pom.xml");
         if (!pomFile.toFile().exists()) {

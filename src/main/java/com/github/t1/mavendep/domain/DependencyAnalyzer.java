@@ -3,6 +3,7 @@ package com.github.t1.mavendep.domain;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -133,8 +134,9 @@ public class DependencyAnalyzer {
 
             scope.join();
 
-            var dependencyUpdates = await(dependencyUpdatesTasks);
-            var pluginUpdates = await(pluginUpdateTasks);
+            var committedVersions = committedVersions(pom);
+            var dependencyUpdates = enrichWithCommittedVersions(await(dependencyUpdatesTasks), committedVersions);
+            var pluginUpdates = enrichWithCommittedVersions(await(pluginUpdateTasks), committedVersions);
             var parentUpdate = await(parentUpdateTask).stream().findAny()
                     .or(() -> localParentUpdate(pom));
 
@@ -143,6 +145,25 @@ public class DependencyAnalyzer {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Analysis was interrupted", e);
         }
+    }
+
+    private static Map<ArtifactRef, Version> committedVersions(Pom pom) {
+        return Git.readCommitted(pom.path())
+                .map(content -> Pom.parse(pom.path(), content))
+                .map(committedPom -> Stream.concat(committedPom.dependencies().stream(), committedPom.plugins().stream())
+                        .filter(Dependency::isValid)
+                        .collect(toMap(Dependency::artifactRef, Dependency::version, (a, _) -> a)))
+                .orElse(Map.of());
+    }
+
+    private static List<DependencyUpdate> enrichWithCommittedVersions(
+            List<DependencyUpdate> updates, Map<ArtifactRef, Version> committedVersions) {
+        if (committedVersions.isEmpty()) return updates;
+        return updates.stream().map(update -> {
+            var committed = committedVersions.get(update.artifactRef());
+            if (committed == null || committed.equals(update.currentVersion())) return update;
+            return update.withCommittedVersion(committed);
+        }).toList();
     }
 
     private boolean isExternalArtifact(Dependency dep) {

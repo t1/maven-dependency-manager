@@ -1235,4 +1235,88 @@ class DependencyAnalyzerTest {
         then(moduleBReport.dependencyUpdates()).hasSize(1);
         then(moduleBReport.dependencyUpdates().getFirst().artifactId()).isEqualTo("spring-core");
     }
+
+    @Test void shouldDetectUncommittedVersionChange() throws Exception {
+        var committedPom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+        var pomFile = writePom(committedPom);
+        git("init");
+        git("add", "pom.xml");
+        git("commit", "-m", "initial");
+
+        // modify the version in the working copy
+        var modifiedPom = committedPom.replace("5.10.0", "5.9.0");
+        writeString(pomFile, modifiedPom);
+
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
+                .willReturn(List.of(Version.fromString("5.9.0"), Version.fromString("5.10.0"), Version.fromString("6.0.3")));
+
+        var analyzer = new DependencyAnalyzer(mockRepository, pomFile);
+        var reports = analyzer.run();
+
+        then(reports).hasSize(1);
+        var update = reports.getFirst().dependencyUpdates().getFirst();
+        then(update.currentVersion()).isEqualTo(Version.fromString("5.9.0"));
+        then(update.committedVersion()).isEqualTo(Version.fromString("5.10.0"));
+    }
+
+    @Test void shouldNotSetCommittedVersionWhenUnchanged() throws Exception {
+        var pomContent = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+        var pomFile = writePom(pomContent);
+        git("init");
+        git("add", "pom.xml");
+        git("commit", "-m", "initial");
+
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
+                .willReturn(List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")));
+
+        var analyzer = new DependencyAnalyzer(mockRepository, pomFile);
+        var reports = analyzer.run();
+
+        then(reports).hasSize(1);
+        var update = reports.getFirst().dependencyUpdates().getFirst();
+        then(update.committedVersion()).isNull();
+    }
+
+    private void git(String... args) throws Exception {
+        var command = new String[args.length + 1];
+        command[0] = "git";
+        System.arraycopy(args, 0, command, 1, args.length);
+        var pb = new ProcessBuilder(command)
+                .directory(tempDir.toFile());
+        pb.environment().put("GIT_AUTHOR_NAME", "test");
+        pb.environment().put("GIT_AUTHOR_EMAIL", "test@test");
+        pb.environment().put("GIT_COMMITTER_NAME", "test");
+        pb.environment().put("GIT_COMMITTER_EMAIL", "test@test");
+        pb.start().waitFor();
+    }
 }

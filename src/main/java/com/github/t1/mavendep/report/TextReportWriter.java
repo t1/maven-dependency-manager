@@ -61,19 +61,25 @@ public class TextReportWriter implements ReportWriter {
     }
 
     private void printReportWithUpdates(List<DependencyUpdate> updates) {
-        var widths = calculateColumnWidths(updates);
+        var hasCommitted = updates.stream().anyMatch(u -> u.committedVersion() != null);
+        var widths = calculateColumnWidths(updates, hasCommitted);
 
         printTableBorder(widths, "┌─", "─┬─", "─┐");
-        printTableRow(widths, "Type/Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
+        if (hasCommitted) {
+            printTableRow(widths, "Type/Scope", "Group ID", "Artifact ID", "Committed", "Current", "Latest", "Update");
+        } else {
+            printTableRow(widths, "Type/Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
+        }
         printTableBorder(widths, "├─", "─┼─", "─┤");
-        printTableRows(updates, widths);
+        printTableRows(updates, widths, hasCommitted);
         printTableBorder(widths, "└─", "─┴─", "─┘");
     }
 
-    private int[] calculateColumnWidths(List<DependencyUpdate> updates) {
+    private int[] calculateColumnWidths(List<DependencyUpdate> updates, boolean hasCommitted) {
         var typeScopeWidth = "Type/Scope".length();
         var groupWidth = "Group ID".length();
         var depWidth = "Artifact ID".length();
+        var committedWidth = hasCommitted ? "Committed".length() : 0;
         var curWidth = "Current".length();
         var latWidth = "Latest".length();
         var updateWidth = "Update".length();
@@ -82,23 +88,41 @@ public class TextReportWriter implements ReportWriter {
             typeScopeWidth = Math.max(typeScopeWidth, formatTypeScope(update).length());
             groupWidth = Math.max(groupWidth, update.groupId().length());
             depWidth = Math.max(depWidth, update.artifactId().length());
+            if (hasCommitted) committedWidth = Math.max(committedWidth, formatCommittedVersion(update).length());
             curWidth = Math.max(curWidth, formatCurrentVersion(update).length());
             latWidth = Math.max(latWidth, formatLatestVersion(update).length());
             updateWidth = Math.max(updateWidth, update.updateType().toString().length());
         }
 
+        if (hasCommitted) {
+            return new int[]{typeScopeWidth, groupWidth, depWidth, committedWidth, curWidth, latWidth, updateWidth};
+        }
         return new int[]{typeScopeWidth, groupWidth, depWidth, curWidth, latWidth, updateWidth};
     }
 
-    private void printTableRows(List<DependencyUpdate> updates, int[] widths) {
+    private void printTableRows(List<DependencyUpdate> updates, int[] widths, boolean hasCommitted) {
         for (var update : updates) {
-            printTableRow(widths, formatTypeScope(update),
-                    update.groupId(),
-                    update.artifactId(),
-                    formatCurrentVersion(update),
-                    formatLatestVersion(update),
-                    update.updateType().toString());
+            if (hasCommitted) {
+                printTableRow(widths, formatTypeScope(update),
+                        update.groupId(),
+                        update.artifactId(),
+                        formatCommittedVersion(update),
+                        formatCurrentVersion(update),
+                        formatLatestVersion(update),
+                        update.updateType().toString());
+            } else {
+                printTableRow(widths, formatTypeScope(update),
+                        update.groupId(),
+                        update.artifactId(),
+                        formatCurrentVersion(update),
+                        formatLatestVersion(update),
+                        update.updateType().toString());
+            }
         }
+    }
+
+    private String formatCommittedVersion(DependencyUpdate update) {
+        return update.committedVersion() != null ? update.committedVersion().toString() : "";
     }
 
     private String formatCurrentVersion(DependencyUpdate update) {
