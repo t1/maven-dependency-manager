@@ -27,7 +27,7 @@ public class DashboardModel {
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
-    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF}
+    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF, LOGS}
 
     private Phase phase = SCANNING;
     private Tab activeTab = DEPENDENCIES;
@@ -151,7 +151,7 @@ public class DashboardModel {
                 .flatMap(r -> switch (activeTab) {
                     case DEPENDENCIES -> r.dependencyUpdates().stream();
                     case PLUGINS -> r.pluginUpdates().stream();
-                    case BUILD, DIFF -> Stream.of();
+                    case BUILD, DIFF, LOGS -> Stream.of();
                 });
         if (!showAll) stream = stream.filter(u -> u.updateType() != UpdateType.none);
         return stream.toList();
@@ -332,7 +332,10 @@ public class DashboardModel {
     public void confirmVersionPick() {
         var picked = versionPicker.confirmAndClose();
         if (picked != null) {
-            setCustomVersion(rawFocusedUpdate(), picked);
+            var focusedUpdate = rawFocusedUpdate();
+            if (focusedUpdate != null) {
+                setCustomVersion(focusedUpdate, picked);
+            }
         }
     }
 

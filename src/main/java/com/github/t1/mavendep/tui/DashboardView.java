@@ -19,6 +19,7 @@ import static com.github.t1.mavendep.domain.Logger.LogLevel.INFO;
 import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.BUILD;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
+import static com.github.t1.mavendep.tui.DashboardModel.Tab.LOGS;
 import static dev.tamboui.style.Overflow.WRAP_WORD;
 
 /// Renders the [DashboardModel] into TamboUI widgets.
@@ -63,7 +64,7 @@ public class DashboardView {
     private void renderTabs(Frame frame, Rect area) {
         tabsState.select(model.activeTab().ordinal());
         var tabs = Tabs.builder()
-                .titles("Dependencies", "Plugins", "Build Output", "Git Diff")
+                .titles("Dependencies", "Plugins", "Build Output", "Git Diff", "Logs")
                 .highlightStyle(Style.EMPTY.bold().fg(Color.YELLOW))
                 .divider(" | ")
                 .block(Block.builder().borders(Borders.ALL).build())
@@ -81,6 +82,8 @@ public class DashboardView {
             buildOutputPanel.render(frame, area, model);
         } else if (model.activeTab() == DIFF) {
             gitDiffPanel.render(frame, area, model);
+        } else if (model.activeTab() == LOGS) {
+            renderLogsTab(frame, area);
         } else {
             renderDependencyTabWithErrors(frame, area);
         }
@@ -126,6 +129,32 @@ public class DashboardView {
                         .build())
                 .build();
         frame.renderWidget(paragraph, split.get(1));
+    }
+
+    private void renderLogsTab(Frame frame, Rect area) {
+        var messages = model.logMessages();
+        if (messages.isEmpty()) {
+            var block = Block.builder().borders(Borders.ALL).title("Logs").build();
+            frame.renderWidget(Paragraph.builder().text("\n  no log messages").block(block).build(), area);
+            return;
+        }
+
+        var text = messages.stream()
+                .map(m -> "[" + m.level() + "] "
+                        + (m.artifact() != null ? m.artifact() + ": " : "")
+                        + m.message())
+                .collect(Collectors.joining("\n"));
+        var visibleLines = Math.max(1, area.height() - 2);
+        var scroll = Math.max(0, messages.size() - visibleLines);
+        var paragraph = Paragraph.builder()
+                .text(text)
+                .overflow(WRAP_WORD)
+                .scroll(scroll)
+                .block(Block.builder().borders(Borders.ALL)
+                        .title("Logs (" + messages.size() + ")")
+                        .build())
+                .build();
+        frame.renderWidget(paragraph, area);
     }
 
     private void renderStatusBar(Frame frame, Rect area) {
