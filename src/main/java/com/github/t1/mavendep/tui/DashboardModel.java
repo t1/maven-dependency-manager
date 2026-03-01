@@ -188,7 +188,11 @@ public class DashboardModel {
     // --- Selection ---
 
     public boolean isSelected(DependencyUpdate update) {
-        return selectedKeys.contains(selectionKey(update));
+        if (selectedKeys.contains(selectionKey(update))) return true;
+        var prop = update.versionProperty();
+        if (prop == null) return false;
+        return allUpdates().anyMatch(u -> prop.equals(u.versionProperty())
+                && selectedKeys.contains(selectionKey(u)));
     }
 
     public void toggleSelection() {
@@ -197,8 +201,24 @@ public class DashboardModel {
         if (c < 0 || c >= updates.size()) return;
         var update = updates.get(c);
         if (!update.isUpdatable()) return;
-        var k = selectionKey(update);
-        if (!selectedKeys.remove(k)) selectedKeys.add(k);
+        if (isSelected(update)) {
+            propertySiblings(update).forEach(u -> selectedKeys.remove(selectionKey(u)));
+        } else {
+            selectedKeys.add(selectionKey(update));
+        }
+    }
+
+    private Stream<DependencyUpdate> propertySiblings(DependencyUpdate update) {
+        var prop = update.versionProperty();
+        if (prop == null) return Stream.of(update);
+        return allUpdates().filter(u -> prop.equals(u.versionProperty()));
+    }
+
+    private Stream<DependencyUpdate> allUpdates() {
+        return reports.stream()
+                .flatMap(r -> Stream.concat(
+                        r.dependencyUpdates().stream(),
+                        r.pluginUpdates().stream()));
     }
 
     public void toggleSelectAll() {

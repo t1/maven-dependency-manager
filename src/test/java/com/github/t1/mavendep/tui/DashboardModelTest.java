@@ -481,6 +481,59 @@ class DashboardModelTest {
         model.setPhase(Phase.READY);
     }
 
+    @Test void shouldShowSiblingAsSelectedWhenSharingVersionProperty() {
+        setReportsWithSharedProperty();
+        var updates = model.activeUpdates();
+
+        model.toggleSelection(); // select first dep (uses shared.version)
+
+        then(model.isSelected(updates.get(0))).isTrue();
+        then(model.isSelected(updates.get(1))).isTrue(); // sibling with same property
+    }
+
+    @Test void shouldDeselectSiblingWhenTogglingSelectedPropertyDep() {
+        setReportsWithSharedProperty();
+        var updates = model.activeUpdates();
+        model.toggleSelection(); // select first dep
+
+        model.cursorDown();
+        model.toggleSelection(); // toggle second dep (appears selected via sibling)
+
+        then(model.isSelected(updates.get(0))).isFalse();
+        then(model.isSelected(updates.get(1))).isFalse();
+    }
+
+    @Test void shouldNotAffectDepsWithDifferentProperty() {
+        setReportsWithSharedProperty();
+        model.setShowAll(true);
+        var updates = model.activeUpdates();
+
+        model.toggleSelection(); // select first dep (shared.version)
+
+        then(model.isSelected(updates.get(2))).isFalse(); // no property, not affected
+    }
+
+    private void setReportsWithSharedProperty() {
+        var dep1 = new Dependency(dependency, "com.example", "lib-a",
+                Version.fromString("1.0.0"), DEFAULT, "shared.version");
+        var dep2 = new Dependency(dependency, "com.example", "lib-b",
+                Version.fromString("1.0.0"), DEFAULT, "shared.version");
+        var dep3 = new Dependency(dependency, "com.other", "unrelated",
+                Version.fromString("2.0.0"), DEFAULT, null);
+        var update1 = dep1.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var update2 = dep2.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var update3 = dep3.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("2.0.0")), UpdateType.none);
+
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2, update3), List.of(), 3);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
     private void setReportsWithTwoDependencyUpdates() {
         var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
                 Version.fromString("5.10.0"), DEFAULT, null);
