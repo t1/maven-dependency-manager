@@ -11,6 +11,8 @@ interface TuiTestDriver extends AutoCloseable {
 
     void awaitText(String text, Duration timeout);
 
+    void awaitAnyText(Duration timeout, String... texts);
+
     boolean waitForExit(Duration timeout);
 
     @Override void close();

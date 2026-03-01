@@ -78,7 +78,7 @@ class TuiDashboardIT {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("Scanning...", ofSeconds(10));
+        tui.awaitAnyText(ofSeconds(10), "Scanning...", "selected");
         tui.awaitText("selected", ofSeconds(10));
         tui.awaitText("assertj-core", ofSeconds(2));
         tui.awaitText("junit-jupiter", ofSeconds(2));

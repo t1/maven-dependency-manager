@@ -14,6 +14,7 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -97,20 +98,26 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
         return textBuffer.getScreenLines().contains(text);
     }
 
-    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
     @Override public void awaitText(String text, Duration timeout) {
+        awaitAnyText(timeout, text);
+    }
+
+    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
+    @Override public void awaitAnyText(Duration timeout, String... texts) {
         var deadline = System.currentTimeMillis() + timeout.toMillis();
         while (System.currentTimeMillis() < deadline) {
-            if (hasText(text)) return;
+            for (var text : texts) {
+                if (hasText(text)) return;
+            }
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RuntimeException("Interrupted while waiting for text: " + text, e);
+                throw new RuntimeException("Interrupted while waiting for any of: " + Arrays.toString(texts), e);
             }
         }
-        throw new AssertionError("Timed out after " + timeout + " waiting for text: \"" + text + "\"\n" +
-                                 "Screen content:\n" + textBuffer.getScreenLines());
+        throw new AssertionError("Timed out after " + timeout + " waiting for any of: " +
+                                 Arrays.toString(texts) + "\nScreen content:\n" + textBuffer.getScreenLines());
     }
 
     @Override public boolean waitForExit(Duration timeout) {
