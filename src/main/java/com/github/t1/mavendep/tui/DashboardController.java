@@ -73,12 +73,12 @@ public class DashboardController {
             return true;
         }
 
-        if (key.isFocusPrevious() || isBackTab(key) || key.isChar('[')) {
+        if (key.isFocusPrevious() || isBackTab(key) || key.isChar('[') || key.isLeft()) {
             model.previousTab();
             refreshDiffIfActive();
             return true;
         }
-        if (key.isFocusNext() || key.isChar(']')) {
+        if (key.isFocusNext() || key.isChar(']') || key.isRight()) {
             model.nextTab();
             refreshDiffIfActive();
             return true;

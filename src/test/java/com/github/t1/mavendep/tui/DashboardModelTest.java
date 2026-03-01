@@ -381,7 +381,7 @@ class DashboardModelTest {
         setReportsWithTwoDependencyUpdates();
         model.setActiveTab(Tab.BUILD);
 
-        then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ] tabs", "[q]uit");
+        then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ]/◁▷ tabs", "[q]uit");
     }
 
     @Test void shouldShowDiffHintOnNonDiffTab() {

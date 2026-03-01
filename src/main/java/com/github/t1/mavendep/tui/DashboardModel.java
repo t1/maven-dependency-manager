@@ -65,7 +65,7 @@ public class DashboardModel {
             new MenuBinding("[s]how all", DEPENDENCY_TABS),
             new MenuBinding("[b]uild", ALL_TABS),
             new MenuBinding("[r]escan", ALL_TABS),
-            new MenuBinding("Tab/[ ] tabs", ALL_TABS),
+            new MenuBinding("Tab/[ ]/◁▷ tabs", ALL_TABS),
             new MenuBinding("[q]uit", ALL_TABS));
 
     private final VersionPickerModel versionPicker = new VersionPickerModel(this::rawFocusedUpdate);

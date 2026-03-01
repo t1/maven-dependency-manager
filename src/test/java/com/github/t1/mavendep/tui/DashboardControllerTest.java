@@ -142,6 +142,16 @@ class DashboardControllerTest {
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.LOGS);
     }
 
+    @Test void shouldSwitchTabsForwardWithRightArrow() {
+        controller.handle(KeyEvent.ofKey(KeyCode.RIGHT), runner);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);
+    }
+
+    @Test void shouldSwitchTabsBackwardWithLeftArrow() {
+        controller.handle(KeyEvent.ofKey(KeyCode.LEFT), runner);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.LOGS);
+    }
+
     @Test void shouldOpenVersionPicker() {
         controller.handle(KeyEvent.ofKey(KeyCode.ENTER), runner);
         then(model.isVersionPickerOpen()).isTrue();

@@ -1,4 +1,3 @@
-* TUI: changing tabs should also work via left/right arrow keys
 * TUI: if a version is defined via a property that is also used by other dependencies,
   then changing it should also render the checkboxes for the other dependencies
 * TUI: selecting a version should update the pom (and mark the checkbox)
