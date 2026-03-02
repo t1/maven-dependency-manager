@@ -22,7 +22,7 @@ using Claude Code and [my plugins](https://github.com/t1/tdder).
   versions and property-based versions, including parent POMs)
 - **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent
   when the parent is within the working set of POMs (via parameter or module resolution)
-- **Flexible Version Parsing**: Handles standard semantic versions (`1.2.3`), multi-segment versions (`2.13.4.2`),
+- **Flexible Version Parsing**: Handles standard [semantic versions](https://semver.org) (`1.2.3`), multi-segment versions (`2.13.4.2`),
   qualifier suffixes (`1.0-RC1`, `5.1.5.Final`), and timestamp-based build numbers (`0.7.7.201606060606`).
   Qualifiers are classified as pre-release (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) or
   release (`Final`, `GA`, `RELEASE`, `SP`) to filter out unstable versions.
