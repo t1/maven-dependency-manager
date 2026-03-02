@@ -336,11 +336,14 @@ public class DashboardModel {
             deselect(propertySiblings(original));
             return;
         }
-        var downgrade = committed != null && targetVersion.compareTo(committed) < 0;
-        var type = downgrade
-                ? UpdateType.between(targetVersion, committed)
-                : UpdateType.between(committed, targetVersion);
-        customVersions.put(selectionKey(original), new VersionPick(targetVersion, type));
+        propertySiblings(original).forEach(sibling -> {
+            var siblingCommitted = committedVersion(sibling);
+            var downgrade = siblingCommitted != null && targetVersion.compareTo(siblingCommitted) < 0;
+            var type = downgrade
+                    ? UpdateType.between(targetVersion, siblingCommitted)
+                    : UpdateType.between(siblingCommitted, targetVersion);
+            customVersions.put(selectionKey(sibling), new VersionPick(targetVersion, type));
+        });
     }
 
     /// Returns the committed version (from git HEAD) for this update,

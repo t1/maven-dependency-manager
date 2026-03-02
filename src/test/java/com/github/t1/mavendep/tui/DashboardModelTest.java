@@ -706,6 +706,58 @@ class DashboardModelTest {
         then(model.isSelected(updates.get(1))).isFalse();
     }
 
+    @Test void shouldShowCustomVersionOnSiblingWhenPickingSharedPropertyDep() {
+        setReportsWithSharedProperty();
+        var updates = model.activeUpdates();
+        var picked = Version.fromString("1.5.0");
+
+        model.setCustomVersion(updates.get(0), picked);
+        model.toggleSelection();
+
+        then(model.currentVersion(updates.get(1))).isEqualTo(picked);
+    }
+
+    @Test void shouldSetCorrectUpdateTypeOnSiblingWhenPickingSharedPropertyDep() {
+        setReportsWithSharedProperty();
+        var updates = model.activeUpdates();
+        var picked = Version.fromString("0.5.0");
+
+        model.setCustomVersion(updates.get(0), picked);
+
+        var effective = model.effectiveUpdate(updates.get(1));
+        then(effective.updateType()).isEqualTo(UpdateType.major); // 1.0.0 → 0.5.0 downgrade
+    }
+
+    @Test void shouldReturnCorrectPomUpdateForSiblingWithSharedProperty() {
+        setReportsWithSharedProperty();
+        var updates = model.activeUpdates();
+        var picked = Version.fromString("1.5.0");
+        model.setCustomVersion(updates.getFirst(), picked);
+        model.selectAll();
+
+        var selected = model.selectedUpdates().toList();
+
+        var sibling = selected.stream()
+                .filter(u -> u.artifactId().equals("lib-b"))
+                .findFirst().orElseThrow();
+        then(sibling.currentVersion()).isEqualTo(Version.fromString("1.0.0")); // original for Pom.Updater to find
+        then(sibling.latestVersion()).isEqualTo(picked); // target for Pom.Updater to replace with
+    }
+
+    @Test void shouldPropagateCustomVersionToPluginSibling() {
+        setReportsWithSharedPropertyAcrossTypes();
+        var dep = model.activeUpdates().getFirst(); // dependency tab
+        var picked = Version.fromString("1.5.0");
+
+        model.setCustomVersion(dep, picked);
+        model.toggleSelection();
+        model.setActiveTab(Tab.PLUGINS);
+        var plugin = model.activeUpdates().getFirst();
+
+        then(model.currentVersion(plugin)).isEqualTo(picked);
+        then(model.isSelected(plugin)).isTrue();
+    }
+
     @Test void shouldNotAffectDepsWithDifferentProperty() {
         setReportsWithSharedProperty();
         model.setShowAll(true);
@@ -714,6 +766,23 @@ class DashboardModelTest {
         model.toggleSelection(); // select first dep (shared.version)
 
         then(model.isSelected(updates.get(2))).isFalse(); // no property, not affected
+    }
+
+    private void setReportsWithSharedPropertyAcrossTypes() {
+        var dep = new Dependency(dependency, "com.example", "lib-a",
+                Version.fromString("1.0.0"), DEFAULT, "shared.version");
+        var plugin = new Dependency(Dependency.DependencyType.plugin, "com.example", "plugin-a",
+                Version.fromString("1.0.0"), DEFAULT, "shared.version");
+        var depUpdate = dep.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("1.0.0"), Version.fromString("1.5.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pluginUpdate = plugin.toUpdate(Version.fromString("2.0.0"),
+                List.of(Version.fromString("1.0.0"), Version.fromString("1.5.0"), Version.fromString("2.0.0")), UpdateType.major);
+
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(depUpdate), List.of(pluginUpdate), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
     }
 
     private void setReportsWithSharedProperty() {
