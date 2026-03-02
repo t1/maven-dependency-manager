@@ -10,11 +10,12 @@ using Claude Code and [my plugins](https://github.com/t1/tdder).
 ## Features
 
 - **Dependency Version Checking**: Queries Maven Central for the latest versions of your dependencies
+- **Plugin Version Checking**: Also checks and updates plugin versions
 - **Parent POM Version Checking**: Also checks and updates parent POM versions
 - **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with
   `--force-cache-update` to bypass the cache. The local repo path can be overridden via the `maven.repo.local` system
   property or the `--local-repo` CLI option.
-- **Multi-Project Support**: Scan single or multiple Maven projects at once
+- **Multi-Project Support**: Scan single or multiple Maven projects at once, automatically recognize Maven modules
 - **Multiple Output Formats**: JSON, YAML, XML, and human-readable text reports
 - **Show Available Versions**: Query all available versions for a specific artifact by `groupId:artifactId`, `groupId`,
   or `artifactId` (resolving partial coordinates from your POM), displayed as a tree grouped by major/minor version
@@ -28,7 +29,6 @@ using Claude Code and [my plugins](https://github.com/t1/tdder).
   release (`Final`, `GA`, `RELEASE`, `SP`) to filter out unstable versions.
   Note that this is not 100% compatible to Maven's version handling.
 - **Robust Error Handling**: Network failures and malformed metadata are logged but don't halt execution
-- **CI/CD Ready**: Perfect for automated pipeline integration
 
 ## Requirements
 
