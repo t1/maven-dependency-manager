@@ -173,7 +173,7 @@ class DashboardModelTest {
         then(effective.latestVersion()).isEqualTo(original.latestVersion());
     }
 
-    @Test void shouldComputeDowngradeTypeFromOriginalCurrent() {
+    @Test void shouldComputeDowngradeTypeFromCommittedVersion() {
         setReportsWithTwoDependencyUpdates();
         var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
 
@@ -210,41 +210,80 @@ class DashboardModelTest {
         then(model.effectiveUpdate(original)).isEqualTo(original);
     }
 
-    @Test void shouldShowOriginalVersionAsIsWhenNotSelected() {
+    @Test void shouldShowOriginalVersionAsCurrentWhenNotSelected() {
         setReportsWithTwoDependencyUpdates();
         var update = model.activeUpdates().getFirst();
 
-        then(model.isVersion(update)).isEqualTo(update.currentVersion());
+        then(model.currentVersion(update)).isEqualTo(update.currentVersion());
     }
 
-    @Test void shouldShowLatestVersionAsIsWhenSelected() {
+    @Test void shouldShowLatestVersionAsCurrentWhenSelected() {
         setReportsWithTwoDependencyUpdates();
         var update = model.activeUpdates().getFirst();
         model.toggleSelection();
 
-        then(model.isVersion(update)).isEqualTo(update.latestVersion());
+        then(model.currentVersion(update)).isEqualTo(update.latestVersion());
     }
 
-    @Test void shouldShowPickedVersionAsIsWhenCustomSelected() {
+    @Test void shouldShowPickedVersionAsCurrentWhenCustomSelected() {
         setReportsWithTwoDependencyUpdates();
         var update = model.activeUpdates().getFirst();
         var picked = Version.fromString("5.9.0");
         model.setCustomVersion(update, picked);
         model.toggleSelection();
 
-        then(model.isVersion(update)).isEqualTo(picked);
+        then(model.currentVersion(update)).isEqualTo(picked);
     }
 
-    @Test void shouldRevertIsToOriginalOnDeselect() {
+    @Test void shouldShowCurrentVersionAsCommittedWhenNoGitChange() {
+        setReportsWithTwoDependencyUpdates();
+        var update = model.activeUpdates().getFirst();
+
+        then(model.committedVersion(update)).isEqualTo(update.currentVersion());
+    }
+
+    @Test void shouldShowGitCommittedVersion() {
+        setReportsWithCommittedVersion();
+        var update = model.activeUpdates().getFirst();
+
+        then(model.committedVersion(update)).isEqualTo(Version.fromString("5.9.0"));
+    }
+
+    @Test void shouldComputeUpdateTypeFromCommittedVersion() {
+        setReportsWithCommittedVersion(); // committed 5.9.0, current 5.10.0, latest 6.0.3
+        var update = model.activeUpdates().getFirst();
+
+        var effective = model.effectiveUpdate(update);
+
+        // type is minor (5.9.0 → 5.10.0) because the POM change is pre-selected as custom pick
+        then(effective.updateType()).isEqualTo(UpdateType.minor);
+    }
+
+    @Test void shouldDetectChangeFromCommittedVersion() {
+        setReportsWithCommittedVersion(); // committed 5.9.0 ≠ latest 6.0.3
+        var update = model.activeUpdates().getFirst();
+
+        then(model.isChange(update)).isTrue();
+    }
+
+    @Test void shouldPreselectUncommittedPomChanges() {
+        setReportsWithCommittedVersion(); // committed 5.9.0, current 5.10.0, latest 6.0.3
+        var update = model.activeUpdates().getFirst();
+
+        then(model.isSelected(update)).isTrue();
+        then(model.currentVersion(update)).isEqualTo(Version.fromString("5.10.0"));
+    }
+
+    @Test void shouldRevertCurrentToOriginalOnDeselect() {
         setReportsWithTwoDependencyUpdates();
         var update = model.activeUpdates().getFirst();
         model.toggleSelection(); // select
         model.toggleSelection(); // deselect
 
-        then(model.isVersion(update)).isEqualTo(update.currentVersion());
+        then(model.currentVersion(update)).isEqualTo(update.currentVersion());
     }
 
-    @Test void shouldDeselectWhenPickingOriginalVersion() {
+    @Test void shouldDeselectWhenPickingCommittedVersion() {
         setReportsWithTwoDependencyUpdates();
         var original = model.activeUpdates().getFirst();
         model.toggleSelection(); // select first
@@ -448,7 +487,7 @@ class DashboardModelTest {
         model.toggleShowAll(); // filtered list = [major1, major2]; preceding visible = major1 at 0
 
         then(model.cursor()).isEqualTo(0);
-        then(model.activeUpdates().get(0).artifactId()).isEqualTo("junit-jupiter");
+        then(model.activeUpdates().getFirst().artifactId()).isEqualTo("junit-jupiter");
     }
 
     @Test void shouldMoveCursorToFirstWhenNoPrecedingVisibleDependency() {
@@ -807,6 +846,19 @@ class DashboardModelTest {
         var report1 = new ProjectReport(pom1, Optional.empty(), List.of(update1), List.of(), 1);
         var report2 = new ProjectReport(pom2, Optional.empty(), List.of(update2), List.of(), 1);
         model.setReports(List.of(report1, report2));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setReportsWithCommittedVersion() {
+        var dep = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var update = dep.toUpdate(Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")), UpdateType.major)
+                .withCommittedVersion(Version.fromString("5.9.0"));
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update), List.of(), 1);
+        model.setReports(List.of(report));
         model.setPhase(Phase.READY);
     }
 

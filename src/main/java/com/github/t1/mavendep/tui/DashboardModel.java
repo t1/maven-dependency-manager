@@ -169,7 +169,19 @@ public class DashboardModel {
         cursors.clear();
         selectedKeys.clear();
         customVersions.clear();
+        preselectUncommittedChanges();
         setNeedsRedraw();
+    }
+
+    /// Pre-selects updates where the POM version was already changed from the committed version,
+    /// e.g. from a previous TUI session that wasn't committed.
+    private void preselectUncommittedChanges() {
+        allUpdates()
+                .filter(u -> u.committedVersion() != null)
+                .forEach(u -> {
+                    setCustomVersion(u, u.currentVersion());
+                    selectedKeys.add(selectionKey(u));
+                });
     }
 
     /// Returns the flat list of dependency updates for the active tab.
@@ -198,7 +210,7 @@ public class DashboardModel {
     private List<DependencyUpdate> filterUpdates(List<DependencyUpdate> updates) {
         if (showAll) return updates;
         return updates.stream()
-                .filter(u -> u.updateType() != UpdateType.none
+                .filter(u -> isChange(u)
                               || worstLogLevelFor(u.artifactRef()).isPresent())
                 .toList();
     }
@@ -241,7 +253,7 @@ public class DashboardModel {
         var c = cursor();
         if (c < 0 || c >= updates.size()) return;
         var update = updates.get(c);
-        if (!update.isChange()) return;
+        if (!isChange(update)) return;
         if (isSelected(update)) {
             deselect(propertySiblings(update));
         } else {
@@ -268,7 +280,7 @@ public class DashboardModel {
     }
 
     private Stream<DependencyUpdate> selectableUpdates() {
-        return activeUpdates().stream().filter(DependencyUpdate::isChange);
+        return activeUpdates().stream().filter(this::isChange);
     }
 
     private boolean allSelected() {
@@ -299,7 +311,7 @@ public class DashboardModel {
     /// `latestVersion` = target version (what to replace it with).
     public Stream<DependencyUpdate> selectedUpdates() {
         return allUpdates()
-                .filter(DependencyUpdate::isChange)
+                .filter(this::isChange)
                 .filter(this::isSelected)
                 .map(this::toPomUpdate);
     }
@@ -319,21 +331,35 @@ public class DashboardModel {
     // --- Custom version (version picker) ---
 
     public void setCustomVersion(DependencyUpdate original, Version targetVersion) {
-        if (targetVersion.equals(original.currentVersion())) {
+        var committed = committedVersion(original);
+        if (targetVersion.equals(committed)) {
             deselect(propertySiblings(original));
             return;
         }
-        var from = original.currentVersion();
-        var downgrade = from != null && targetVersion.compareTo(from) < 0;
+        var downgrade = committed != null && targetVersion.compareTo(committed) < 0;
         var type = downgrade
-                ? UpdateType.between(targetVersion, from)
-                : UpdateType.between(from, targetVersion);
+                ? UpdateType.between(targetVersion, committed)
+                : UpdateType.between(committed, targetVersion);
         customVersions.put(selectionKey(original), new VersionPick(targetVersion, type));
+    }
+
+    /// Returns the committed version (from git HEAD) for this update,
+    /// falling back to the current POM version if there are no uncommitted changes.
+    public Version committedVersion(DependencyUpdate update) {
+        var committed = update.committedVersion();
+        return committed != null ? committed : update.currentVersion();
+    }
+
+    /// Returns true if the committed version differs from the latest version.
+    public boolean isChange(DependencyUpdate update) {
+        var committed = committedVersion(update);
+        return committed != null && update.latestVersion() != null
+                && update.latestVersion().compareTo(committed) != 0;
     }
 
     /// Returns the version currently in the POM for this update:
     /// original if not selected, latest or custom pick if selected.
-    public Version isVersion(DependencyUpdate update) {
+    public Version currentVersion(DependencyUpdate update) {
         if (!isSelected(update)) return update.currentVersion();
         var pick = customVersions.get(selectionKey(update));
         return pick != null ? pick.target() : update.latestVersion();
@@ -341,12 +367,21 @@ public class DashboardModel {
 
     public DependencyUpdate effectiveUpdate(DependencyUpdate update) {
         var pick = customVersions.get(selectionKey(update));
-        if (pick == null) return update;
-        return new DependencyUpdate(
+        if (pick != null) return new DependencyUpdate(
                 update.dependency().with(pick.target()),
                 update.latestVersion(),
                 update.availableVersions(),
-                pick.type());
+                pick.type(),
+                update.committedVersion());
+        var committed = committedVersion(update);
+        var type = UpdateType.between(committed, update.latestVersion());
+        if (type == update.updateType()) return update;
+        return new DependencyUpdate(
+                update.dependency(),
+                update.latestVersion(),
+                update.availableVersions(),
+                type,
+                update.committedVersion());
     }
 
     // --- Scan progress ---
