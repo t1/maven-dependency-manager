@@ -1,7 +1,7 @@
 # Maven Dependency Manager
 
 A Java-based CLI tool to check for newer versions of Maven dependencies across multiple projects, with intelligent
-caching using the local Maven repository.
+caching using the local Maven repository, different output formats, and a Terminal UI (`tui`).
 
 This is actually my personal playground project
 for [Level 3 Agentic Development](https://www.codecentric.de/wissens-hub/blog/die-fuenf-level-der-ki-gestuetzten-softwareentwicklung)

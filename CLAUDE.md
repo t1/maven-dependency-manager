@@ -31,7 +31,6 @@ This project uses the **tdder** plugin for TDD and Clean Code practices. **VERY 
 - Java and Maven conventions are provided by the plugin's `java` and `maven` skills —
   **always load these before making coding style decisions** (e.g. static imports, visibility, naming)
 
-See `TDD.md` and `CLEAN_CODE.md` for pointers to the plugin.
 
 ## Documentation Strategy
 
