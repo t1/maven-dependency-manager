@@ -245,13 +245,13 @@ class DependencySummaryTest {
         then(summary.patchUpdates()).isEqualTo(1);
     }
 
-    private DependencyUpdate createUpdate(
+    private Update createUpdate(
             String groupId,
             String artifactId,
             String currentVersion,
             String latestVersion,
             UpdateType updateType) {
-        return new DependencyUpdate(
+        return new Update(
                 new Dependency(dependency, groupId, artifactId, Version.fromString(currentVersion), compile, null),
                 Version.fromString(latestVersion),
                 List.of(Version.fromString(currentVersion), Version.fromString(latestVersion)),
@@ -259,8 +259,8 @@ class DependencySummaryTest {
         );
     }
 
-    private DependencyUpdate createUpdateWithNullCurrent() {
-        return new DependencyUpdate(
+    private Update createUpdateWithNullCurrent() {
+        return new Update(
                 new Dependency(dependency, "com.example", "lib", null, compile, null),
                 Version.fromString("1.0.0"),
                 List.of(Version.fromString("1.0.0")),
@@ -268,8 +268,8 @@ class DependencySummaryTest {
         );
     }
 
-    private DependencyUpdate createUpdateWithNullLatest() {
-        return new DependencyUpdate(
+    private Update createUpdateWithNullLatest() {
+        return new Update(
                 new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
                 null,
                 List.of(Version.fromString("1.0.0")),

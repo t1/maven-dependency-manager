@@ -48,10 +48,10 @@ public record Dependency(
         return new Dependency(type, groupId(), artifactId(), version, scope, versionProperty);
     }
 
-    public DependencyUpdate toUpdate(
+    public Update toUpdate(
             Version latestVersion,
             List<Version> availableVersions,
             UpdateType updateType) {
-        return new DependencyUpdate(this, latestVersion, availableVersions, updateType);
+        return new Update(this, latestVersion, availableVersions, updateType);
     }
 }

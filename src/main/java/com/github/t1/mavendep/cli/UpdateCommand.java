@@ -1,10 +1,10 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import picocli.CommandLine.ArgGroup;
 import picocli.CommandLine.Command;
@@ -132,11 +132,11 @@ public class UpdateCommand implements Callable<Integer> {
         }
     }
 
-    private boolean matchesAnyFilter(DependencyUpdate update) {
+    private boolean matchesAnyFilter(Update update) {
         return dependencyFilters.stream().anyMatch(filter -> matchesFilter(update, filter));
     }
 
-    private static boolean matchesFilter(DependencyUpdate update, String filter) {
+    private static boolean matchesFilter(Update update, String filter) {
         var dependency = update.dependency();
         if (filter.contains(":")) {
             var parts = filter.split(":", 2);

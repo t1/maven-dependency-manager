@@ -1,8 +1,8 @@
 package com.github.t1.mavendep.report;
 
 import com.github.t1.mavendep.domain.DependencySummary;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -60,7 +60,7 @@ public class TextReportWriter implements ReportWriter {
         out.println();
     }
 
-    private void printReportWithUpdates(List<DependencyUpdate> updates) {
+    private void printReportWithUpdates(List<Update> updates) {
         var hasCommitted = updates.stream().anyMatch(u -> u.committedVersion() != null);
         var widths = calculateColumnWidths(updates, hasCommitted);
 
@@ -75,7 +75,7 @@ public class TextReportWriter implements ReportWriter {
         printTableBorder(widths, "└─", "─┴─", "─┘");
     }
 
-    private int[] calculateColumnWidths(List<DependencyUpdate> updates, boolean hasCommitted) {
+    private int[] calculateColumnWidths(List<Update> updates, boolean hasCommitted) {
         var typeScopeWidth = "Type/Scope".length();
         var groupWidth = "Group ID".length();
         var depWidth = "Artifact ID".length();
@@ -100,7 +100,7 @@ public class TextReportWriter implements ReportWriter {
         return new int[]{typeScopeWidth, groupWidth, depWidth, curWidth, latWidth, updateWidth};
     }
 
-    private void printTableRows(List<DependencyUpdate> updates, int[] widths, boolean hasCommitted) {
+    private void printTableRows(List<Update> updates, int[] widths, boolean hasCommitted) {
         for (var update : updates) {
             if (hasCommitted) {
                 printTableRow(widths, formatTypeScope(update),
@@ -121,15 +121,15 @@ public class TextReportWriter implements ReportWriter {
         }
     }
 
-    private String formatCommittedVersion(DependencyUpdate update) {
+    private String formatCommittedVersion(Update update) {
         return update.committedVersion() != null ? update.committedVersion().toString() : "";
     }
 
-    private String formatCurrentVersion(DependencyUpdate update) {
+    private String formatCurrentVersion(Update update) {
         return update.currentVersion() != null ? update.currentVersion().toString() : "<managed>";
     }
 
-    private String formatLatestVersion(DependencyUpdate update) {
+    private String formatLatestVersion(Update update) {
         return update.latestVersion() != null ? update.latestVersion().toString() : "?";
     }
 
@@ -175,7 +175,7 @@ public class TextReportWriter implements ReportWriter {
         out.println();
     }
 
-    private String formatTypeScope(DependencyUpdate update) {
+    private String formatTypeScope(Update update) {
         if (update.type() == dependency) {
             return "dependency/" + update.scope();
         }

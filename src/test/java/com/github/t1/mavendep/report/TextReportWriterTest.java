@@ -1,9 +1,9 @@
 package com.github.t1.mavendep.report;
 
 import com.github.t1.mavendep.domain.Dependency;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -53,7 +53,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldGenerateTableFormatReport() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -79,13 +79,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowSummary() {
-        var update1 = new DependencyUpdate(
+        var update1 = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var update2 = new DependencyUpdate(
+        var update2 = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("5.3.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
@@ -112,7 +112,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldNotShowDependenciesHeader() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -128,19 +128,19 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowTotalDependencyCountInSummary() {
-        var update1 = new DependencyUpdate(
+        var update1 = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var update2 = new DependencyUpdate(
+        var update2 = new Update(
                 new Dependency(dependency, "org.springframework.boot", "spring-boot-starter-web", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.1"),
                 List.of(),
                 minor
         );
-        var update3 = new DependencyUpdate(
+        var update3 = new Update(
                 new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind", Version.fromString("2.15.0"), compile, null),
                 Version.fromString("2.16.1"),
                 List.of(),
@@ -155,7 +155,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayGroupIdInFirstColumn() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -171,7 +171,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayArtifactIdHeader() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -186,13 +186,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowAllDependenciesWhenIncludingUpToDate() {
-        var outdated = new DependencyUpdate(
+        var outdated = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var upToDate = new DependencyUpdate(
+        var upToDate = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("6.0.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
@@ -210,13 +210,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldFilterOutUpToDateDependenciesWhenShowAllIsFalse() {
-        var outdated = new DependencyUpdate(
+        var outdated = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var upToDate = new DependencyUpdate(
+        var upToDate = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("6.0.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
@@ -234,7 +234,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayTypeScopeColumn() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -250,19 +250,19 @@ class TextReportWriterTest {
 
     @Test
     void shouldSortDependenciesByType() {
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
         );
-        var pluginUpdate = new DependencyUpdate(
+        var pluginUpdate = new Update(
                 new Dependency(plugin, "org.apache.maven.plugins", "maven-compiler-plugin", Version.fromString("3.11.0"), compile, null),
                 Version.fromString("3.12.0"),
                 List.of(),
                 minor
         );
-        var dependencyUpdate = new DependencyUpdate(
+        var dependencyUpdate = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -288,7 +288,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayQuestionMarkWhenLatestVersionIsNull() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "unknown-artifact", Version.fromString("1.0.0"), compile, null),
                 null,
                 List.of(),
@@ -305,13 +305,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayParentPomAsFirstRowInTableWithPseudoScope() {
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
         );
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -330,13 +330,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayQuestionMarkWhenParentLatestVersionIsNull() {
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "com.example", "unknown-parent", Version.fromString("1.0.0"), compile, null),
                 null,
                 List.of(),
                 none
         );
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -354,7 +354,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayManagedWhenCurrentVersionIsNull() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
                 Version.fromString("2.0.0"),
                 List.of(),
@@ -371,13 +371,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayManagedWhenParentCurrentVersionIsNull() {
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "com.example", "managed-parent", null, compile, null),
                 Version.fromString("2.0.0"),
                 List.of(),
                 none
         );
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -395,13 +395,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowIndividualSummaryForEachProject() {
-        var update1 = new DependencyUpdate(
+        var update1 = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var update2 = new DependencyUpdate(
+        var update2 = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("5.3.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
@@ -425,19 +425,19 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowTotalSummaryForMultipleProjects() {
-        var update1 = new DependencyUpdate(
+        var update1 = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var update2 = new DependencyUpdate(
+        var update2 = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("5.3.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
                 major
         );
-        var update3 = new DependencyUpdate(
+        var update3 = new Update(
                 new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind", Version.fromString("2.15.0"), compile, null),
                 Version.fromString("2.16.0"),
                 List.of(),
@@ -453,7 +453,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldNotShowTotalSummaryForSingleProject() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -468,7 +468,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowSummaryForUpToDateDependencies() {
-        var upToDate = new DependencyUpdate(
+        var upToDate = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("6.0.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
@@ -483,13 +483,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowSummaryForMixOfOutdatedAndUpToDateDependencies() {
-        var outdated = new DependencyUpdate(
+        var outdated = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
                 patch
         );
-        var upToDate = new DependencyUpdate(
+        var upToDate = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("6.0.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
@@ -514,13 +514,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowTotalSummaryForMultipleProjectsWithUpToDateDependencies() {
-        var upToDate1 = new DependencyUpdate(
+        var upToDate1 = new Update(
                 new Dependency(dependency, "org.springframework", "spring-core", Version.fromString("6.0.0"), compile, null),
                 Version.fromString("6.0.0"),
                 List.of(),
                 none
         );
-        var upToDate2 = new DependencyUpdate(
+        var upToDate2 = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.1"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -536,7 +536,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldShowAllDependenciesCountEvenWhenOnlyShowingOutdated() {
-        var outdated = new DependencyUpdate(
+        var outdated = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -551,7 +551,7 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayTypeScopeColumnWithDependencyValue() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -567,13 +567,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayTypeScopeColumnWithParentValue() {
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
         );
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),
@@ -591,7 +591,7 @@ class TextReportWriterTest {
     }
 
     @Test void shouldShowCommittedVersionColumn() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.9.0"), compile, null),
                 Version.fromString("6.0.3"),
                 List.of(),
@@ -607,7 +607,7 @@ class TextReportWriterTest {
     }
 
     @Test void shouldNotShowCommittedColumnWhenNoCommittedVersions() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("6.0.3"),
                 List.of(),
@@ -622,13 +622,13 @@ class TextReportWriterTest {
 
     @Test
     void shouldDisplayParentWithoutScope() {
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
                 minor
         );
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
                 List.of(),

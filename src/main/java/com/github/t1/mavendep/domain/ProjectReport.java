@@ -9,9 +9,9 @@ import static java.util.Objects.requireNonNull;
 
 public record ProjectReport(
         Pom pom,
-        Optional<DependencyUpdate> parentUpdate,
-        List<DependencyUpdate> dependencyUpdates,
-        List<DependencyUpdate> pluginUpdates,
+        Optional<Update> parentUpdate,
+        List<Update> dependencyUpdates,
+        List<Update> pluginUpdates,
         int totalDependencies) {
 
     public ProjectReport {
@@ -22,19 +22,19 @@ public record ProjectReport(
         if (totalDependencies < 0) throw new IllegalArgumentException();
     }
 
-    public Stream<DependencyUpdate> updates() {
+    public Stream<Update> updates() {
         return Stream.concat(parentUpdate.stream(),
                 Stream.concat(
                                 dependencyUpdates.stream(),
                                 pluginUpdates.stream())
-                        .filter(DependencyUpdate::isChange));
+                        .filter(Update::isChange));
     }
 
     public boolean hasUpdates() {
         return updates().findAny().isPresent();
     }
 
-    public ProjectReport filterUpdates(Predicate<DependencyUpdate> predicate) {
+    public ProjectReport filterUpdates(Predicate<Update> predicate) {
         return new ProjectReport(
                 pom,
                 parentUpdate.filter(predicate),
@@ -44,6 +44,6 @@ public record ProjectReport(
     }
 
     public ProjectReport onlyUpdates() {
-        return filterUpdates(DependencyUpdate::isChange);
+        return filterUpdates(Update::isChange);
     }
 }

@@ -1,8 +1,8 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.ArtifactRef;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 
@@ -185,7 +185,7 @@ public class DashboardModel {
     }
 
     /// Returns the flat list of dependency updates for the active tab.
-    public List<DependencyUpdate> activeUpdates() {
+    public List<Update> activeUpdates() {
         return activeGroupedUpdates().stream()
                 .flatMap(e -> e.getValue().stream())
                 .toList();
@@ -194,7 +194,7 @@ public class DashboardModel {
     /// Returns updates grouped by POM file, with show-all filtering applied.
     /// Each entry maps a POM path to its filtered updates for the active tab.
     /// Only used by the table panel for rendering section headers.
-    public List<Map.Entry<Path, List<DependencyUpdate>>> activeGroupedUpdates() {
+    public List<Map.Entry<Path, List<Update>>> activeGroupedUpdates() {
         return reports.stream()
                 .map(r -> Map.entry(
                         r.pom().path(),
@@ -207,11 +207,11 @@ public class DashboardModel {
                 .toList();
     }
 
-    private List<DependencyUpdate> filterUpdates(List<DependencyUpdate> updates) {
+    private List<Update> filterUpdates(List<Update> updates) {
         if (showAll) return updates;
         return updates.stream()
                 .filter(u -> isChange(u)
-                              || worstLogLevelFor(u.artifactRef()).isPresent())
+                             || worstLogLevelFor(u.artifactRef()).isPresent())
                 .toList();
     }
 
@@ -240,7 +240,7 @@ public class DashboardModel {
 
     // --- Selection ---
 
-    public boolean isSelected(DependencyUpdate update) {
+    public boolean isSelected(Update update) {
         if (selectedKeys.contains(selectionKey(update))) return true;
         var prop = update.versionProperty();
         if (prop == null) return false;
@@ -261,13 +261,13 @@ public class DashboardModel {
         }
     }
 
-    private Stream<DependencyUpdate> propertySiblings(DependencyUpdate update) {
+    private Stream<Update> propertySiblings(Update update) {
         var prop = update.versionProperty();
         if (prop == null) return Stream.of(update);
         return allUpdates().filter(u -> prop.equals(u.versionProperty()));
     }
 
-    private Stream<DependencyUpdate> allUpdates() {
+    private Stream<Update> allUpdates() {
         return reports.stream()
                 .flatMap(r -> Stream.concat(
                         r.dependencyUpdates().stream(),
@@ -279,7 +279,7 @@ public class DashboardModel {
         else selectAll();
     }
 
-    private Stream<DependencyUpdate> selectableUpdates() {
+    private Stream<Update> selectableUpdates() {
         return activeUpdates().stream().filter(this::isChange);
     }
 
@@ -295,7 +295,7 @@ public class DashboardModel {
         deselect(activeUpdates().stream());
     }
 
-    private void deselect(Stream<DependencyUpdate> updates) {
+    private void deselect(Stream<Update> updates) {
         updates.forEach(u -> {
             selectedKeys.remove(selectionKey(u));
             customVersions.remove(selectionKey(u));
@@ -309,28 +309,28 @@ public class DashboardModel {
     /// Returns the selected updates, formatted for [com.github.t1.mavendep.domain.Pom#apply]:
     /// `currentVersion` = original version (what to find in the POM),
     /// `latestVersion` = target version (what to replace it with).
-    public Stream<DependencyUpdate> selectedUpdates() {
+    public Stream<Update> selectedUpdates() {
         return allUpdates()
                 .filter(this::isChange)
                 .filter(this::isSelected)
                 .map(this::toPomUpdate);
     }
 
-    private DependencyUpdate toPomUpdate(DependencyUpdate update) {
+    private Update toPomUpdate(Update update) {
         var pick = customVersions.get(selectionKey(update));
         if (pick == null) return update;
-        return new DependencyUpdate(
+        return new Update(
                 update.dependency(),
                 pick.target(),
                 update.availableVersions(),
                 pick.type());
     }
 
-    private static ArtifactRef selectionKey(DependencyUpdate u) {return u.artifactRef();}
+    private static ArtifactRef selectionKey(Update u) {return u.artifactRef();}
 
     // --- Custom version (version picker) ---
 
-    public void setCustomVersion(DependencyUpdate original, Version targetVersion) {
+    public void setCustomVersion(Update original, Version targetVersion) {
         var committed = committedVersion(original);
         if (targetVersion.equals(committed)) {
             deselect(propertySiblings(original));
@@ -345,29 +345,29 @@ public class DashboardModel {
 
     /// Returns the committed version (from git HEAD) for this update,
     /// falling back to the current POM version if there are no uncommitted changes.
-    public Version committedVersion(DependencyUpdate update) {
+    public Version committedVersion(Update update) {
         var committed = update.committedVersion();
         return committed != null ? committed : update.currentVersion();
     }
 
     /// Returns true if the committed version differs from the latest version.
-    public boolean isChange(DependencyUpdate update) {
+    public boolean isChange(Update update) {
         var committed = committedVersion(update);
         return committed != null && update.latestVersion() != null
-                && update.latestVersion().compareTo(committed) != 0;
+               && update.latestVersion().compareTo(committed) != 0;
     }
 
     /// Returns the version currently in the POM for this update:
     /// original if not selected, latest or custom pick if selected.
-    public Version currentVersion(DependencyUpdate update) {
+    public Version currentVersion(Update update) {
         if (!isSelected(update)) return update.currentVersion();
         var pick = customVersions.get(selectionKey(update));
         return pick != null ? pick.target() : update.latestVersion();
     }
 
-    public DependencyUpdate effectiveUpdate(DependencyUpdate update) {
+    public Update effectiveUpdate(Update update) {
         var pick = customVersions.get(selectionKey(update));
-        if (pick != null) return new DependencyUpdate(
+        if (pick != null) return new Update(
                 update.dependency().with(pick.target()),
                 update.latestVersion(),
                 update.availableVersions(),
@@ -376,7 +376,7 @@ public class DashboardModel {
         var committed = committedVersion(update);
         var type = UpdateType.between(committed, update.latestVersion());
         if (type == update.updateType()) return update;
-        return new DependencyUpdate(
+        return new Update(
                 update.dependency(),
                 update.latestVersion(),
                 update.availableVersions(),
@@ -485,13 +485,13 @@ public class DashboardModel {
         }
     }
 
-    /// Returns the focused [DependencyUpdate] or null if none.
-    public DependencyUpdate focusedUpdate() {
+    /// Returns the focused [Update] or null if none.
+    public Update focusedUpdate() {
         var raw = rawFocusedUpdate();
         return (raw != null) ? effectiveUpdate(raw) : null;
     }
 
-    private DependencyUpdate rawFocusedUpdate() {
+    private Update rawFocusedUpdate() {
         var updates = activeUpdates();
         return updates.isEmpty() ? null : updates.get(cursor());
     }

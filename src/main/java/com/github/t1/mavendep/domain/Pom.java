@@ -311,7 +311,7 @@ public class Pom {
         dirty = false;
     }
 
-    public void apply(Stream<DependencyUpdate> updates) {updates.filter(DependencyUpdate::isChange).forEach(new Updater()::apply);}
+    public void apply(Stream<Update> updates) {updates.filter(Update::isChange).forEach(new Updater()::apply);}
 
     public void writeToDisk() {
         try {
@@ -325,13 +325,13 @@ public class Pom {
         private static final String OPTIONAL_WHITESPACE = "\\s*";
         private static final String OPTIONAL_COMMENTS = "(?:\\s*<!--.*?-->\\s*)*";
 
-        private void apply(DependencyUpdate update) {
+        private void apply(Update update) {
             if (update.versionProperty() != null) updatePropertyValue(update.versionProperty(), update);
             else if (update.type() == DependencyType.parent) updateParentDirectVersion(update);
             else updateDirectVersion(update);
         }
 
-        private void updatePropertyValue(String propertyName, DependencyUpdate update) {
+        private void updatePropertyValue(String propertyName, Update update) {
             if (properties.containsKey(propertyName)) {
                 replaceVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
             } else if (parentPom != null) {
@@ -339,11 +339,11 @@ public class Pom {
             }
         }
 
-        private void updateDirectVersion(DependencyUpdate update) {
+        private void updateDirectVersion(Update update) {
             replaceVersionInTag("<version>", "</version>", update);
         }
 
-        private void updateParentDirectVersion(DependencyUpdate update) {
+        private void updateParentDirectVersion(Update update) {
             var pattern = Pattern.compile(
                     "<parent>.*?<version>" +
                     OPTIONAL_COMMENTS +
@@ -358,7 +358,7 @@ public class Pom {
             replaceVersion(pattern, update);
         }
 
-        private void replaceVersionInTag(String openingTag, String closingTag, DependencyUpdate update) {
+        private void replaceVersionInTag(String openingTag, String closingTag, Update update) {
             var pattern = Pattern.compile(
                     quote(openingTag) +
                     OPTIONAL_COMMENTS +
@@ -373,7 +373,7 @@ public class Pom {
             replaceVersion(pattern, update);
         }
 
-        private void replaceVersion(Pattern pattern, DependencyUpdate update) {
+        private void replaceVersion(Pattern pattern, Update update) {
             var matcher = pattern.matcher(content);
             if (matcher.find()) {
                 var matched = matcher.group();

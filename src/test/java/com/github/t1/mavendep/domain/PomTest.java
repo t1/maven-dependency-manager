@@ -29,13 +29,13 @@ class PomTest {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project xmlns="http://maven.apache.org/POM/4.0.0">
                     <modelVersion>4.0.0</modelVersion>
-
+                
                     <parent>
                         <groupId>com.example</groupId>
                         <artifactId>parent-project</artifactId>
                         <version>1.0.0</version>
                     </parent>
-
+                
                     <artifactId>child-project</artifactId>
                 </project>
                 """);
@@ -51,13 +51,13 @@ class PomTest {
                 <?xml version="1.0" encoding="UTF-8"?>
                 <project xmlns="http://maven.apache.org/POM/4.0.0">
                     <modelVersion>4.0.0</modelVersion>
-
+                
                     <parent>
                         <groupId>com.example</groupId>
                         <artifactId>parent-project</artifactId>
                         <version>2.0.0</version>
                     </parent>
-
+                
                     <artifactId>child-project</artifactId>
                 </project>
                 """);
@@ -325,7 +325,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <artifactId>some-lib</artifactId>
@@ -351,7 +351,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>com.example</groupId>
@@ -420,7 +420,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
@@ -444,7 +444,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -462,13 +462,13 @@ class PomTest {
 
         var pom = Pom.parse(pomFile).orElseThrow();
         var updates = Stream.of(
-                new DependencyUpdate(
+                new Update(
                         new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                         Version.fromString("5.11.0"),
                         List.of(),
                         none
                 ),
-                new DependencyUpdate(
+                new Update(
                         new Dependency(dependency, "info.picocli", "picocli", Version.fromString("4.7.0"), compile, null),
                         Version.fromString("4.7.7"),
                         List.of(),
@@ -511,7 +511,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind", Version.fromString("2.20.0"), compile, "jackson.version"),
                 Version.fromString("2.21.0"),
                 List.of(),
@@ -547,7 +547,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
@@ -616,7 +616,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
@@ -655,7 +655,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.apache.sshd", "sshd-common", Version.fromString("2.12.1"), compile, null),
                 Version.fromString("2.13.0"),
                 List.of(),
@@ -698,7 +698,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind", Version.fromString("2.20.0"), compile, "jackson.version"),
                 Version.fromString("2.21.0"),
                 List.of(),
@@ -741,7 +741,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.apache.sshd", "sshd-common", Version.fromString("2.12.1"), compile, "sshd.version"),
                 Version.fromString("2.13.0"),
                 List.of(),
@@ -783,7 +783,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, "junit.version"),
                 Version.fromString("5.11.0"),
                 List.of(),
@@ -821,7 +821,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(dependency, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), compile, null),
                 Version.fromString("3.2.0"),
                 List.of(),
@@ -863,7 +863,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var parentUpdate = new DependencyUpdate(
+        var parentUpdate = new Update(
                 new Dependency(parent, "org.springframework.boot", "spring-boot-starter-parent", Version.fromString("3.1.0"), null, "spring-boot.version"),
                 Version.fromString("3.2.0"),
                 List.of(),
@@ -887,7 +887,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <build>
                         <plugins>
                             <plugin>
@@ -901,7 +901,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(plugin, "org.apache.maven.plugins", "maven-compiler-plugin", Version.fromString("3.8.1"), compile, null),
                 Version.fromString("3.13.0"),
                 List.of(),
@@ -925,7 +925,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -937,25 +937,25 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var sameVersion = new DependencyUpdate(
+        var sameVersion = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.11.0"), test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
         );
-        var nullCurrentVersion = new DependencyUpdate(
+        var nullCurrentVersion = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", null, test, null),
                 Version.fromString("5.11.0"),
                 List.of(),
                 none
         );
-        var nullLatestVersion = new DependencyUpdate(
+        var nullLatestVersion = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.11.0"), test, null),
                 null,
                 List.of(),
                 none
         );
-        var bothNull = new DependencyUpdate(
+        var bothNull = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", null, test, null),
                 null,
                 List.of(),
@@ -976,7 +976,7 @@ class PomTest {
                     <groupId>com.example</groupId>
                     <artifactId>test-project</artifactId>
                     <version>1.0.0</version>
-
+                
                     <dependencies>
                         <dependency>
                             <groupId>org.junit.jupiter</groupId>
@@ -989,7 +989,7 @@ class PomTest {
                 """;
         var pomFile = writePom(pomContent);
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 pom.dependencies().getFirst(),
                 Version.fromString("5.11.0"),
                 List.of(),
@@ -1037,7 +1037,7 @@ class PomTest {
                 """);
 
         var pom = Pom.parse(pomFile).orElseThrow();
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "alpha", Version.fromString("2.0.0"), compile, "alpha.version"),
                 Version.fromString("3.0.0"),
                 List.of(),

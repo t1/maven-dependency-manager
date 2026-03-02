@@ -125,7 +125,7 @@ public class DependencyAnalyzer {
     }
 
     private ProjectReport analyze(Pom pom) {
-        try (var scope = StructuredTaskScope.<DependencyUpdate>open()) {
+        try (var scope = StructuredTaskScope.<Update>open()) {
             var dependencyUpdatesTasks = submitAnalysis(scope, pom.dependencies().stream()
                     .filter(this::isExternalArtifact));
             var pluginUpdateTasks = submitAnalysis(scope, pom.plugins().stream());
@@ -156,8 +156,8 @@ public class DependencyAnalyzer {
                 .orElse(Map.of());
     }
 
-    private static List<DependencyUpdate> enrichWithCommittedVersions(
-            List<DependencyUpdate> updates, Map<ArtifactRef, Version> committedVersions) {
+    private static List<Update> enrichWithCommittedVersions(
+            List<Update> updates, Map<ArtifactRef, Version> committedVersions) {
         if (committedVersions.isEmpty()) return updates;
         return updates.stream().map(update -> {
             var committed = committedVersions.get(update.artifactRef());
@@ -170,20 +170,20 @@ public class DependencyAnalyzer {
         return !isLocalArtifact(dep);
     }
 
-    private List<Subtask<DependencyUpdate>> submitAnalysis(
-            StructuredTaskScope<DependencyUpdate, Void> scope,
+    private List<Subtask<Update>> submitAnalysis(
+            StructuredTaskScope<Update, Void> scope,
             Stream<Dependency> dependencies) {
         return dependencies.map(dependency -> scope.fork(() -> analyze(dependency))).toList();
     }
 
-    private static List<DependencyUpdate> await(List<Subtask<DependencyUpdate>> tasks) {
+    private static List<Update> await(List<Subtask<Update>> tasks) {
         return tasks.stream()
                 .map(Subtask::get)
                 .filter(Objects::nonNull)
                 .toList();
     }
 
-    private Optional<DependencyUpdate> localParentUpdate(Pom pom) {
+    private Optional<Update> localParentUpdate(Pom pom) {
         return pom.parent()
                 .filter(this::isLocalArtifact)
                 .map(dep -> dep.toUpdate(dep.version(), List.of(), none));
@@ -193,7 +193,7 @@ public class DependencyAnalyzer {
         return localArtifacts.contains(dep.coordinates());
     }
 
-    private DependencyUpdate analyze(Dependency dependency) {
+    private Update analyze(Dependency dependency) {
         var artifact = dependency.artifactRef();
         var availableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<Version>of()
                 : repository.getAvailableVersions(artifact);

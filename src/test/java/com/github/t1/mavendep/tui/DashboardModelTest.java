@@ -53,14 +53,14 @@ class DashboardModelTest {
     }
 
     @Test void shouldMoveCursorDown() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         model.cursorDown();
         then(model.cursor()).isEqualTo(1);
     }
 
     @Test void shouldNotMoveCursorBelowLast() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         model.cursorDown();
         model.cursorDown();
@@ -68,7 +68,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldMoveCursorUp() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.cursorDown();
 
         model.cursorUp();
@@ -92,7 +92,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldToggleSelection() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var updates = model.activeUpdates();
 
         model.toggleSelection();
@@ -103,14 +103,14 @@ class DashboardModelTest {
     }
 
     @Test void shouldSelectAll() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         model.toggleSelectAll();
         then(model.selectedCount()).isEqualTo(2);
     }
 
     @Test void shouldDeselectAllWhenAllSelected() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.selectAll();
 
         model.toggleSelectAll();
@@ -118,7 +118,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldSelectNone() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.selectAll();
 
         model.selectNone();
@@ -151,7 +151,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldOpenAndCloseVersionPicker() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         model.openVersionPicker();
         then(model.isVersionPickerOpen()).isTrue();
@@ -161,7 +161,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldSetCustomVersionAsCurrent() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var updates = model.activeUpdates();
         var original = updates.getFirst();
         var customVersion = Version.fromString("5.9.0");
@@ -174,7 +174,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldComputeDowngradeTypeFromCommittedVersion() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
 
         model.setCustomVersion(original, Version.fromString("5.9.0"));
@@ -184,7 +184,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldReturnPomCompatibleUpdateForCustomVersion() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
         var picked = Version.fromString("5.9.0");
         model.setCustomVersion(original, picked);
@@ -200,7 +200,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldRevertToOriginalVersionOnDeselect() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var original = model.activeUpdates().getFirst();
         model.setCustomVersion(original, Version.fromString("5.9.0"));
         model.toggleSelection(); // select
@@ -211,14 +211,14 @@ class DashboardModelTest {
     }
 
     @Test void shouldShowOriginalVersionAsCurrentWhenNotSelected() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var update = model.activeUpdates().getFirst();
 
         then(model.currentVersion(update)).isEqualTo(update.currentVersion());
     }
 
     @Test void shouldShowLatestVersionAsCurrentWhenSelected() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var update = model.activeUpdates().getFirst();
         model.toggleSelection();
 
@@ -226,7 +226,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldShowPickedVersionAsCurrentWhenCustomSelected() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var update = model.activeUpdates().getFirst();
         var picked = Version.fromString("5.9.0");
         model.setCustomVersion(update, picked);
@@ -236,7 +236,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldShowCurrentVersionAsCommittedWhenNoGitChange() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var update = model.activeUpdates().getFirst();
 
         then(model.committedVersion(update)).isEqualTo(update.currentVersion());
@@ -275,7 +275,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldRevertCurrentToOriginalOnDeselect() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var update = model.activeUpdates().getFirst();
         model.toggleSelection(); // select
         model.toggleSelection(); // deselect
@@ -284,7 +284,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldDeselectWhenPickingCommittedVersion() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         var original = model.activeUpdates().getFirst();
         model.toggleSelection(); // select first
 
@@ -295,7 +295,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldAutoSelectOnVersionPick() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.openVersionPicker();
 
         model.confirmVersionPick();
@@ -304,7 +304,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldCursorHome() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.cursorDown();
 
         model.cursorHome();
@@ -312,7 +312,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldCursorEnd() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         model.cursorEnd();
         then(model.cursor()).isEqualTo(1);
@@ -343,7 +343,7 @@ class DashboardModelTest {
 
     @Test void shouldBeDirtyAfterSetReports() {
         model.clearNeedsRedraw();
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         then(model.needsRedraw()).isTrue();
     }
 
@@ -534,7 +534,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldShowDependencyMenuOnDependenciesTab() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         then(model.menuText()).contains("[Space] toggle", "[Enter] pick version", "[s]how all", "[p]lugins");
     }
@@ -547,7 +547,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldHideDependencyActionsOnBuildTab() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.setActiveTab(Tab.BUILD);
 
         then(model.menuText())
@@ -557,20 +557,20 @@ class DashboardModelTest {
     }
 
     @Test void shouldShowGlobalActionsOnAllTabs() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.setActiveTab(Tab.BUILD);
 
         then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ]/◁▷ tabs", "[q]uit");
     }
 
     @Test void shouldShowDiffHintOnNonDiffTab() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         then(model.menuText()).contains("[d]iff");
     }
 
     @Test void shouldShowDependenciesHintOnDiffTab() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
         model.setActiveTab(Tab.DIFF);
 
         then(model.menuText()).contains("[d]ependencies");
@@ -583,7 +583,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldReturnNullEmptyMessageWhenUpdatesExist() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         then(model.emptyMessage()).isNull();
     }
@@ -791,7 +791,7 @@ class DashboardModelTest {
     }
 
     @Test void shouldReturnSingleGroupForSinglePom() {
-        setReportsWithTwoDependencyUpdates();
+        setReportsWithTwoUpdates();
 
         var grouped = model.activeGroupedUpdates();
 
@@ -862,7 +862,7 @@ class DashboardModelTest {
         model.setPhase(Phase.READY);
     }
 
-    private void setReportsWithTwoDependencyUpdates() {
+    private void setReportsWithTwoUpdates() {
         var dep1 = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
                 Version.fromString("5.10.0"), DEFAULT, null);
         var dep2 = new Dependency(dependency, "com.fasterxml.jackson.core", "jackson-databind",

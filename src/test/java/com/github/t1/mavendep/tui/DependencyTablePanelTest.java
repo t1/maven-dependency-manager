@@ -1,6 +1,6 @@
 package com.github.t1.mavendep.tui;
 
-import com.github.t1.mavendep.domain.DependencyUpdate;
+import com.github.t1.mavendep.domain.Update;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -49,9 +49,9 @@ class DependencyTablePanelTest {
         then(DependencyTablePanel.toVisualIndex(2, grouped)).isEqualTo(5);
     }
 
-    private static List<DependencyUpdate> mockUpdates(int count) {
+    private static List<Update> mockUpdates(int count) {
         return java.util.stream.IntStream.range(0, count)
-                .mapToObj(_ -> mock(DependencyUpdate.class))
+                .mapToObj(_ -> mock(Update.class))
                 .toList();
     }
 }

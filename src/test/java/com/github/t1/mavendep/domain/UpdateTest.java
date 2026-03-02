@@ -14,7 +14,7 @@ import static com.github.t1.mavendep.domain.UpdateType.none;
 import static com.github.t1.mavendep.domain.UpdateType.patch;
 import static org.assertj.core.api.BDDAssertions.then;
 
-class DependencyUpdateTest {
+class UpdateTest {
 
     @Test
     void shouldCreateRecord_whenAllFieldsProvided() {
@@ -22,7 +22,7 @@ class DependencyUpdateTest {
         var latestVersion = Version.fromString("2.0.0");
         var availableVersions = List.of(currentVersion, latestVersion);
 
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", currentVersion, compile, null),
                 latestVersion,
                 availableVersions,
@@ -44,7 +44,7 @@ class DependencyUpdateTest {
         var latestVersion = Version.fromString("1.1.0");
         var availableVersions = List.of(currentVersion, latestVersion);
 
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.test", "lib", currentVersion, test, null),
                 latestVersion,
                 availableVersions,
@@ -61,7 +61,7 @@ class DependencyUpdateTest {
         var latestVersion = Version.fromString("1.0.1");
         var availableVersions = List.of(currentVersion, latestVersion);
 
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "org.test", "lib", currentVersion, runtime, null),
                 latestVersion,
                 availableVersions,
@@ -77,7 +77,7 @@ class DependencyUpdateTest {
         var currentVersion = Version.fromString("1.0.0");
         var latestVersion = Version.fromString("2.0.0");
 
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", currentVersion, compile, "lib.version"),
                 latestVersion,
                 List.of(),
@@ -88,7 +88,7 @@ class DependencyUpdateTest {
     }
 
     @Test void shouldHaveNullCommittedVersionByDefault() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
                 Version.fromString("2.0.0"),
                 List.of(),
@@ -100,7 +100,7 @@ class DependencyUpdateTest {
 
     @Test void shouldHoldCommittedVersion() {
         var committed = Version.fromString("1.5.0");
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
                 Version.fromString("2.0.0"),
                 List.of(),
@@ -112,7 +112,7 @@ class DependencyUpdateTest {
 
     @Test
     void shouldBeChangeForUpgrade() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
                 Version.fromString("2.0.0"),
                 List.of(),
@@ -124,7 +124,7 @@ class DependencyUpdateTest {
 
     @Test
     void shouldBeChangeForDowngrade() {
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", Version.fromString("2.0.0"), compile, null),
                 Version.fromString("1.0.0"),
                 List.of(),
@@ -137,7 +137,7 @@ class DependencyUpdateTest {
     @Test
     void shouldNotBeChangeWhenVersionsEqual() {
         var version = Version.fromString("1.0.0");
-        var update = new DependencyUpdate(
+        var update = new Update(
                 new Dependency(dependency, "com.example", "lib", version, compile, null),
                 version,
                 List.of(),

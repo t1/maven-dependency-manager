@@ -4,10 +4,10 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Dependency.DependencyType;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.Scope;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
@@ -219,12 +219,12 @@ class JsonReportWriterTest {
         }
     }
 
-    private DependencyUpdate createUpdate(String groupId, String artifactId, String currentVersion, String latestVersion, UpdateType updateType) {
+    private Update createUpdate(String groupId, String artifactId, String currentVersion, String latestVersion, UpdateType updateType) {
         return createUpdate(dependency, groupId, artifactId, currentVersion, latestVersion, compile, updateType);
     }
 
-    private DependencyUpdate createUpdate(DependencyType type, String groupId, String artifactId, String currentVersion, String latestVersion, Scope scope, UpdateType updateType) {
-        return new DependencyUpdate(
+    private Update createUpdate(DependencyType type, String groupId, String artifactId, String currentVersion, String latestVersion, Scope scope, UpdateType updateType) {
+        return new Update(
                 new Dependency(type, groupId, artifactId, Version.fromString(currentVersion), scope, null),
                 Version.fromString(latestVersion),
                 List.of(Version.fromString(currentVersion), Version.fromString(latestVersion)),
@@ -232,8 +232,8 @@ class JsonReportWriterTest {
         );
     }
 
-    private DependencyUpdate createUpdateWithNullLatest() {
-        return new DependencyUpdate(
+    private Update createUpdateWithNullLatest() {
+        return new Update(
                 new Dependency(dependency, "com.example", "unknown-artifact", Version.fromString("1.0.0"), compile, null),
                 null,
                 List.of(Version.fromString("1.0.0")),

@@ -3,8 +3,8 @@ package com.github.t1.mavendep.report;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.t1.mavendep.domain.DependencySummary;
-import com.github.t1.mavendep.domain.DependencyUpdate;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.Version;
 
 import java.util.List;
@@ -66,7 +66,7 @@ class ReportTreeBuilder {
         return projectNode;
     }
 
-    private ObjectNode buildDependencyNode(DependencyUpdate update) {
+    private ObjectNode buildDependencyNode(Update update) {
         var depNode = mapper.createObjectNode();
         depNode.put("type", update.type().toString());
         depNode.put("groupId", update.groupId());

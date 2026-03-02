@@ -1,6 +1,6 @@
 package com.github.t1.mavendep.tui;
 
-import com.github.t1.mavendep.domain.DependencyUpdate;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.Version;
 
 import java.util.List;
@@ -9,12 +9,12 @@ import java.util.function.Supplier;
 /// Manages the version picker overlay state within the TUI dashboard.
 class VersionPickerModel {
 
-    private final Supplier<DependencyUpdate> focusedUpdateSupplier;
+    private final Supplier<Update> focusedUpdateSupplier;
 
     private boolean open;
     private int cursor;
 
-    VersionPickerModel(Supplier<DependencyUpdate> focusedUpdateSupplier) {
+    VersionPickerModel(Supplier<Update> focusedUpdateSupplier) {
         this.focusedUpdateSupplier = focusedUpdateSupplier;
     }
 

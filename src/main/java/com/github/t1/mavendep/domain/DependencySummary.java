@@ -69,8 +69,8 @@ public record DependencySummary(
         );
     }
 
-    private static List<DependencyUpdate> getAllUpdates(ProjectReport report) {
-        var allUpdates = new ArrayList<DependencyUpdate>();
+    private static List<Update> getAllUpdates(ProjectReport report) {
+        var allUpdates = new ArrayList<Update>();
         report.parentUpdate().ifPresent(allUpdates::add);
         allUpdates.addAll(report.dependencyUpdates());
         allUpdates.addAll(report.pluginUpdates());

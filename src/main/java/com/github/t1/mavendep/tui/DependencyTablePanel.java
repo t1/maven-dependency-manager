@@ -1,6 +1,6 @@
 package com.github.t1.mavendep.tui;
 
-import com.github.t1.mavendep.domain.DependencyUpdate;
+import com.github.t1.mavendep.domain.Update;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
@@ -60,11 +60,11 @@ class DependencyTablePanel {
         frame.renderStatefulWidget(table, area, tableState);
     }
 
-    private static List<Row> buildFlatRows(List<DependencyUpdate> updates, DashboardModel model) {
+    private static List<Row> buildFlatRows(List<Update> updates, DashboardModel model) {
         return updates.stream().map(u -> toRow(u, model)).toList();
     }
 
-    private static List<Row> buildGroupedRows(List<Map.Entry<Path, List<DependencyUpdate>>> grouped, DashboardModel model) {
+    private static List<Row> buildGroupedRows(List<Map.Entry<Path, List<Update>>> grouped, DashboardModel model) {
         var rows = new ArrayList<Row>();
         for (var entry : grouped) {
             rows.add(toHeaderRow(entry.getKey()));
@@ -84,7 +84,7 @@ class DependencyTablePanel {
     }
 
     /// Maps a flat data index to a visual row index by adding the count of header rows above.
-    static int toVisualIndex(int dataIndex, List<Map.Entry<Path, List<DependencyUpdate>>> grouped) {
+    static int toVisualIndex(int dataIndex, List<Map.Entry<Path, List<Update>>> grouped) {
         var headersAbove = 0;
         var remaining = dataIndex;
         for (var entry : grouped) {
@@ -96,7 +96,7 @@ class DependencyTablePanel {
         return dataIndex + headersAbove;
     }
 
-    private static Row toRow(DependencyUpdate update, DashboardModel model) {
+    private static Row toRow(Update update, DashboardModel model) {
         var effective = model.effectiveUpdate(update);
         var checkbox = !model.isChange(update) ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
         var coords = String.valueOf(update.artifactRef());
@@ -113,7 +113,7 @@ class DependencyTablePanel {
         var latest = String.valueOf(update.latestVersion());
         var committedVer = model.committedVersion(update);
         var downgrade = committedVer != null && currentVersion != null
-                && currentVersion.compareTo(committedVer) < 0;
+                        && currentVersion.compareTo(committedVer) < 0;
         var type = (downgrade ? "-" : "") + effective.updateType().name();
 
         var style = switch (effective.updateType()) {
