@@ -8,27 +8,48 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.writeString;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TuiDashboardIT {
-    private static final Path FIXTURE_POM = Path.of("src/test/resources/tui-e2e-fixture/pom.xml").toAbsolutePath();
+    private static final String POM_CONTENT = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <project xmlns="http://maven.apache.org/POM/4.0.0">
+                <modelVersion>4.0.0</modelVersion>
+                <groupId>com.example</groupId>
+                <artifactId>tui-e2e-fixture</artifactId>
+                <version>1.0.0</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.assertj</groupId>
+                        <artifactId>assertj-core</artifactId>
+                        <version>3.25.0</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter</artifactId>
+                        <version>5.10.0</version>
+                        <scope>test</scope>
+                    </dependency>
+                </dependencies>
+            </project>
+            """;
 
     @TempDir Path tempDir;
 
     private HttpServer fakeRepo;
     private final Map<String, String> repoResponses = new ConcurrentHashMap<>();
     private TuiTestDriver tui;
-    private Path pomCopy;
+    private Path pomFile;
 
     @BeforeEach void setUp() throws IOException {
-        pomCopy = tempDir.resolve("pom.xml");
-        Files.copy(FIXTURE_POM, pomCopy);
+        pomFile = tempDir.resolve("pom.xml");
+        writeString(pomFile, POM_CONTENT);
 
         fakeRepo = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
         fakeRepo.createContext("/", exchange -> {
@@ -55,7 +76,7 @@ class TuiDashboardIT {
     private void startTui() {
         var repoUrl = "http://localhost:" + fakeRepo.getAddress().getPort();
         var localRepo = tempDir.resolve("local-repo");
-        tui = new Pty4jTuiTestDriver(pomCopy, repoUrl, localRepo);
+        tui = new Pty4jTuiTestDriver(pomFile, repoUrl, localRepo);
     }
 
     private void givenAllVersions() {
