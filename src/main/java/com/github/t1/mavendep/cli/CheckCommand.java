@@ -21,14 +21,6 @@ public class CheckCommand implements Callable<Integer> {
     @Mixin
     private RepositoryOptions repositoryOptions;
 
-    @SuppressWarnings("unused") // Used by Picocli
-    public CheckCommand() {}
-
-    CheckCommand(CommonOptions commonOptions, RepositoryOptions repositoryOptions) {
-        this.commonOptions = commonOptions;
-        this.repositoryOptions = repositoryOptions;
-    }
-
     @Override
     public Integer call() {
         with(commonOptions.logger()).run(() -> {
