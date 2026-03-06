@@ -10,12 +10,13 @@ import picocli.CommandLine.Parameters;
 
 import java.nio.file.Path;
 import java.util.Optional;
+import java.util.concurrent.Callable;
 
 @Command(
         name = "show-available",
         description = "Show all available versions for a Maven artifact"
 )
-public class ShowAvailableCommand implements Runnable {
+public class ShowAvailableCommand implements Callable<Integer> {
 
     @Mixin
     private RepositoryOptions repositoryOptions;
@@ -34,11 +35,11 @@ public class ShowAvailableCommand implements Runnable {
     private Path pomFile;
 
     @Override
-    public void run() {
+    public Integer call() {
         var resolved = resolveCoordinate();
         if (resolved.isEmpty()) {
             System.out.println("No dependency matching '" + coordinate + "' found in " + pomFile);
-            return;
+            return 1;
         }
         var dep = resolved.get();
 
@@ -50,6 +51,7 @@ public class ShowAvailableCommand implements Runnable {
         } else {
             System.out.println(VersionTreeTableFormatter.format(versions));
         }
+        return 0;
     }
 
     private Optional<Dependency> resolveCoordinate() {

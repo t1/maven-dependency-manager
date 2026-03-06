@@ -8,6 +8,7 @@ import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
+import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
@@ -28,23 +29,26 @@ public class TuiCommand implements Callable<Integer> {
     @Mixin
     private RepositoryOptions repositoryOptions;
 
+    private static final String DEFAULT_BUILD_GOALS = "clean verify";
+
     @Option(
             names = {"--build-goals"},
-            description = "Maven goals to run when building (default: clean verify)",
-            defaultValue = "clean verify"
+            description = "Maven goals to run when building (default: " + DEFAULT_BUILD_GOALS + ")",
+            defaultValue = DEFAULT_BUILD_GOALS
     )
-    private String buildGoals;
+    private String buildGoals = DEFAULT_BUILD_GOALS;
 
     private final Consumer<TuiCommand> dashboardRunner;
 
-    @SuppressWarnings("unused") // Used by Picocli
-    public TuiCommand() {
-        this(TuiCommand::runDashboard);
+    TuiCommand(CommonOptions commonOptions, RepositoryOptions repositoryOptions) {
+        this();
+        this.commonOptions = commonOptions;
+        this.repositoryOptions = repositoryOptions;
     }
 
-    TuiCommand(Consumer<TuiCommand> dashboardRunner) {
-        this.dashboardRunner = dashboardRunner;
-    }
+    TuiCommand() {this(TuiCommand::runDashboard);}
+
+    TuiCommand(Consumer<TuiCommand> dashboardRunner) {this.dashboardRunner = dashboardRunner;}
 
     @Override
     public Integer call() {
@@ -53,8 +57,9 @@ public class TuiCommand implements Callable<Integer> {
             return 0;
         } catch (RuntimeException e) {
             var cause = e.getCause() != null ? e.getCause() : e;
-            spec.commandLine().getErr().println("TUI error: " + cause.getMessage());
-            if (commonOptions.verbose) cause.printStackTrace(spec.commandLine().getErr());
+            var err = spec != null ? spec.commandLine().getErr() : new PrintWriter(System.err, true);
+            err.println("TUI error: " + cause.getMessage());
+            if (commonOptions.verbose) cause.printStackTrace(err);
             return 1;
         }
     }

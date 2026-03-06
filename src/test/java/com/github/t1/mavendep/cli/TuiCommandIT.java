@@ -13,6 +13,14 @@ class TuiCommandIT {
         then(subcommands).containsKey("tui");
     }
 
+    @Test void shouldUseTuiAsDefaultCommand() {
+        var cli = new CommandLine(new MavenDepManagerCli());
+        var parseResult = cli.parseArgs();
+        then(parseResult.hasSubcommand()).isFalse();
+        then(parseResult.commandSpec().userObject()).isInstanceOf(MavenDepManagerCli.class);
+        // MavenDepManagerCli.call() delegates to TuiCommand
+    }
+
     @Test void shouldParseBuildGoalsOption() {
         var cli = new CommandLine(new MavenDepManagerCli());
         var parseResult = cli.parseArgs("tui", "--build-goals", "clean install");

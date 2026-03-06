@@ -6,6 +6,8 @@ import picocli.CommandLine.Command;
 import picocli.CommandLine.HelpCommand;
 import picocli.CommandLine.Mixin;
 
+import java.util.concurrent.Callable;
+
 @Command(
         name = "maven-dep-manager",
         description = "Maven Dependency Manager - Check for or apply dependency updates",
@@ -14,7 +16,7 @@ import picocli.CommandLine.Mixin;
         usageHelpAutoWidth = true,
         version = "1.0.0"
 )
-public class MavenDepManagerCli implements Runnable {
+public class MavenDepManagerCli implements Callable<Integer> {
 
     @Mixin
     private CommonOptions commonOptions;
@@ -27,7 +29,7 @@ public class MavenDepManagerCli implements Runnable {
         System.exit(exitCode);
     }
 
-    /// PicoCLI has no built-in "default subcommand" feature; the parent's `run()` is called
-    /// when no subcommand is specified, so we delegate to `check` manually.
-    @Override public void run() {new CheckCommand(commonOptions, repositoryOptions).run();}
+    /// PicoCLI has no built-in "default subcommand" feature; the parent's `call()` is called
+    /// when no subcommand is specified, so we delegate to `tui` manually.
+    @Override public Integer call() {return new TuiCommand(commonOptions, repositoryOptions).call();}
 }

@@ -66,7 +66,10 @@ Then simply use `mdm check`, `mdm update`, etc.
 ### Basic Usage
 
 ```bash
-# Check current directory's pom.xml (default)
+# Launch the interactive TUI dashboard (default)
+mdm
+
+# Check current directory's pom.xml
 mdm check
 
 # Check a single project

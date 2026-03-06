@@ -253,20 +253,6 @@ class CheckCommandIT extends BaseCliIT {
     }
 
     @Test
-    void shouldUseCheckAsDefaultCommand() throws IOException, InterruptedException {
-        createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
-        givenMavenRepoVersions("org.assertj", "assertj-core", List.of(
-                Version.fromString("3.25.1"),
-                Version.fromString("3.27.7")
-        ));
-
-        var output = runCli(tempDir, "--format", "text");
-
-        then(output).contains("Maven Dependency Update Report");
-        then(output).contains("assertj-core");
-    }
-
-    @Test
     void shouldAcceptMavenCentralUrlOption() throws IOException, InterruptedException {
         createPomWithDependency("org.assertj", "assertj-core", "3.25.1");
         givenMavenRepoVersions("org.assertj", "assertj-core", List.of(

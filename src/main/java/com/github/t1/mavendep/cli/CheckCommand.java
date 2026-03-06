@@ -4,6 +4,8 @@ import com.github.t1.mavendep.domain.DependencyAnalyzer;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
+import java.util.concurrent.Callable;
+
 import static com.github.t1.mavendep.domain.Logger.with;
 import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
 
@@ -11,7 +13,7 @@ import static com.github.t1.mavendep.report.ReportOutputHandler.writeReport;
         name = "check",
         description = "Check for dependency updates in Maven projects"
 )
-public class CheckCommand implements Runnable {
+public class CheckCommand implements Callable<Integer> {
 
     @Mixin
     private CommonOptions commonOptions;
@@ -28,7 +30,7 @@ public class CheckCommand implements Runnable {
     }
 
     @Override
-    public void run() {
+    public Integer call() {
         with(commonOptions.logger()).run(() -> {
             var mavenRepository = repositoryOptions.createMavenRepository();
             var analyzer = new DependencyAnalyzer(mavenRepository, commonOptions.pomFiles);
@@ -37,5 +39,6 @@ public class CheckCommand implements Runnable {
 
             writeReport(reports, commonOptions.reportConfig());
         });
+        return 0;
     }
 }
