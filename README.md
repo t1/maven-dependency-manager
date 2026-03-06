@@ -160,7 +160,7 @@ The TUI provides a full interactive dashboard where you can:
 - Pick specific target versions (Enter to open version picker), also downgrades — POM is updated on confirm
 - Run a Maven build and see output in a separate tab (`b`)
 - Rescan after manually applying updates (`r`)
-- Switch between tabs (Tab/`]`/Right forward, Shift-Tab/`[`/Left backward, `p` for Plugins, `d` for Diff/Dependencies)
+- Switch between tabs (Tab/`]`/Right forward, Shift-Tab/`[`/Left backward, `p` for Plugins, `d` for Diff/Dependencies, `m` for Messages)
 - View scan errors and warnings inline below the dependency table
 - Quit (`q`)
 

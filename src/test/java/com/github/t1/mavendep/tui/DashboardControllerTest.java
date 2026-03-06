@@ -122,6 +122,11 @@ class DashboardControllerTest {
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);
     }
 
+    @Test void shouldJumpToMessagesTab() {
+        controller.handle(KeyEvent.ofChar('m'), runner);
+        then(model.activeTab()).isEqualTo(DashboardModel.Tab.MESSAGES);
+    }
+
     @Test void shouldSwitchTabs() {
         controller.handle(KeyEvent.ofKey(KeyCode.TAB), runner);
         then(model.activeTab()).isEqualTo(DashboardModel.Tab.PLUGINS);

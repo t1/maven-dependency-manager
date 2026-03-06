@@ -28,7 +28,10 @@ public class DashboardApp {
             var diffAction = new GitDiffAction(model, tui, workingDir, config.pomFiles());
 
             var controller = new DashboardController(model,
-                    () -> { applyAction.run(); diffAction.refresh(); },
+                    () -> {
+                        applyAction.run();
+                        diffAction.refresh();
+                    },
                     buildAction::start,
                     scanAction::start,
                     diffAction::refresh);

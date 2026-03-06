@@ -303,6 +303,36 @@ class DashboardModelTest {
         then(model.isSelected(model.activeUpdates().getFirst())).isTrue();
     }
 
+    @Test void shouldTreatCustomPickOnUpToDateDepAsChange() {
+        setReportsWithMixedUpdates();
+        model.setShowAll(true);
+        model.cursorDown(); // focus on up-to-date dep
+        var upToDate = model.activeUpdates().get(1);
+        var picked = Version.fromString("0.9.0");
+
+        model.setCustomVersion(upToDate, picked);
+
+        then(model.isChange(upToDate)).isTrue();
+    }
+
+    @Test void shouldClampCursorWhenDeselectingCustomPickedDepWithShowAllOff() {
+        setReportsWithMixedUpdates();
+        model.setShowAll(true);
+        model.cursorDown(); // focus on up-to-date dep (index 1)
+        var upToDate = model.activeUpdates().get(1);
+        model.setCustomVersion(upToDate, Version.fromString("0.9.0"));
+        model.toggleSelection(); // select it
+        model.toggleShowAll(); // show-all OFF — dep stays visible (isChange true)
+        then(model.activeUpdates()).hasSize(2); // both visible
+
+        model.cursorDown(); // cursor at 1 (the custom-picked dep)
+        model.toggleSelection(); // deselect — removes custom version
+
+        then(model.activeUpdates()).hasSize(1); // up-to-date dep filtered out
+        then(model.cursor()).isLessThan(model.activeUpdates().size());
+        then(model.focusedUpdate()).isNotNull(); // should not crash
+    }
+
     @Test void shouldCursorHome() {
         setReportsWithTwoUpdates();
         model.cursorDown();
@@ -533,14 +563,26 @@ class DashboardModelTest {
         then(model.showAll()).isTrue();
     }
 
+    @Test void shouldShowPickerMenuWhenVersionPickerOpen() {
+        setReportsWithTwoUpdates();
+        wireBindings();
+        model.openVersionPicker();
+
+        then(model.menuText())
+                .contains("[Enter] confirm", "[Esc] cancel", "▲▼ navigate")
+                .doesNotContain("[Space] toggle");
+    }
+
     @Test void shouldShowDependencyMenuOnDependenciesTab() {
         setReportsWithTwoUpdates();
+        wireBindings();
 
         then(model.menuText()).contains("[Space] toggle", "[Enter] pick version", "[s]how all", "[p]lugins");
     }
 
     @Test void shouldHidePluginsHintOnPluginsTab() {
         setReportsWithDependenciesAndPlugins();
+        wireBindings();
         model.setActiveTab(Tab.PLUGINS);
 
         then(model.menuText()).doesNotContain("[p]lugins");
@@ -548,6 +590,7 @@ class DashboardModelTest {
 
     @Test void shouldHideDependencyActionsOnBuildTab() {
         setReportsWithTwoUpdates();
+        wireBindings();
         model.setActiveTab(Tab.BUILD);
 
         then(model.menuText())
@@ -558,6 +601,7 @@ class DashboardModelTest {
 
     @Test void shouldShowGlobalActionsOnAllTabs() {
         setReportsWithTwoUpdates();
+        wireBindings();
         model.setActiveTab(Tab.BUILD);
 
         then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ]/◁▷ tabs", "[q]uit");
@@ -565,12 +609,14 @@ class DashboardModelTest {
 
     @Test void shouldShowDiffHintOnNonDiffTab() {
         setReportsWithTwoUpdates();
+        wireBindings();
 
         then(model.menuText()).contains("[d]iff");
     }
 
     @Test void shouldShowDependenciesHintOnDiffTab() {
         setReportsWithTwoUpdates();
+        wireBindings();
         model.setActiveTab(Tab.DIFF);
 
         then(model.menuText()).contains("[d]ependencies");
@@ -929,6 +975,11 @@ class DashboardModelTest {
         var report = new ProjectReport(pom, Optional.empty(), List.of(update), List.of(), 1);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
+    }
+
+    /// Creates a [DashboardController] to wire bindings into the model.
+    private void wireBindings() {
+        new DashboardController(model, () -> {}, () -> {}, () -> {}, () -> {});
     }
 
     private void setReportsWithTwoUpdates() {

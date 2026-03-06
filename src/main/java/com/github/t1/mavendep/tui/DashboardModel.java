@@ -23,7 +23,6 @@ import static com.github.t1.mavendep.domain.Logger.LogLevel;
 import static com.github.t1.mavendep.domain.Logger.LogMessage;
 import static com.github.t1.mavendep.tui.DashboardModel.Phase.SCANNING;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.DEPENDENCIES;
-import static com.github.t1.mavendep.tui.DashboardModel.Tab.DIFF;
 import static com.github.t1.mavendep.tui.DashboardModel.Tab.PLUGINS;
 
 /// Holds all mutable state for the TUI dashboard.
@@ -32,7 +31,11 @@ public class DashboardModel {
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
-    public enum Tab {DEPENDENCIES, PLUGINS, BUILD, DIFF, MESSAGES}
+    public enum Tab {
+        DEPENDENCIES, PLUGINS, BUILD, DIFF, MESSAGES;
+        static final Set<Tab> DEPENDENCY_TABS = EnumSet.of(DEPENDENCIES, PLUGINS);
+        static final Set<Tab> ALL_TABS = EnumSet.allOf(Tab.class);
+    }
 
     private Phase phase = SCANNING;
     private Tab activeTab = DEPENDENCIES;
@@ -60,33 +63,21 @@ public class DashboardModel {
 
     private boolean showAll;
 
-    private static final Set<Tab> DEPENDENCY_TABS = EnumSet.of(DEPENDENCIES, PLUGINS);
-    private static final Set<Tab> ALL_TABS = EnumSet.allOf(Tab.class);
-
-    private static final List<MenuBinding> STATIC_BINDINGS = List.of(
-            new MenuBinding("[Space] toggle", DEPENDENCY_TABS),
-            new MenuBinding("[Enter] pick version", DEPENDENCY_TABS),
-            new MenuBinding("[s]how all", DEPENDENCY_TABS),
-            new MenuBinding("[b]uild", ALL_TABS),
-            new MenuBinding("[r]escan", ALL_TABS),
-            new MenuBinding("Tab/[ ]/◁▷ tabs", ALL_TABS),
-            new MenuBinding("[q]uit", ALL_TABS));
+    private List<MenuBinding> bindings = List.of();
+    private List<MenuBinding> pickerBindings = List.of();
 
     private final VersionPickerModel versionPicker = new VersionPickerModel(this::rawFocusedUpdate);
 
-    // --- Menu ---
+    void setBindings(List<MenuBinding> bindings) {this.bindings = bindings;}
+
+    void setPickerBindings(List<MenuBinding> pickerBindings) {this.pickerBindings = pickerBindings;}
 
     /// Returns the formatted menu text showing only bindings available on the active tab.
     public String menuText() {
-        var dynamicBindings = new ArrayList<MenuBinding>();
-        if (activeTab != PLUGINS) dynamicBindings.add(new MenuBinding("[p]lugins", ALL_TABS));
-        dynamicBindings.add((activeTab == DIFF)
-                ? new MenuBinding("[d]ependencies", ALL_TABS)
-                : new MenuBinding("[d]iff", ALL_TABS));
-
-        return Stream.concat(STATIC_BINDINGS.stream(), dynamicBindings.stream())
-                .filter(b -> b.isAvailableOn(activeTab))
-                .map(MenuBinding::display)
+        var active = isVersionPickerOpen() ? pickerBindings : bindings;
+        return active.stream()
+                .map(b -> b.displayFor(activeTab))
+                .flatMap(Optional::stream)
                 .collect(Collectors.joining(" "));
     }
 
@@ -238,6 +229,11 @@ public class DashboardModel {
         setCursor(Math.max(0, activeUpdates().size() - 1));
     }
 
+    private void clampCursor() {
+        var max = Math.max(0, activeUpdates().size() - 1);
+        if (cursor() > max) setCursor(max);
+    }
+
     // --- Selection ---
 
     public boolean isSelected(Update update) {
@@ -256,6 +252,7 @@ public class DashboardModel {
         if (!isChange(update)) return;
         if (isSelected(update)) {
             deselect(propertySiblings(update));
+            clampCursor();
         } else {
             selectedKeys.add(selectionKey(update));
         }
@@ -353,10 +350,14 @@ public class DashboardModel {
         return committed != null ? committed : update.currentVersion();
     }
 
-    /// Returns true if the committed version differs from the latest version.
+    /// Returns true if the committed version differs from the target version
+    /// (latest, or custom pick if one was set).
     public boolean isChange(Update update) {
         var committed = committedVersion(update);
-        return committed != null && update.latestVersion() != null
+        if (committed == null) return false;
+        var pick = customVersions.get(selectionKey(update));
+        if (pick != null) return pick.target().compareTo(committed) != 0;
+        return update.latestVersion() != null
                && update.latestVersion().compareTo(committed) != 0;
     }
 
