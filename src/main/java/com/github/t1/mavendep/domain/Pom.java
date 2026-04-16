@@ -8,8 +8,13 @@ import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -17,7 +22,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType;
@@ -26,8 +30,7 @@ import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
 import static com.github.t1.mavendep.domain.Logger.log;
 import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
-import static java.util.regex.Pattern.DOTALL;
-import static java.util.regex.Pattern.quote;
+import static javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION;
 import static org.w3c.dom.Node.ELEMENT_NODE;
 
 /// Represents a Maven POM (Project Object Model) file with parsing and updating capabilities.
@@ -46,8 +49,8 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 /// ## Update Strategy
 /// - Detects property-based versions (${property.name}) and updates the property
 /// - Updates direct versions in `<version>` tags
-/// - Uses regex-based text replacement (not DOM manipulation)
-/// - Preserves all formatting while updating versions
+/// - Uses DOM manipulation to update version text nodes, preserving comments and whitespace
+/// - Serializes via `Transformer` with the original XML declaration prepended
 ///
 /// ## Example
 /// ```java
@@ -92,6 +95,7 @@ public class Pom {
         var dependencies = parseAllElements(doc, dependency, properties);
         var plugins = parseAllElements(doc, plugin, properties);
         return new Pom(
+                doc,
                 content,
                 pomPath,
                 new Coordinates(groupId, textContent("artifactId", document), Version.fromString(version)),
@@ -282,7 +286,7 @@ public class Pom {
 
 
     private boolean dirty;
-    private String content;
+    private Document doc;
     private final String originalContent;
     private final Path path;
     private final Coordinates coordinates;
@@ -294,7 +298,8 @@ public class Pom {
     private Pom parentPom;
 
     private Pom(
-            String content,
+            Document doc,
+            String originalContent,
             Path path,
             Coordinates coordinates,
             Optional<Dependency> parent,
@@ -302,8 +307,8 @@ public class Pom {
             List<Dependency> plugins,
             Map<String, String> properties,
             List<String> modules) {
-        this.content = content;
-        this.originalContent = content;
+        this.doc = doc;
+        this.originalContent = originalContent;
         this.path = path;
         this.coordinates = coordinates;
         this.parent = parent;
@@ -351,7 +356,7 @@ public class Pom {
 
     /// Resets the POM content to its original parsed state, discarding any in-memory changes.
     public void reset() {
-        content = originalContent;
+        doc = parseDocument(originalContent);
         dirty = false;
     }
 
@@ -359,74 +364,64 @@ public class Pom {
 
     public void writeToDisk() {
         try {
-            writeString(path, content);
+            writeString(path, dirty ? serialize(doc) : originalContent);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
     }
 
-    private class Updater {
-        private static final String OPTIONAL_WHITESPACE = "\\s*";
-        private static final String OPTIONAL_COMMENTS = "(?:\\s*<!--.*?-->\\s*)*";
+    private String serialize(Document doc) {
+        try {
+            var transformer = TransformerFactory.newInstance().newTransformer();
+            transformer.setOutputProperty(OMIT_XML_DECLARATION, "yes");
+            var writer = new StringWriter();
+            transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            var xmlDeclEnd = originalContent.indexOf("?>");
+            var xmlDeclaration = (xmlDeclEnd >= 0) ? originalContent.substring(0, xmlDeclEnd + 2) + "\n" : "";
+            return xmlDeclaration + writer;
+        } catch (TransformerException e) {
+            throw new RuntimeException("can't serialize POM", e);
+        }
+    }
 
+    private class Updater {
         private void apply(Update update) {
             if (update.versionProperty() != null) updatePropertyValue(update.versionProperty(), update);
-            else if (update.type() == DependencyType.parent) updateParentDirectVersion(update);
-            else updateDirectVersion(update);
+            else updateVersionElement(update);
         }
 
         private void updatePropertyValue(String propertyName, Update update) {
-            var updatedLocally = replaceVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
-            if (!updatedLocally && parentPom != null) {
+            var updated = updateElementByName(propertyName, update.currentVersion(), update.latestVersion());
+            if (!updated && parentPom != null) {
                 parentPom.apply(Stream.of(update));
             }
         }
 
-        private void updateDirectVersion(Update update) {
-            replaceVersionInTag("<version>", "</version>", update);
+        private void updateVersionElement(Update update) {
+            var versionElements = doc.getElementsByTagName("version");
+            for (var i = 0; i < versionElements.getLength(); i++) {
+                if (replaceTextContent(versionElements.item(i), update.currentVersion(), update.latestVersion())) return;
+            }
         }
 
-        private void updateParentDirectVersion(Update update) {
-            var pattern = Pattern.compile(
-                    "<parent>.*?<version>" +
-                    OPTIONAL_COMMENTS +
-                    OPTIONAL_WHITESPACE +
-                    quote(update.currentVersion().toString()) +
-                    OPTIONAL_WHITESPACE +
-                    OPTIONAL_COMMENTS +
-                    "</version>.*?</parent>",
-                    DOTALL
-            );
-
-            replaceVersion(pattern, update);
+        private boolean updateElementByName(String elementName, Version currentVersion, Version latestVersion) {
+            var elements = doc.getElementsByTagName(elementName);
+            for (var i = 0; i < elements.getLength(); i++) {
+                if (replaceTextContent(elements.item(i), currentVersion, latestVersion)) return true;
+            }
+            return false;
         }
 
-        private boolean replaceVersionInTag(String openingTag, String closingTag, Update update) {
-            var pattern = Pattern.compile(
-                    quote(openingTag) +
-                    OPTIONAL_COMMENTS +
-                    OPTIONAL_WHITESPACE +
-                    quote(update.currentVersion().toString()) +
-                    OPTIONAL_WHITESPACE +
-                    OPTIONAL_COMMENTS +
-                    quote(closingTag),
-                    DOTALL
-            );
-
-            return replaceVersion(pattern, update);
-        }
-
-        private boolean replaceVersion(Pattern pattern, Update update) {
-            var matcher = pattern.matcher(content);
-            if (matcher.find()) {
-                var matched = matcher.group();
-                var replacement = matched.replaceFirst(
-                        quote(update.currentVersion().toString()),
-                        update.latestVersion().toString()
-                );
-                content = content.replace(matched, replacement);
-                dirty = true;
-                return true;
+        private boolean replaceTextContent(Node element, Version currentVersion, Version latestVersion) {
+            if (!element.getTextContent().trim().equals(currentVersion.toString())) return false;
+            var children = element.getChildNodes();
+            for (var i = 0; i < children.getLength(); i++) {
+                var child = children.item(i);
+                if (child.getNodeType() == Node.TEXT_NODE && child.getTextContent().trim().equals(currentVersion.toString())) {
+                    child.setTextContent(child.getTextContent().replace(currentVersion.toString(), latestVersion.toString()));
+                    dirty = true;
+                    return true;
+                }
             }
             return false;
         }
