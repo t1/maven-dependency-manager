@@ -41,13 +41,14 @@ class DependencyTablePanel {
         tableState.select(visualIndex);
 
         var table = Table.builder()
-                .header(Row.from("", "Group:Artifact", "", "Committed", "Current", "Latest", "Type")
+                .header(Row.from("", "Group:Artifact", "", "Scope", "Committed", "Current", "Latest", "Type")
                         .style(Style.EMPTY.bold()))
                 .rows(rows)
                 .widths(
                         Constraint.length(3),
                         Constraint.fill(),
                         Constraint.length(2),
+                        Constraint.length(20),
                         Constraint.length(12),
                         Constraint.length(12),
                         Constraint.length(12),
@@ -79,7 +80,7 @@ class DependencyTablePanel {
 
     private static Row toHeaderRow(Path pomPath) {
         var display = pomPath.isAbsolute() ? CWD.relativize(pomPath) : pomPath;
-        return Row.from("", "── " + display + " ──", "", "", "", "", "")
+        return Row.from("", "── " + display + " ──", "", "", "", "", "", "")
                 .style(HEADER_STYLE);
     }
 
@@ -123,6 +124,7 @@ class DependencyTablePanel {
             case none -> Style.EMPTY;
         };
 
-        return Row.from(checkbox, coords, icon, committed, current, latest, type).style(style);
+        var scope = update.formatScope();
+        return Row.from(checkbox, coords, icon, scope, committed, current, latest, type).style(style);
     }
 }

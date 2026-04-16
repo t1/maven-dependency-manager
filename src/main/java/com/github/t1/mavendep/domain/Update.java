@@ -39,6 +39,13 @@ public record Update(
 
     public String versionProperty() {return dependency.versionProperty();}
 
+    public String profile() {return dependency.profile();}
+
+    public String formatScope() {
+        var base = (type() == DependencyType.dependency) ? "dependency/" + scope() : type().toString();
+        return profile() != null ? base + "@" + profile() : base;
+    }
+
     public boolean isChange() {
         return currentVersion() != null && latestVersion() != null && latestVersion().compareTo(currentVersion()) != 0;
     }

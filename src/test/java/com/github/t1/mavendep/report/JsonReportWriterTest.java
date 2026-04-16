@@ -2,6 +2,7 @@ package com.github.t1.mavendep.report;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.t1.mavendep.domain.Coordinates;
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Dependency.DependencyType;
 import com.github.t1.mavendep.domain.Pom;
@@ -217,6 +218,29 @@ class JsonReportWriterTest {
         } catch (IOException e) {
             throw new RuntimeException("failed to parse JSON", e);
         }
+    }
+
+    @Test void shouldIncludeProfileFieldInJsonOutput() {
+        var dep = new Dependency(dependency,
+                new Coordinates("org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0")),
+                test, null, "my-profile");
+        var update = new Update(dep, Version.fromString("5.10.1"), List.of(), patch);
+        var report = new ProjectReport(pom(), Optional.empty(), List.of(update), List.of(), 1);
+
+        var root = write(report.onlyUpdates());
+
+        var depNode = root.get("projects").get(0).get("dependencies").get(0);
+        then(depNode.get("profile").asText()).isEqualTo("my-profile");
+    }
+
+    @Test void shouldOmitProfileFieldWhenNull() {
+        var update = createUpdate("org.junit.jupiter", "junit-jupiter", "5.10.0", "5.10.1", patch);
+        var report = new ProjectReport(pom(), Optional.empty(), List.of(update), List.of(), 1);
+
+        var root = write(report.onlyUpdates());
+
+        var depNode = root.get("projects").get(0).get("dependencies").get(0);
+        then(depNode.has("profile")).isFalse();
     }
 
     private Update createUpdate(String groupId, String artifactId, String currentVersion, String latestVersion, UpdateType updateType) {

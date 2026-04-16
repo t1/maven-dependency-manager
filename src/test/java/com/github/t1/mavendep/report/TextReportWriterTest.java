@@ -1,5 +1,6 @@
 package com.github.t1.mavendep.report;
 
+import com.github.t1.mavendep.domain.Coordinates;
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
@@ -233,7 +234,7 @@ class TextReportWriterTest {
     }
 
     @Test
-    void shouldDisplayTypeScopeColumn() {
+    void shouldDisplayScopeColumn() {
         var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), test, null),
                 Version.fromString("5.10.1"),
@@ -244,7 +245,7 @@ class TextReportWriterTest {
 
         var text = writeToString(List.of(report.onlyUpdates()));
 
-        then(text).contains("│ Type/Scope");
+        then(text).contains("│ Scope");
         then(text).contains("│ dependency/test");
     }
 
@@ -550,7 +551,7 @@ class TextReportWriterTest {
     }
 
     @Test
-    void shouldDisplayTypeScopeColumnWithDependencyValue() {
+    void shouldDisplayScopeColumnWithDependencyValue() {
         var update = new Update(
                 new Dependency(dependency, "org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0"), compile, null),
                 Version.fromString("5.10.1"),
@@ -561,7 +562,7 @@ class TextReportWriterTest {
 
         var text = writeToString(List.of(report.onlyUpdates()));
 
-        then(text).contains("│ Type/Scope");
+        then(text).contains("│ Scope");
         then(text).contains("│ dependency/compile");
     }
 
@@ -618,6 +619,19 @@ class TextReportWriterTest {
         var text = writeToString(List.of(report));
 
         then(text).doesNotContain("Committed");
+    }
+
+    @Test void shouldDisplayScopeColumnWithProfile() {
+        var dep = new Dependency(dependency,
+                new Coordinates("org.junit.jupiter", "junit-jupiter", Version.fromString("5.10.0")),
+                test, null, "my-profile");
+        var update = new Update(dep, Version.fromString("5.10.1"), List.of(), patch);
+        var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(update), List.of(), 1);
+
+        var text = writeToString(List.of(report.onlyUpdates()));
+
+        then(text).contains("│ Scope");
+        then(text).contains("│ dependency/test@my-profile");
     }
 
     @Test

@@ -8,8 +8,6 @@ import java.io.PrintStream;
 import java.util.List;
 import java.util.stream.Stream;
 
-import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
-
 public class TextReportWriter implements ReportWriter {
 
     private final PrintStream out;
@@ -66,9 +64,9 @@ public class TextReportWriter implements ReportWriter {
 
         printTableBorder(widths, "┌─", "─┬─", "─┐");
         if (hasCommitted) {
-            printTableRow(widths, "Type/Scope", "Group ID", "Artifact ID", "Committed", "Current", "Latest", "Update");
+            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Committed", "Current", "Latest", "Update");
         } else {
-            printTableRow(widths, "Type/Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
+            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
         }
         printTableBorder(widths, "├─", "─┼─", "─┤");
         printTableRows(updates, widths, hasCommitted);
@@ -76,7 +74,7 @@ public class TextReportWriter implements ReportWriter {
     }
 
     private int[] calculateColumnWidths(List<Update> updates, boolean hasCommitted) {
-        var typeScopeWidth = "Type/Scope".length();
+        var scopeWidth = "Scope".length();
         var groupWidth = "Group ID".length();
         var depWidth = "Artifact ID".length();
         var committedWidth = hasCommitted ? "Committed".length() : 0;
@@ -85,7 +83,7 @@ public class TextReportWriter implements ReportWriter {
         var updateWidth = "Update".length();
 
         for (var update : updates) {
-            typeScopeWidth = Math.max(typeScopeWidth, formatTypeScope(update).length());
+            scopeWidth = Math.max(scopeWidth, update.formatScope().length());
             groupWidth = Math.max(groupWidth, update.groupId().length());
             depWidth = Math.max(depWidth, update.artifactId().length());
             if (hasCommitted) committedWidth = Math.max(committedWidth, formatCommittedVersion(update).length());
@@ -95,15 +93,15 @@ public class TextReportWriter implements ReportWriter {
         }
 
         if (hasCommitted) {
-            return new int[]{typeScopeWidth, groupWidth, depWidth, committedWidth, curWidth, latWidth, updateWidth};
+            return new int[]{scopeWidth, groupWidth, depWidth, committedWidth, curWidth, latWidth, updateWidth};
         }
-        return new int[]{typeScopeWidth, groupWidth, depWidth, curWidth, latWidth, updateWidth};
+        return new int[]{scopeWidth, groupWidth, depWidth, curWidth, latWidth, updateWidth};
     }
 
     private void printTableRows(List<Update> updates, int[] widths, boolean hasCommitted) {
         for (var update : updates) {
             if (hasCommitted) {
-                printTableRow(widths, formatTypeScope(update),
+                printTableRow(widths, update.formatScope(),
                         update.groupId(),
                         update.artifactId(),
                         formatCommittedVersion(update),
@@ -111,7 +109,7 @@ public class TextReportWriter implements ReportWriter {
                         formatLatestVersion(update),
                         update.updateType().toString());
             } else {
-                printTableRow(widths, formatTypeScope(update),
+                printTableRow(widths, update.formatScope(),
                         update.groupId(),
                         update.artifactId(),
                         formatCurrentVersion(update),
@@ -175,10 +173,4 @@ public class TextReportWriter implements ReportWriter {
         out.println();
     }
 
-    private String formatTypeScope(Update update) {
-        if (update.type() == dependency) {
-            return "dependency/" + update.scope();
-        }
-        return update.type().toString();
-    }
 }
