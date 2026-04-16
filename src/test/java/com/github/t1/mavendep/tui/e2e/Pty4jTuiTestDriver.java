@@ -18,7 +18,7 @@ import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
 class Pty4jTuiTestDriver implements TuiTestDriver {
-    private static final int COLUMNS = 100;
+    private static final int COLUMNS = 120;
     private static final int ROWS = 30;
 
     private final PtyProcess process;
