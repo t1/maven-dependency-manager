@@ -97,6 +97,15 @@ class DependencyTablePanel {
         return dataIndex + headersAbove;
     }
 
+    private static String formatShortScope(Update update) {
+        var base = switch (update.type()) {
+            case dependency -> update.scope().toString();
+            case parent -> "parent";
+            case plugin -> "plugin";
+        };
+        return update.profile() != null ? base + "@" + update.profile() : base;
+    }
+
     private static Row toRow(Update update, DashboardModel model) {
         var effective = model.effectiveUpdate(update);
         var checkbox = !model.isChange(update) ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
@@ -124,7 +133,7 @@ class DependencyTablePanel {
             case none -> Style.EMPTY;
         };
 
-        var scope = update.formatScope();
+        var scope = formatShortScope(update);
         return Row.from(checkbox, coords, icon, scope, committed, current, latest, type).style(style);
     }
 }
