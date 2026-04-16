@@ -89,13 +89,15 @@ public class Pom {
         var version = textContent("version", document);
         if (groupId == null && parent.isPresent()) groupId = parent.get().groupId();
         if (version == null && parent.isPresent()) version = parent.get().version().toString();
+        var dependencies = parseAllElements(doc, dependency, properties);
+        var plugins = parseAllElements(doc, plugin, properties);
         return new Pom(
                 content,
                 pomPath,
                 new Coordinates(groupId, textContent("artifactId", document), Version.fromString(version)),
                 parent,
-                parseElementsFromDocument(doc, dependency, properties),
-                parseElementsFromDocument(doc, plugin, properties),
+                dependencies,
+                plugins,
                 properties,
                 parseModulesFromDocument(doc));
     }
@@ -122,24 +124,31 @@ public class Pom {
     }
 
     private static Map<String, String> parsePropertiesFromDocument(Document doc) {
+        return parsePropertiesFrom(doc.getDocumentElement());
+    }
+
+    private static Map<String, String> parsePropertiesFrom(Element parent) {
         var properties = new HashMap<String, String>();
-        var propertiesNodes = doc.getElementsByTagName("properties");
-
-        if (propertiesNodes.getLength() > 0) {
-            var propertiesNode = propertiesNodes.item(0);
-            var children = propertiesNode.getChildNodes();
-
-            for (var i = 0; i < children.getLength(); i++) {
-                var child = children.item(i);
-                if (child.getNodeType() == ELEMENT_NODE) {
-                    var key = child.getNodeName();
-                    var value = child.getTextContent().trim();
-                    properties.put(key, value);
+        var children = parent.getChildNodes();
+        for (var i = 0; i < children.getLength(); i++) {
+            var child = children.item(i);
+            if (child.getNodeType() == ELEMENT_NODE && child.getNodeName().equals("properties")) {
+                var propChildren = child.getChildNodes();
+                for (var j = 0; j < propChildren.getLength(); j++) {
+                    var propChild = propChildren.item(j);
+                    if (propChild.getNodeType() == ELEMENT_NODE) {
+                        properties.put(propChild.getNodeName(), propChild.getTextContent().trim());
+                    }
                 }
             }
         }
-
         return properties;
+    }
+
+    private static List<Dependency> parseAllElements(Document doc, DependencyType type, Map<String, String> properties) {
+        var elements = new ArrayList<>(parseElementsFromDocument(doc, type, properties));
+        elements.addAll(parseElementsFromProfiles(doc, type, properties));
+        return elements;
     }
 
     private static List<Dependency> parseElementsFromDocument(Document doc, DependencyType type, Map<String, String> properties) {
@@ -147,17 +156,52 @@ public class Pom {
         var nodes = doc.getElementsByTagName(type.name());
 
         for (var i = 0; i < nodes.getLength(); i++) {
-            elements.add(new DependencyParser(properties, type).parse(nodes.item(i)));
+            var node = nodes.item(i);
+            if (!isInsideProfile(node)) {
+                elements.add(new DependencyParser(properties, type, null).parse(node));
+            }
         }
 
         return elements;
+    }
+
+    private static boolean isInsideProfile(Node node) {
+        var parent = node.getParentNode();
+        while (parent != null) {
+            if (parent.getNodeName().equals("profile")) return true;
+            parent = parent.getParentNode();
+        }
+        return false;
+    }
+
+    private static List<Dependency> parseElementsFromProfiles(Document doc, DependencyType type, Map<String, String> properties) {
+        var elements = new ArrayList<Dependency>();
+        var profiles = doc.getElementsByTagName("profile");
+
+        for (var i = 0; i < profiles.getLength(); i++) {
+            var profile = (Element) profiles.item(i);
+            var profileId = textContent("id", profile);
+            var mergedProperties = mergeProfileProperties(properties, profile);
+            var nodes = profile.getElementsByTagName(type.name());
+            for (var j = 0; j < nodes.getLength(); j++) {
+                elements.add(new DependencyParser(mergedProperties, type, profileId).parse(nodes.item(j)));
+            }
+        }
+
+        return elements;
+    }
+
+    private static Map<String, String> mergeProfileProperties(Map<String, String> baseProperties, Element profile) {
+        var merged = new HashMap<>(baseProperties);
+        merged.putAll(parsePropertiesFrom(profile));
+        return merged;
     }
 
     private static Optional<Dependency> parseParentFromDocument(Document doc, Map<String, String> properties) {
         var parentNodes = doc.getElementsByTagName("parent");
         if (parentNodes.getLength() == 0) return Optional.empty();
         var parentNode = parentNodes.item(0);
-        return Optional.of(new DependencyParser(properties, DependencyType.parent).parse(parentNode));
+        return Optional.of(new DependencyParser(properties, DependencyType.parent, null).parse(parentNode));
     }
 
     private static List<String> parseModulesFromDocument(Document doc) {
@@ -194,7 +238,7 @@ public class Pom {
         return value;
     }
 
-    private record DependencyParser(Map<String, String> properties, DependencyType type) {
+    private record DependencyParser(Map<String, String> properties, DependencyType type, String profile) {
         private static final String DEFAULT_PLUGIN_GROUP_ID = "org.apache.maven.plugins";
 
         private Dependency parse(Node depNode) {
@@ -225,7 +269,7 @@ public class Pom {
                 groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
 
-            var dependency = new Dependency(type, groupId, artifactId, version, scope, versionProperty);
+            var dependency = new Dependency(type, new Coordinates(groupId, artifactId, version), scope, versionProperty, profile);
             if (groupId.isEmpty()) log().warning(dependency.artifactRef(), "missing groupId");
             if (artifactId.isEmpty()) log().warning(dependency.artifactRef(), "missing artifactId");
             return dependency;
@@ -332,9 +376,8 @@ public class Pom {
         }
 
         private void updatePropertyValue(String propertyName, Update update) {
-            if (properties.containsKey(propertyName)) {
-                replaceVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
-            } else if (parentPom != null) {
+            var updatedLocally = replaceVersionInTag("<" + propertyName + ">", "</" + propertyName + ">", update);
+            if (!updatedLocally && parentPom != null) {
                 parentPom.apply(Stream.of(update));
             }
         }
@@ -358,7 +401,7 @@ public class Pom {
             replaceVersion(pattern, update);
         }
 
-        private void replaceVersionInTag(String openingTag, String closingTag, Update update) {
+        private boolean replaceVersionInTag(String openingTag, String closingTag, Update update) {
             var pattern = Pattern.compile(
                     quote(openingTag) +
                     OPTIONAL_COMMENTS +
@@ -370,10 +413,10 @@ public class Pom {
                     DOTALL
             );
 
-            replaceVersion(pattern, update);
+            return replaceVersion(pattern, update);
         }
 
-        private void replaceVersion(Pattern pattern, Update update) {
+        private boolean replaceVersion(Pattern pattern, Update update) {
             var matcher = pattern.matcher(content);
             if (matcher.find()) {
                 var matched = matcher.group();
@@ -383,7 +426,9 @@ public class Pom {
                 );
                 content = content.replace(matched, replacement);
                 dirty = true;
+                return true;
             }
+            return false;
         }
     }
 }

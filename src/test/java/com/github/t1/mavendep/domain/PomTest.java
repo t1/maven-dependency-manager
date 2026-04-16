@@ -1006,6 +1006,250 @@ class PomTest {
         then(readString(pomFile)).isEqualTo(pomContent);
     }
 
+    // Profile tests
+
+    @Test void shouldParseDependencyFromProfile() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <profiles>
+                        <profile>
+                            <id>test-profile</id>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>5.10.0</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.dependencies()).hasSize(1);
+        var dep = pom.dependencies().getFirst();
+        then(dep.groupId()).isEqualTo("org.junit.jupiter");
+        then(dep.version().toString()).isEqualTo("5.10.0");
+        then(dep.profile()).isEqualTo("test-profile");
+    }
+
+    @Test void shouldNotSetProfileNameOnTopLevelDependency() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.dependencies().getFirst().profile()).isNull();
+    }
+
+    @Test void shouldResolveProfileDependencyVersionFromProfileProperties() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <profiles>
+                        <profile>
+                            <id>test-profile</id>
+                            <properties>
+                                <junit.version>5.10.0</junit.version>
+                            </properties>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>${junit.version}</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.dependencies().getFirst().version().toString()).isEqualTo("5.10.0");
+        then(pom.dependencies().getFirst().versionProperty()).isEqualTo("junit.version");
+    }
+
+    @Test void shouldResolveProfileDependencyVersionFromTopLevelProperties() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <properties>
+                        <junit.version>5.10.0</junit.version>
+                    </properties>
+
+                    <profiles>
+                        <profile>
+                            <id>test-profile</id>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>${junit.version}</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.dependencies().getFirst().version().toString()).isEqualTo("5.10.0");
+    }
+
+    @Test void shouldPreferProfilePropertyOverTopLevelProperty() {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <properties>
+                        <junit.version>5.9.0</junit.version>
+                    </properties>
+
+                    <profiles>
+                        <profile>
+                            <id>test-profile</id>
+                            <properties>
+                                <junit.version>5.10.0</junit.version>
+                            </properties>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>${junit.version}</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+
+        then(pom.dependencies().getFirst().version().toString()).isEqualTo("5.10.0");
+    }
+
+    @Test void shouldUpdateDirectVersionInProfileDependency() throws IOException {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <profiles>
+                        <profile>
+                            <id>test-profile</id>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>5.10.0</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+        var update = new Update(
+                pom.dependencies().getFirst(),
+                Version.fromString("5.11.0"),
+                List.of(),
+                none
+        );
+
+        pom.apply(Stream.of(update));
+        pom.writeToDisk();
+
+        var updatedContent = readString(pomFile);
+        then(updatedContent).contains("<version>5.11.0</version>");
+        then(updatedContent).doesNotContain("<version>5.10.0</version>");
+    }
+
+    @Test void shouldUpdatePropertyInProfileProperties() throws IOException {
+        var pomFile = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+
+                    <profiles>
+                        <profile>
+                            <id>test-profile</id>
+                            <properties>
+                                <junit.version>5.10.0</junit.version>
+                            </properties>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>${junit.version}</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomFile).orElseThrow();
+        var update = new Update(
+                pom.dependencies().getFirst(),
+                Version.fromString("5.11.0"),
+                List.of(),
+                none
+        );
+
+        pom.apply(Stream.of(update));
+        pom.writeToDisk();
+
+        var updatedContent = readString(pomFile);
+        then(updatedContent).contains("<junit.version>5.11.0</junit.version>");
+        then(updatedContent).doesNotContain("<junit.version>5.10.0</junit.version>");
+    }
+
     @Test
     void shouldUpdateCorrectPropertyWhenMultiplePropertiesHaveSameVersion() throws IOException {
         var pomFile = writePom("""

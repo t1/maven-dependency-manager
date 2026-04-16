@@ -9,7 +9,8 @@ public record Dependency(
         DependencyType type,
         Coordinates coordinates,
         Scope scope,
-        String versionProperty) {
+        String versionProperty,
+        String profile) {
     public enum DependencyType {
         parent,
         dependency,
@@ -17,7 +18,7 @@ public record Dependency(
     }
 
     public Dependency(DependencyType type, String groupId, String artifactId, Version version, Scope scope, String versionProperty) {
-        this(type, new Coordinates(groupId, artifactId, version), scope, versionProperty);
+        this(type, new Coordinates(groupId, artifactId, version), scope, versionProperty, null);
     }
 
     public ArtifactRef artifactRef() {return coordinates.artifactRef();}
@@ -45,7 +46,7 @@ public record Dependency(
     }
 
     public Dependency with(Version version) {
-        return new Dependency(type, groupId(), artifactId(), version, scope, versionProperty);
+        return new Dependency(type, new Coordinates(groupId(), artifactId(), version), scope, versionProperty, profile);
     }
 
     public Update toUpdate(
