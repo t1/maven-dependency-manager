@@ -48,7 +48,7 @@ class DependencyTablePanel {
                         Constraint.length(3),
                         Constraint.fill(),
                         Constraint.length(2),
-                        Constraint.length(20),
+                        Constraint.length(12),
                         Constraint.length(12),
                         Constraint.length(12),
                         Constraint.length(12),
