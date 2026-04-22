@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -168,7 +169,7 @@ public class DashboardModel {
     /// e.g. from a previous TUI session that wasn't committed.
     private void preselectUncommittedChanges() {
         allUpdates()
-                .filter(u -> u.committedVersion() != null)
+                .filter(u -> u.committedVersion() != null && u.currentVersion() != null)
                 .forEach(u -> {
                     setCustomVersion(u, u.currentVersion());
                     selectedKeys.add(selectionKey(u));
@@ -329,7 +330,7 @@ public class DashboardModel {
 
     public void setCustomVersion(Update original, Version targetVersion) {
         var committed = committedVersion(original);
-        if (targetVersion.equals(committed)) {
+        if (Objects.equals(targetVersion, committed)) {
             deselect(propertySiblings(original));
             return;
         }
