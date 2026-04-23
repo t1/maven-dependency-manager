@@ -33,7 +33,7 @@ class VersionPickerPanel {
 
         var items = versions.stream()
                 .map(v -> ListItem.from(v.toString()))
-                .toList();
+                .toArray(ListItem[]::new);
 
         var list = ListWidget.builder()
                 .items(items)

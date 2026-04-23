@@ -24,6 +24,7 @@
         <skip.surefire.tests>${skipTests}</skip.surefire.tests>
 
         <jackson.version>2.21.2</jackson.version>
+        <tamboui-tui.version>0.2.0</tamboui-tui.version>
     </properties>
 
     <repositories>
@@ -61,12 +62,12 @@
         <dependency>
             <groupId>dev.tamboui</groupId>
             <artifactId>tamboui-tui</artifactId>
-            <version>0.1.0</version>
+            <version>${tamboui-tui.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.tamboui</groupId>
             <artifactId>tamboui-jline3-backend</artifactId>
-            <version>0.1.0</version>
+            <version>${tamboui-tui.version}</version>
         </dependency>
 
         <!-- Testing -->

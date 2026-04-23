@@ -3,7 +3,7 @@ package com.github.t1.mavendep.tui;
 import dev.tamboui.layout.Position;
 import dev.tamboui.layout.Size;
 import dev.tamboui.terminal.Backend;
-import dev.tamboui.buffer.CellUpdate;
+import dev.tamboui.buffer.DiffResult;
 
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -58,7 +58,7 @@ class BackTabBackendWrapper implements Backend {
     }
 
     // --- Pure delegation ---
-    @Override public void draw(Iterable<CellUpdate> updates) throws IOException {delegate.draw(updates);}
+    @Override public void draw(DiffResult diff) throws IOException {delegate.draw(diff);}
     @Override public void flush() throws IOException {delegate.flush();}
     @Override public void clear() throws IOException {delegate.clear();}
     @Override public Size size() throws IOException {return delegate.size();}
