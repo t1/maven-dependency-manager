@@ -23,7 +23,7 @@
         <!--suppress XmlUnresolvedReference -->
         <skip.surefire.tests>${skipTests}</skip.surefire.tests>
 
-        <jackson.version>2.21.2</jackson.version>
+        <jackson.version>2.21.3</jackson.version>
         <tamboui-tui.version>0.2.0</tamboui-tui.version>
     </properties>
 
