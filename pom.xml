@@ -100,7 +100,7 @@
         <dependency>
             <groupId>org.jetbrains.jediterm</groupId>
             <artifactId>jediterm-core</artifactId>
-            <version>3.64</version>
+            <version>3.66</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
