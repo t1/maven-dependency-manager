@@ -872,6 +872,51 @@ class DashboardModelTest {
         model.setPhase(Phase.READY);
     }
 
+    @Test void shouldDisplayRootProjectNameInTitle() {
+        var rootPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(rootPom.path()).willReturn(Path.of("pom.xml"));
+        given(rootPom.coordinates()).willReturn(new com.github.t1.mavendep.domain.Coordinates("com.example", "root-project", Version.fromString("1.0.0")));
+        given(rootPom.name()).willReturn("Root Project");
+        var modulePom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(modulePom.path()).willReturn(Path.of("module/pom.xml"));
+        given(modulePom.coordinates()).willReturn(new com.github.t1.mavendep.domain.Coordinates("com.example", "module-project", Version.fromString("1.0.0")));
+        given(modulePom.name()).willReturn("Module Project");
+        model.setRootPomFiles(List.of(Path.of("pom.xml")));
+        model.setReports(List.of(
+                new ProjectReport(rootPom, Optional.empty(), List.of(), List.of(), 0),
+                new ProjectReport(modulePom, Optional.empty(), List.of(), List.of(), 0)));
+
+        then(model.titleText()).isEqualTo("Maven Dependency Manager — Root Project");
+    }
+
+    @Test void shouldFallBackToRootArtifactIdWhenNameMissing() {
+        var rootPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(rootPom.path()).willReturn(Path.of("pom.xml"));
+        given(rootPom.coordinates()).willReturn(new com.github.t1.mavendep.domain.Coordinates("com.example", "root-project", Version.fromString("1.0.0")));
+        given(rootPom.name()).willReturn(null);
+        model.setRootPomFiles(List.of(Path.of("pom.xml")));
+        model.setReports(List.of(new ProjectReport(rootPom, Optional.empty(), List.of(), List.of(), 0)));
+
+        then(model.titleText()).isEqualTo("Maven Dependency Manager — root-project");
+    }
+
+    @Test void shouldDisplayMultipleRootProjectNamesInTitle() {
+        var firstPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(firstPom.path()).willReturn(Path.of("first/pom.xml"));
+        given(firstPom.coordinates()).willReturn(new com.github.t1.mavendep.domain.Coordinates("com.example", "first-project", Version.fromString("1.0.0")));
+        given(firstPom.name()).willReturn("First Project");
+        var secondPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(secondPom.path()).willReturn(Path.of("second/pom.xml"));
+        given(secondPom.coordinates()).willReturn(new com.github.t1.mavendep.domain.Coordinates("com.example", "second-project", Version.fromString("1.0.0")));
+        given(secondPom.name()).willReturn("Second Project");
+        model.setRootPomFiles(List.of(Path.of("first/pom.xml"), Path.of("second/pom.xml")));
+        model.setReports(List.of(
+                new ProjectReport(firstPom, Optional.empty(), List.of(), List.of(), 0),
+                new ProjectReport(secondPom, Optional.empty(), List.of(), List.of(), 0)));
+
+        then(model.titleText()).isEqualTo("Maven Dependency Manager — First Project, Second Project");
+    }
+
     @Test void shouldGroupUpdatesByPom() {
         setReportsFromTwoPoms();
 

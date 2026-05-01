@@ -16,6 +16,7 @@ public class DashboardApp {
     public void run() throws Exception {
         var model = new DashboardModel();
         model.setShowAll(config.showAll());
+        model.setRootPomFiles(config.pomFiles());
         var view = new DashboardView(model);
 
         var backend = new BackTabBackendWrapper(BackendFactory.create());

@@ -24,6 +24,7 @@ class TuiDashboardIT {
                 <groupId>com.example</groupId>
                 <artifactId>tui-e2e-fixture</artifactId>
                 <version>1.0.0</version>
+                <name>TUI E2E Fixture</name>
                 <dependencies>
                     <dependency>
                         <groupId>org.assertj</groupId>
@@ -88,7 +89,7 @@ class TuiDashboardIT {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("Maven Dependency Manager");
+        tui.awaitText("Maven Dependency Manager — TUI E2E Fixture");
         tui.awaitText("Dependencies");
         tui.awaitText("[s]how all");
         tui.awaitText("[q]uit");
@@ -119,7 +120,7 @@ class TuiDashboardIT {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("Maven Dependency Manager");
+        tui.awaitText("Maven Dependency Manager — TUI E2E Fixture");
         tui.type("q");
         assertTrue(tui.waitForExit());
     }

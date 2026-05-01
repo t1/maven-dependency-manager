@@ -42,7 +42,7 @@ import static org.w3c.dom.Node.ELEMENT_NODE;
 /// - Parses plugins with groupId, artifactId, version (defaults groupId to `org.apache.maven.plugins` if missing)
 /// - Resolves property references (${property.name})
 /// - Extracts parent POM information
-/// - Extracts module definitions for multi-module projects
+/// - Extracts project name and module definitions for multi-module projects
 /// - Updates dependency, plugin, and parent versions
 /// - Preserves formatting: whitespace, comments, indentation
 /// - Supports in-memory chaining of updates without re-parsing
@@ -100,6 +100,7 @@ public class Pom {
                 content,
                 pomPath,
                 new Coordinates(groupId, textContent("artifactId", document), Version.fromString(version)),
+                textContent("name", document),
                 parent,
                 dependencies,
                 plugins,
@@ -291,6 +292,7 @@ public class Pom {
     private final String originalContent;
     private final Path path;
     private final Coordinates coordinates;
+    private final String name;
     private final Optional<Dependency> parent;
     private final Map<String, String> properties;
     private final List<Dependency> dependencies;
@@ -303,6 +305,7 @@ public class Pom {
             String originalContent,
             Path path,
             Coordinates coordinates,
+            String name,
             Optional<Dependency> parent,
             List<Dependency> dependencies,
             List<Dependency> plugins,
@@ -312,6 +315,7 @@ public class Pom {
         this.originalContent = originalContent;
         this.path = path;
         this.coordinates = coordinates;
+        this.name = name;
         this.parent = parent;
         this.properties = properties;
         this.dependencies = dependencies;
@@ -324,6 +328,8 @@ public class Pom {
     public Path path() {return path;}
 
     public Coordinates coordinates() {return coordinates;}
+
+    public String name() {return name;}
 
     public List<Dependency> dependencies() {return dependencies;}
 

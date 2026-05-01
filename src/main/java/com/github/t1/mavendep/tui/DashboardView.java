@@ -57,7 +57,7 @@ public class DashboardView {
 
     private void renderTitleBar(Frame frame, Rect area) {
         var title = Paragraph.builder()
-                .text("Maven Dependency Manager")
+                .text(model.titleText())
                 .style(Style.EMPTY.bold().fg(Color.CYAN))
                 .block(Block.builder().borders(Borders.ALL).build())
                 .build();

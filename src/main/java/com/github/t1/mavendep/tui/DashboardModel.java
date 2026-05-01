@@ -1,11 +1,13 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.ArtifactRef;
+import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.EnumMap;
@@ -42,6 +44,7 @@ public class DashboardModel {
     private Tab activeTab = DEPENDENCIES;
 
     private List<ProjectReport> reports = List.of();
+    private List<Path> rootPomFiles = List.of();
     private final Map<Tab, Integer> cursors = new EnumMap<>(Tab.class);
     private final Set<ArtifactRef> selectedKeys = new HashSet<>();
 
@@ -72,6 +75,26 @@ public class DashboardModel {
     void setBindings(List<MenuBinding> bindings) {this.bindings = bindings;}
 
     void setPickerBindings(List<MenuBinding> pickerBindings) {this.pickerBindings = pickerBindings;}
+
+    void setRootPomFiles(List<Path> rootPomFiles) {this.rootPomFiles = rootPomFiles.stream().map(DashboardModel::resolveToPomFile).toList();}
+
+    public String titleText() {
+        var roots = reports.stream()
+                .filter(report -> rootPomFiles.contains(resolveToPomFile(report.pom().path())))
+                .map(report -> displayName(report.pom()))
+                .distinct()
+                .toList();
+        return roots.isEmpty() ? "Maven Dependency Manager" : "Maven Dependency Manager — " + String.join(", ", roots);
+    }
+
+    private static String displayName(Pom pom) {
+        return (pom.name() == null || pom.name().isBlank()) ? pom.coordinates().artifactId() : pom.name();
+    }
+
+    private static Path resolveToPomFile(Path path) {
+        var absolute = path.toAbsolutePath().normalize();
+        return Files.isDirectory(absolute) ? absolute.resolve("pom.xml") : absolute;
+    }
 
     /// Returns the formatted menu text showing only bindings available on the active tab.
     public String menuText() {

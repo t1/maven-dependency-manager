@@ -157,7 +157,7 @@ mdm tui --force-cache-update
 
 The TUI provides a full interactive dashboard where you can:
 
-- Browse dependencies and plugins
+- Browse dependencies and plugins, grouped by POM and scope in the table; plugins use profile sub-groups only when present. The header shows the root project name(s), falling back to artifactId(s)
 - Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none) — POM is updated automatically
 - Pick specific target versions (Enter to open version picker), also downgrades — POM is updated on confirm
 - Run a Maven build and see output in a separate tab (`b`)

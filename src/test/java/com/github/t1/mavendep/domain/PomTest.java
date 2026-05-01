@@ -209,6 +209,24 @@ class PomTest {
     }
 
     @Test
+    void shouldParseProjectName() {
+        var pomContent = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                    <name>Test Project</name>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomContent).orElseThrow();
+
+        then(pom.name()).isEqualTo("Test Project");
+    }
+
+    @Test
     void shouldParseModules() {
         var pomContent = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>
