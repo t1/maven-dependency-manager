@@ -2,7 +2,6 @@ package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Update;
-import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
 
@@ -55,14 +54,16 @@ class DependencyTablePanelTest {
         then(DependencyTablePanel.toVisualIndex(2, grouped)).isEqualTo(5);
     }
 
-    @Test void shouldSuppressTypeWhenCurrentVersionIsUnknown() {
+    @Test void shouldFormatUnknownEffectiveUpdate() {
         var update = new Update(
                 new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
                 Version.fromString("2.0.0"),
                 List.of(),
-                UpdateType.none);
+                com.github.t1.mavendep.domain.UpdateType.none);
+        var model = mock(DashboardModel.class);
+        org.mockito.BDDMockito.given(model.currentVersion(update)).willReturn(null);
 
-        then(DependencyTablePanel.formatUpdateType(update, false)).isEmpty();
+        then(DependencyTablePanel.formatUpdate(update, model)).isEqualTo("? → 2.0.0");
     }
 
     private static List<Update> mockUpdates(int count) {

@@ -71,9 +71,10 @@ class TextReportWriterTest {
         then(text).contains("│ Artifact ID");  // Table header
         then(text).contains("├─");  // Header separator
         then(text).contains("│ junit-jupiter");
+        then(text).contains("│ Declared");
+        then(text).contains("│ Update");
         then(text).contains("│ 5.10.0");
-        then(text).contains("│ 5.10.1");
-        then(text).contains("│ patch");
+        then(text).contains("│ 5.10.0 → 5.10.1");
         then(text).contains("└─");  // Table bottom border
         then(text).contains("  Summary:");
     }
@@ -205,7 +206,7 @@ class TextReportWriterTest {
 
         then(text).contains("│ junit-jupiter");
         then(text).contains("│ spring-core");
-        then(text).contains("│ none");
+        then(text).contains("│ 6.0.0           │");
         then(text).contains("Summary: 2 dependencies, 1 updates available");
     }
 
@@ -301,7 +302,7 @@ class TextReportWriterTest {
 
         then(text).contains("│ unknown-artifact");
         then(text).contains("│ 1.0.0");
-        then(text).contains("│ ?");  // Latest version is null
+        then(text).contains("│ 1.0.0 → ?");
     }
 
     @Test
@@ -350,7 +351,7 @@ class TextReportWriterTest {
         then(text).contains("│ parent");
         then(text).contains("│ unknown-parent");
         then(text).contains("│ 1.0.0");
-        then(text).contains("│ ?");  // Latest version is null
+        then(text).contains("│ 1.0.0 → ?");
     }
 
     @Test
@@ -367,8 +368,7 @@ class TextReportWriterTest {
 
         then(text).contains("│ managed-artifact");
         then(text).contains("│ <managed>");
-        then(text).contains("│ 2.0.0");
-        then(text).doesNotContain("│ none │");
+        then(text).contains("│ ? → 2.0.0");
     }
 
     @Test
@@ -392,7 +392,7 @@ class TextReportWriterTest {
         then(text).contains("│ parent");
         then(text).contains("│ managed-parent");
         then(text).contains("│ <managed>");
-        then(text).contains("│ 2.0.0");
+        then(text).contains("│ ? → 2.0.0");
     }
 
     @Test
@@ -603,9 +603,9 @@ class TextReportWriterTest {
 
         var text = writeToString(List.of(report));
 
-        then(text).contains("│ Committed");
-        then(text).contains("│ 5.10.0");
-        then(text).contains("│ 5.9.0");
+        then(text).contains("│ Declared");
+        then(text).contains("│ 5.10.0 → 5.9.0");
+        then(text).contains("│ 5.9.0 → 6.0.3");
     }
 
     @Test void shouldNotShowCommittedColumnWhenNoCommittedVersions() {
@@ -620,6 +620,7 @@ class TextReportWriterTest {
         var text = writeToString(List.of(report));
 
         then(text).doesNotContain("Committed");
+        then(text).contains("Declared");
     }
 
     @Test void shouldDisplayScopeColumnWithProfile() {

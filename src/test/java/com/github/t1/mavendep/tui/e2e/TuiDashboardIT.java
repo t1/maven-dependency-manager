@@ -177,12 +177,13 @@ class TuiDashboardIT {
         givenAllVersions();
         startTui();
 
-        tui.awaitText("0 selected");
+        tui.awaitText("[Enter] pick version");
         tui.pressKey(Key.ENTER);
+        tui.awaitText("[Esc] cancel");
+        tui.awaitNoText("[Enter] pick version");
         tui.awaitText("3.27.7");
-        tui.awaitText("3.25.0");
         tui.pressKey(Key.ESCAPE);
-        tui.awaitText("0 selected");
+        tui.awaitText("[Enter] pick version");
     }
 
     @Test void scanCompletesEvenWhenVersionLookupFails() {
@@ -193,10 +194,10 @@ class TuiDashboardIT {
         tui.awaitText("selected");
         tui.awaitText("assertj-core");
         tui.awaitText("3.27.7");
-        // junit-jupiter has update type "none" and is hidden by default
+        // junit-jupiter has no latest version metadata and is hidden by default
         tui.type("s"); // toggle show-all
         tui.awaitText("junit-jupiter");
-        tui.awaitText("none");
+        tui.awaitText("5.10.0 → ?");
     }
 
     private void givenVersions(String groupId, String artifactId, String... versions) {

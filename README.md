@@ -240,13 +240,13 @@ Maven Dependency Update Report
 Project: /path/to/pom.xml
 
 Outdated Dependencies (3):
-┌─────────┬──────────────────────────┬─────────────────────────┬───────────┬────────┬───────┐
-│ Scope   │ Group ID                 │ Artifact ID             │ Effective │ Latest │ Type  │
-├─────────┼──────────────────────────┼─────────────────────────┼───────────┼────────┼───────┤
-│ compile │ org.springframework.boot │ spring-boot-starter-web │ 3.1.0     │ 3.2.1  │ MINOR │
-│ compile │ com.fasterxml.jackson    │ jackson-databind        │ 2.15.0    │ 2.16.1 │ MINOR │
-│ test    │ org.junit.jupiter        │ junit-jupiter           │ 5.10.0    │ 5.10.1 │ PATCH │
-└─────────┴──────────────────────────┴─────────────────────────┴───────────┴────────┴───────┘
+┌─────────┬──────────────────────────┬─────────────────────────┬──────────┬─────────────────┐
+│ Scope   │ Group ID                 │ Artifact ID             │ Declared │ Update          │
+├─────────┼──────────────────────────┼─────────────────────────┼──────────┼─────────────────┤
+│ compile │ org.springframework.boot │ spring-boot-starter-web │ 3.1.0    │ 3.1.0 → 3.2.1   │
+│ compile │ com.fasterxml.jackson    │ jackson-databind        │ 2.15.0   │ 2.15.0 → 2.16.1 │
+│ test    │ org.junit.jupiter        │ junit-jupiter           │ 5.10.0   │ 5.10.0 → 5.10.1 │
+└─────────┴──────────────────────────┴─────────────────────────┴──────────┴─────────────────┘
 
 Summary: 3 updates available (0 major, 2 minor, 1 patch)
 ```
@@ -270,7 +270,7 @@ To run a specific integration test method (but no unit test):
 **IMPORTANT** note the quotes in some of these commands, as this string contains a `#` character!
 
 Managed dependencies and plugins are reported with their Maven-effective current version.
-When the effective current version can't be determined, the update type column is left blank instead of pretending the type is `none`.
+Human-readable outputs merge local git/POM state into a `Declared` column and merge effective/latest information into an `Update` column.
 When you update one that has no local `<version>`, the tool adds a local explicit version override to the current `pom.xml`.
 
 At the moment, effective-version detection uses Maven's default profile activation context for the current environment;

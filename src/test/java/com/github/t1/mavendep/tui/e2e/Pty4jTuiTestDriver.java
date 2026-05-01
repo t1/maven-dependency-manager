@@ -16,6 +16,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 
 class Pty4jTuiTestDriver implements TuiTestDriver {
     private static final int COLUMNS = 120;
@@ -103,20 +104,33 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
 
     @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
     @Override public void awaitAnyText(String... texts) {
+        awaitCondition(
+                () -> Arrays.stream(texts).anyMatch(this::hasText),
+                "Timed out after " + TIMEOUT + " waiting for any of: " +
+                Arrays.toString(texts) + "\nScreen content:\n" + textBuffer.getScreenLines());
+    }
+
+    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
+    @Override public void awaitNoText(String text) {
+        awaitCondition(
+                () -> !hasText(text),
+                "Timed out after " + TIMEOUT + " waiting for absence of: [" + text + "]\nScreen content:\n" +
+                textBuffer.getScreenLines());
+    }
+
+    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
+    private void awaitCondition(BooleanSupplier condition, String timeoutMessage) {
         var deadline = System.currentTimeMillis() + TIMEOUT.toMillis();
         while (System.currentTimeMillis() < deadline) {
-            for (var text : texts) {
-                if (hasText(text)) return;
-            }
+            if (condition.getAsBoolean()) return;
             try {
                 Thread.sleep(50);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                throw new RuntimeException("Interrupted while waiting for any of: " + Arrays.toString(texts), e);
+                throw new RuntimeException("Interrupted while waiting for terminal state", e);
             }
         }
-        throw new AssertionError("Timed out after " + TIMEOUT + " waiting for any of: " +
-                                 Arrays.toString(texts) + "\nScreen content:\n" + textBuffer.getScreenLines());
+        throw new AssertionError(timeoutMessage);
     }
 
     @Override public boolean waitForExit() {

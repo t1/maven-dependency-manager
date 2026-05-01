@@ -362,6 +362,12 @@ public class DashboardModel {
                && update.latestVersion().compareTo(committed) != 0;
     }
 
+    public Version declaredVersion(Update update) {
+        if (!isSelected(update)) return update.declaredVersion();
+        var pick = customVersions.get(selectionKey(update));
+        return pick != null ? pick.target() : update.latestVersion();
+    }
+
     /// Returns the version currently effective for this update:
     /// original effective version if not selected, latest or custom pick if selected.
     public Version currentVersion(Update update) {

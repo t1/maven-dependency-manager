@@ -3,6 +3,7 @@ package com.github.t1.mavendep.report;
 import com.github.t1.mavendep.domain.DependencySummary;
 import com.github.t1.mavendep.domain.ProjectReport;
 import com.github.t1.mavendep.domain.Update;
+import com.github.t1.mavendep.domain.Version;
 
 import java.io.PrintStream;
 import java.util.List;
@@ -59,80 +60,57 @@ public class TextReportWriter implements ReportWriter {
     }
 
     private void printReportWithUpdates(List<Update> updates) {
-        var hasCommitted = updates.stream().anyMatch(u -> u.committedVersion() != null);
-        var widths = calculateColumnWidths(updates, hasCommitted);
+        var widths = calculateColumnWidths(updates);
 
         printTableBorder(widths, "┌─", "─┬─", "─┐");
-        if (hasCommitted) {
-            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Committed", "Effective", "Latest", "Update");
-        } else {
-            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Effective", "Latest", "Update");
-        }
+        printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Declared", "Update");
         printTableBorder(widths, "├─", "─┼─", "─┤");
-        printTableRows(updates, widths, hasCommitted);
+        printTableRows(updates, widths);
         printTableBorder(widths, "└─", "─┴─", "─┘");
     }
 
-    private int[] calculateColumnWidths(List<Update> updates, boolean hasCommitted) {
+    private int[] calculateColumnWidths(List<Update> updates) {
         var scopeWidth = "Scope".length();
         var groupWidth = "Group ID".length();
         var depWidth = "Artifact ID".length();
-        var committedWidth = hasCommitted ? "Committed".length() : 0;
-        var curWidth = "Effective".length();
-        var latWidth = "Latest".length();
+        var declaredWidth = "Declared".length();
         var updateWidth = "Update".length();
 
         for (var update : updates) {
             scopeWidth = Math.max(scopeWidth, update.formatScope().length());
             groupWidth = Math.max(groupWidth, update.groupId().length());
             depWidth = Math.max(depWidth, update.artifactId().length());
-            if (hasCommitted) committedWidth = Math.max(committedWidth, formatCommittedVersion(update).length());
-            curWidth = Math.max(curWidth, formatCurrentVersion(update).length());
-            latWidth = Math.max(latWidth, formatLatestVersion(update).length());
-            updateWidth = Math.max(updateWidth, formatUpdateType(update).length());
+            declaredWidth = Math.max(declaredWidth, formatDeclared(update).length());
+            updateWidth = Math.max(updateWidth, formatUpdate(update).length());
         }
 
-        if (hasCommitted) {
-            return new int[]{scopeWidth, groupWidth, depWidth, committedWidth, curWidth, latWidth, updateWidth};
-        }
-        return new int[]{scopeWidth, groupWidth, depWidth, curWidth, latWidth, updateWidth};
+        return new int[]{scopeWidth, groupWidth, depWidth, declaredWidth, updateWidth};
     }
 
-    private void printTableRows(List<Update> updates, int[] widths, boolean hasCommitted) {
+    private void printTableRows(List<Update> updates, int[] widths) {
         for (var update : updates) {
-            if (hasCommitted) {
-                printTableRow(widths, update.formatScope(),
-                        update.groupId(),
-                        update.artifactId(),
-                        formatCommittedVersion(update),
-                        formatCurrentVersion(update),
-                        formatLatestVersion(update),
-                        formatUpdateType(update));
-            } else {
-                printTableRow(widths, update.formatScope(),
-                        update.groupId(),
-                        update.artifactId(),
-                        formatCurrentVersion(update),
-                        formatLatestVersion(update),
-                        formatUpdateType(update));
-            }
+            printTableRow(widths, update.formatScope(),
+                    update.groupId(),
+                    update.artifactId(),
+                    formatDeclared(update),
+                    formatUpdate(update));
         }
     }
 
-    private String formatCommittedVersion(Update update) {
-        return update.committedVersion() != null ? update.committedVersion().toString() : "";
+    private String formatDeclared(Update update) {
+        var committed = versionString(update.committedVersion(), null);
+        var declared = versionString(update.declaredVersion(), "<managed>");
+        return (committed == null || committed.equals(declared)) ? declared : committed + " → " + declared;
     }
 
-    private String formatCurrentVersion(Update update) {
-        return update.currentVersion() != null ? update.currentVersion().toString() : "<managed>";
+    private String formatUpdate(Update update) {
+        var effective = versionString(update.currentVersion(), "?");
+        var latest = versionString(update.latestVersion(), "?");
+        return effective.equals(latest) ? effective : effective + " → " + latest;
     }
 
-    private String formatLatestVersion(Update update) {
-        return update.latestVersion() != null ? update.latestVersion().toString() : "?";
-    }
-
-    private String formatUpdateType(Update update) {
-        return update.currentVersion() != null ? update.updateType().toString() : "";
+    private String versionString(Version version, String fallback) {
+        return version != null ? version.toString() : fallback;
     }
 
     private void printTotalSummary() {

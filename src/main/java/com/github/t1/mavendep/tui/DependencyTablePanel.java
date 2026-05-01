@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.Update;
+import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Rect;
@@ -18,6 +19,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 /// Renders the dependency/plugin table with selection checkboxes.
 class DependencyTablePanel {
@@ -41,19 +43,12 @@ class DependencyTablePanel {
         var visualIndex = multiPom ? toVisualIndex(model.cursor(), grouped) : model.cursor();
         tableState.select(visualIndex);
 
+        var widths = columnWidths(model);
         var table = Table.builder()
-                .header(Row.from("", "Group:Artifact", "", "Scope", "Committed", "Effective", "Latest", "Type")
+                .header(Row.from("", "Group:Artifact", "", "Scope", "Declared ", "Update")
                         .style(Style.EMPTY.bold()))
                 .rows(rows)
-                .widths(
-                        Constraint.length(3),
-                        Constraint.fill(),
-                        Constraint.length(2),
-                        Constraint.length(12),
-                        Constraint.length(12),
-                        Constraint.length(12),
-                        Constraint.length(12),
-                        Constraint.length(7))
+                .widths(widths)
                 .highlightStyle(Style.EMPTY.bg(Color.DARK_GRAY))
                 .highlightSymbol("> ")
                 .block(Block.builder().borders(Borders.ALL).title(model.activeTab().name()).build())
@@ -81,7 +76,7 @@ class DependencyTablePanel {
 
     private static Row toHeaderRow(Path pomPath) {
         var display = pomPath.isAbsolute() ? CWD.relativize(pomPath) : pomPath;
-        return Row.from("", "── " + display + " ──", "", "", "", "", "", "")
+        return Row.from("", "── " + display + " ──", "", "", "", "")
                 .style(HEADER_STYLE);
     }
 
@@ -108,7 +103,6 @@ class DependencyTablePanel {
     }
 
     private static Row toRow(Update update, DashboardModel model) {
-        var effective = model.effectiveUpdate(update);
         var checkbox = !model.isChange(update) ? "   " : model.isSelected(update) ? "[x]" : "[ ]";
         var coords = String.valueOf(update.artifactRef());
         var icon = model.worstLogLevelFor(update.artifactRef())
@@ -118,32 +112,60 @@ class DependencyTablePanel {
                     case INFO -> "";
                 })
                 .orElse("");
-        var committed = formatVersion(model.committedVersion(update), "");
-        var currentVersion = model.currentVersion(update);
-        var current = formatVersion(currentVersion, "<managed>");
-        var latest = formatVersion(update.latestVersion(), "?");
-        var committedVer = model.committedVersion(update);
-        var downgrade = committedVer != null && currentVersion != null
-                        && currentVersion.compareTo(committedVer) < 0;
-        var type = formatUpdateType(effective, downgrade);
+        var scope = formatShortScope(update);
+        var declared = formatDeclared(update, model);
+        var displayType = UpdateType.between(model.currentVersion(update), update.latestVersion());
+        var style = styleFor(displayType, update.currentVersion() != null);
 
-        var style = switch (effective.updateType()) {
+        return Row.from(checkbox, coords, icon, scope, declared, formatUpdate(update, model)).style(style);
+    }
+
+    private static Constraint[] columnWidths(DashboardModel model) {
+        var updates = model.activeUpdates();
+        return new Constraint[]{
+                Constraint.length(maxLength(3, updates, update -> !model.isChange(update) ? "   " : model.isSelected(update) ? "[x]" : "[ ]")),
+                Constraint.fill(),
+                Constraint.length(maxLength(0, updates, update -> model.worstLogLevelFor(update.artifactRef())
+                        .map(level -> switch (level) {
+                            case ERROR -> "❌";
+                            case WARNING -> "⚠️";
+                            case INFO -> "";
+                        })
+                        .orElse(""))),
+                Constraint.length(maxLength("Scope".length(), updates, DependencyTablePanel::formatShortScope)),
+                Constraint.length(maxLength("Declared ".length(), updates, update -> formatDeclared(update, model))),
+                Constraint.length(maxLength("Update".length(), updates, update -> formatUpdate(update, model)))
+        };
+    }
+
+    private static int maxLength(int headerLength, List<Update> updates, Function<Update, String> formatter) {
+        return Math.max(headerLength, updates.stream().map(formatter).mapToInt(String::length).max().orElse(0));
+    }
+
+    static String formatDeclared(Update update, DashboardModel model) {
+        var committed = formatVersion(update.committedVersion(), null);
+        var declared = formatVersion(model.declaredVersion(update), "<managed>");
+        var formatted = (committed == null || committed.equals(declared)) ? declared : committed + " → " + declared;
+        return formatted + " ";
+    }
+
+    static String formatUpdate(Update update, DashboardModel model) {
+        var effective = formatVersion(model.currentVersion(update), "?");
+        var latest = formatVersion(update.latestVersion(), "?");
+        return effective.equals(latest) ? effective : effective + " → " + latest;
+    }
+
+    private static Style styleFor(UpdateType updateType, boolean resolved) {
+        if (!resolved) return Style.EMPTY;
+        return switch (updateType) {
             case major -> Style.EMPTY.fg(Color.RED);
-            case minor -> Style.EMPTY.fg(Color.YELLOW);
-            case patch -> Style.EMPTY.fg(Color.GREEN);
+            case minor -> Style.EMPTY.fg(Color.GREEN);
+            case patch -> Style.EMPTY.fg(Color.BLUE);
             case none -> Style.EMPTY;
         };
-
-        var scope = formatShortScope(update);
-        return Row.from(checkbox, coords, icon, scope, committed, current, latest, type).style(style);
     }
 
     private static String formatVersion(Version version, String fallback) {
         return version != null ? version.toString() : fallback;
-    }
-
-    static String formatUpdateType(Update update, boolean downgrade) {
-        if (update.currentVersion() == null) return "";
-        return (downgrade ? "-" : "") + update.updateType().name();
     }
 }
