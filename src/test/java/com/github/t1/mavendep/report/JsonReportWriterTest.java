@@ -52,7 +52,7 @@ class JsonReportWriterTest {
         var dep = project.get("dependencies").get(0);
         then(dep.get("groupId").asText()).isEqualTo("org.junit.jupiter");
         then(dep.get("artifactId").asText()).isEqualTo("junit-jupiter");
-        then(dep.get("currentVersion").asText()).isEqualTo("5.10.0");
+        then(dep.get("effectiveVersion").asText()).isEqualTo("5.10.0");
         then(dep.get("latestVersion").asText()).isEqualTo("5.10.1");
         then(dep.get("updateType").asText()).isEqualTo("patch");
     }
@@ -107,7 +107,7 @@ class JsonReportWriterTest {
         var dep = root.get("projects").get(0).get("dependencies").get(0);
         then(dep.get("groupId").asText()).isEqualTo("com.example");
         then(dep.get("artifactId").asText()).isEqualTo("unknown-artifact");
-        then(dep.get("currentVersion").asText()).isEqualTo("1.0.0");
+        then(dep.get("effectiveVersion").asText()).isEqualTo("1.0.0");
         then(dep.get("latestVersion").isNull()).isTrue();
     }
 
@@ -147,7 +147,7 @@ class JsonReportWriterTest {
         then(pluginNode.get("type").asText()).isEqualTo("plugin");
         then(pluginNode.get("groupId").asText()).isEqualTo("org.apache.maven.plugins");
         then(pluginNode.get("artifactId").asText()).isEqualTo("maven-compiler-plugin");
-        then(pluginNode.get("currentVersion").asText()).isEqualTo("3.11.0");
+        then(pluginNode.get("effectiveVersion").asText()).isEqualTo("3.11.0");
         then(pluginNode.get("latestVersion").asText()).isEqualTo("3.12.0");
         then(pluginNode.get("scope").asText()).isEmpty();
     }
@@ -177,7 +177,7 @@ class JsonReportWriterTest {
 
         var dep = root.get("projects").get(0).get("dependencies").get(0);
         then(dep.get("committedVersion").asText()).isEqualTo("5.10.0");
-        then(dep.get("currentVersion").asText()).isEqualTo("5.9.0");
+        then(dep.get("effectiveVersion").asText()).isEqualTo("5.9.0");
     }
 
     @Test void shouldOmitCommittedVersionWhenNull() {

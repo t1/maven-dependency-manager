@@ -5,6 +5,7 @@
 /// - `Dependency` / `Update` — represent a Maven dependency and its available update
 /// - `Version` — parsed semantic version with qualifier classification (pre-release vs release)
 /// - `MavenRepository` — fetches and caches artifact metadata from Maven Central
+/// - `MavenCommandEffectivePomResolver` — asks Maven for the effective POM so managed/current versions are accurate
 /// - `DependencyAnalyzer` — orchestrates scanning POMs and querying the repository;
 ///   detects uncommitted POM changes via `Git` and sets `Update.committedVersion`
 /// - `Git` — reads file content from git HEAD for uncommitted change detection

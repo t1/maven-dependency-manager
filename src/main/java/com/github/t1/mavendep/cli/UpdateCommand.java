@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
+import com.github.t1.mavendep.domain.MavenCommandEffectivePomResolver;
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.domain.Pom;
 import com.github.t1.mavendep.domain.ProjectReport;
@@ -75,7 +76,7 @@ public class UpdateCommand implements Callable<Integer> {
     public Integer call() {
         return with(commonOptions.logger()).call(() -> {
             var effectiveRepository = (repository != null) ? repository : repositoryOptions.createMavenRepository();
-            var analyzer = new DependencyAnalyzer(effectiveRepository, commonOptions.pomFiles);
+            var analyzer = new DependencyAnalyzer(effectiveRepository, new MavenCommandEffectivePomResolver(), commonOptions.pomFiles);
 
             var reports = analyzer.run();
 

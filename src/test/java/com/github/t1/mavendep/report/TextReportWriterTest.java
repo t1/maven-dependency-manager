@@ -368,6 +368,7 @@ class TextReportWriterTest {
         then(text).contains("│ managed-artifact");
         then(text).contains("│ <managed>");
         then(text).contains("│ 2.0.0");
+        then(text).doesNotContain("│ none │");
     }
 
     @Test

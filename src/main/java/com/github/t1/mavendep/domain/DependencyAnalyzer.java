@@ -29,6 +29,7 @@ public class DependencyAnalyzer {
     private static final String POM_FILENAME = "pom.xml";
 
     private final MavenRepository repository;
+    private final EffectivePomResolver effectivePomResolver;
     private final List<Path> pomFiles;
     private final AnalysisProgressListener progressListener;
 
@@ -37,15 +38,32 @@ public class DependencyAnalyzer {
     private Set<Coordinates> localArtifacts;
 
     public DependencyAnalyzer(MavenRepository repository, Path... pomFiles) {
-        this(repository, List.of(pomFiles));
+        this(repository, EffectivePomResolver.NONE, List.of(pomFiles), AnalysisProgressListener.NONE);
+    }
+
+    public DependencyAnalyzer(MavenRepository repository, EffectivePomResolver effectivePomResolver, Path... pomFiles) {
+        this(repository, effectivePomResolver, List.of(pomFiles), AnalysisProgressListener.NONE);
     }
 
     public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles) {
-        this(repository, pomFiles, AnalysisProgressListener.NONE);
+        this(repository, EffectivePomResolver.NONE, pomFiles, AnalysisProgressListener.NONE);
+    }
+
+    public DependencyAnalyzer(MavenRepository repository, EffectivePomResolver effectivePomResolver, List<Path> pomFiles) {
+        this(repository, effectivePomResolver, pomFiles, AnalysisProgressListener.NONE);
     }
 
     public DependencyAnalyzer(MavenRepository repository, List<Path> pomFiles, AnalysisProgressListener progressListener) {
+        this(repository, EffectivePomResolver.NONE, pomFiles, progressListener);
+    }
+
+    public DependencyAnalyzer(
+            MavenRepository repository,
+            EffectivePomResolver effectivePomResolver,
+            List<Path> pomFiles,
+            AnalysisProgressListener progressListener) {
         this.repository = repository;
+        this.effectivePomResolver = effectivePomResolver;
         this.pomFiles = pomFiles;
         this.progressListener = progressListener;
     }
@@ -126,11 +144,12 @@ public class DependencyAnalyzer {
 
     private ProjectReport analyze(Pom pom) {
         try (var scope = StructuredTaskScope.<Update>open()) {
+            var effectivePom = effectivePomResolver.resolve(pom.path());
             var dependencyUpdatesTasks = submitAnalysis(scope, pom.dependencies().stream()
-                    .filter(this::isExternalArtifact));
-            var pluginUpdateTasks = submitAnalysis(scope, pom.plugins().stream());
+                    .filter(this::isExternalArtifact), effectivePom);
+            var pluginUpdateTasks = submitAnalysis(scope, pom.plugins().stream(), effectivePom);
             var parentUpdateTask = submitAnalysis(scope, pom.parent().stream()
-                    .filter(this::isExternalArtifact));
+                    .filter(this::isExternalArtifact), effectivePom);
 
             scope.join();
 
@@ -161,7 +180,7 @@ public class DependencyAnalyzer {
         if (committedVersions.isEmpty()) return updates;
         return updates.stream().map(update -> {
             var committed = committedVersions.get(update.artifactRef());
-            if (committed == null || committed.equals(update.currentVersion())) return update;
+            if (committed == null || committed.equals(update.declaredVersion())) return update;
             return update.withCommittedVersion(committed);
         }).toList();
     }
@@ -172,8 +191,9 @@ public class DependencyAnalyzer {
 
     private List<Subtask<Update>> submitAnalysis(
             StructuredTaskScope<Update, Void> scope,
-            Stream<Dependency> dependencies) {
-        return dependencies.map(dependency -> scope.fork(() -> analyze(dependency))).toList();
+            Stream<Dependency> dependencies,
+            EffectivePom effectivePom) {
+        return dependencies.map(dependency -> scope.fork(() -> analyze(dependency, effectivePom.versionFor(dependency)))).toList();
     }
 
     private static List<Update> await(List<Subtask<Update>> tasks) {
@@ -186,14 +206,14 @@ public class DependencyAnalyzer {
     private Optional<Update> localParentUpdate(Pom pom) {
         return pom.parent()
                 .filter(this::isLocalArtifact)
-                .map(dep -> dep.toUpdate(dep.version(), List.of(), none));
+                .map(dep -> dep.toUpdate(dep.version(), dep.version(), List.of(), none));
     }
 
     private boolean isLocalArtifact(Dependency dep) {
         return localArtifacts.contains(dep.coordinates());
     }
 
-    private Update analyze(Dependency dependency) {
+    private Update analyze(Dependency dependency, Version effectiveVersion) {
         var artifact = dependency.artifactRef();
         var availableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<Version>of()
                 : repository.getAvailableVersions(artifact);
@@ -201,8 +221,8 @@ public class DependencyAnalyzer {
                 .filter(version -> version.isReleased(artifact))
                 .toList();
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
-        var updateType = UpdateType.between(dependency.version(), latestVersion);
-        var result = dependency.toUpdate(latestVersion, availableVersions, updateType);
+        var updateType = UpdateType.between(effectiveVersion, latestVersion);
+        var result = dependency.toUpdate(effectiveVersion, latestVersion, availableVersions, updateType);
         progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifact.toString());
         return result;
     }

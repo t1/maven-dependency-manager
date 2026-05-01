@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -360,7 +361,10 @@ public class Pom {
         dirty = false;
     }
 
-    public void apply(Stream<Update> updates) {updates.filter(Update::isChange).forEach(new Updater()::apply);}
+    public void apply(Stream<Update> updates) {
+        updates.filter(update -> update.latestVersion() != null && !Objects.equals(update.declaredVersion(), update.latestVersion()))
+                .forEach(new Updater()::apply);
+    }
 
     public void writeToDisk() {
         try {
@@ -391,17 +395,21 @@ public class Pom {
         }
 
         private void updatePropertyValue(String propertyName, Update update) {
-            var updated = updateElementByName(propertyName, update.currentVersion(), update.latestVersion());
+            var updated = updateElementByName(propertyName, update.declaredVersion(), update.latestVersion());
             if (!updated && parentPom != null) {
                 parentPom.apply(Stream.of(update));
             }
         }
 
         private void updateVersionElement(Update update) {
-            var versionElements = doc.getElementsByTagName("version");
-            for (var i = 0; i < versionElements.getLength(); i++) {
-                if (replaceTextContent(versionElements.item(i), update.currentVersion(), update.latestVersion())) return;
+            if (update.declaredVersion() != null) {
+                var versionElements = doc.getElementsByTagName("version");
+                for (var i = 0; i < versionElements.getLength(); i++) {
+                    if (replaceTextContent(versionElements.item(i), update.declaredVersion(), update.latestVersion())) return;
+                }
+                return;
             }
+            insertVersionElement(update);
         }
 
         private boolean updateElementByName(String elementName, Version currentVersion, Version latestVersion) {
@@ -413,6 +421,7 @@ public class Pom {
         }
 
         private boolean replaceTextContent(Node element, Version currentVersion, Version latestVersion) {
+            if (currentVersion == null || latestVersion == null) return false;
             if (!element.getTextContent().trim().equals(currentVersion.toString())) return false;
             var children = element.getChildNodes();
             for (var i = 0; i < children.getLength(); i++) {
@@ -424,6 +433,105 @@ public class Pom {
                 }
             }
             return false;
+        }
+
+        private void insertVersionElement(Update update) {
+            if (update.latestVersion() == null) return;
+            findElementWithoutVersion(update).ifPresent(element -> {
+                var artifactId = directChild(element, "artifactId").orElseThrow();
+                var nextElement = nextElementSibling(artifactId);
+                var indentation = childIndentation(element);
+                if (nextElement.isPresent()) {
+                    element.insertBefore(createVersionNode(update), nextElement.get());
+                    element.insertBefore(doc.createTextNode(indentation), nextElement.get());
+                } else {
+                    var trailingWhitespace = trailingWhitespace(element).orElse(null);
+                    if (trailingWhitespace != null) {
+                        element.insertBefore(doc.createTextNode(indentation), trailingWhitespace);
+                        element.insertBefore(createVersionNode(update), trailingWhitespace);
+                    } else {
+                        element.appendChild(doc.createTextNode(indentation));
+                        element.appendChild(createVersionNode(update));
+                    }
+                }
+                dirty = true;
+            });
+        }
+
+        private Optional<Element> findElementWithoutVersion(Update update) {
+            var nodes = doc.getElementsByTagName(update.type().name());
+            for (var i = 0; i < nodes.getLength(); i++) {
+                var node = nodes.item(i);
+                if (!(node instanceof Element element)) continue;
+                if (matches(update, element) && directChild(element, "version").isEmpty()) return Optional.of(element);
+            }
+            return Optional.empty();
+        }
+
+        private boolean matches(Update update, Element element) {
+            var groupId = directChildText(element, "groupId");
+            if (groupId == null && update.type() == plugin) groupId = DependencyParser.DEFAULT_PLUGIN_GROUP_ID;
+            return Objects.equals(groupId, update.groupId())
+                   && Objects.equals(directChildText(element, "artifactId"), update.artifactId())
+                   && Objects.equals(profileId(element), update.profile());
+        }
+
+        private Optional<Element> directChild(Element parent, String tagName) {
+            var children = parent.getChildNodes();
+            for (var i = 0; i < children.getLength(); i++) {
+                var child = children.item(i);
+                if (child.getNodeType() == ELEMENT_NODE && child.getNodeName().equals(tagName)) {
+                    return Optional.of((Element) child);
+                }
+            }
+            return Optional.empty();
+        }
+
+        private String directChildText(Element parent, String tagName) {
+            return directChild(parent, tagName).map(Element::getTextContent).map(String::trim).orElse(null);
+        }
+
+        private Optional<Node> nextElementSibling(Node node) {
+            var sibling = node.getNextSibling();
+            while (sibling != null) {
+                if (sibling.getNodeType() == ELEMENT_NODE) return Optional.of(sibling);
+                sibling = sibling.getNextSibling();
+            }
+            return Optional.empty();
+        }
+
+        private String childIndentation(Element element) {
+            var children = element.getChildNodes();
+            for (var i = 0; i < children.getLength(); i++) {
+                var child = children.item(i);
+                if (child.getNodeType() == Node.TEXT_NODE && child.getTextContent().contains("\n")) {
+                    return child.getTextContent();
+                }
+            }
+            return "\n    ";
+        }
+
+        private Optional<Node> trailingWhitespace(Element element) {
+            var child = element.getLastChild();
+            if (child != null && child.getNodeType() == Node.TEXT_NODE && child.getTextContent().isBlank()) return Optional.of(child);
+            return Optional.empty();
+        }
+
+        private Element createVersionNode(Update update) {
+            var version = doc.createElement("version");
+            version.setTextContent(update.latestVersion().toString());
+            return version;
+        }
+
+        private String profileId(Node node) {
+            var current = node.getParentNode();
+            while (current != null) {
+                if (current instanceof Element element && current.getNodeName().equals("profile")) {
+                    return directChildText(element, "id");
+                }
+                current = current.getParentNode();
+            }
+            return null;
         }
     }
 }

@@ -305,7 +305,7 @@ public class DashboardModel {
     }
 
     /// Returns the selected updates, formatted for [com.github.t1.mavendep.domain.Pom#apply]:
-    /// `currentVersion` = original version (what to find in the POM),
+    /// `declaredVersion` = original version in the POM (what to find or override locally),
     /// `latestVersion` = target version (what to replace it with).
     public Stream<Update> selectedUpdates() {
         return allUpdates()
@@ -345,7 +345,7 @@ public class DashboardModel {
     }
 
     /// Returns the committed version (from git HEAD) for this update,
-    /// falling back to the current POM version if there are no uncommitted changes.
+    /// falling back to the current effective version if there are no uncommitted changes.
     public Version committedVersion(Update update) {
         var committed = update.committedVersion();
         return committed != null ? committed : update.currentVersion();
@@ -362,8 +362,8 @@ public class DashboardModel {
                && update.latestVersion().compareTo(committed) != 0;
     }
 
-    /// Returns the version currently in the POM for this update:
-    /// original if not selected, latest or custom pick if selected.
+    /// Returns the version currently effective for this update:
+    /// original effective version if not selected, latest or custom pick if selected.
     public Version currentVersion(Update update) {
         if (!isSelected(update)) return update.currentVersion();
         var pick = customVersions.get(selectionKey(update));
@@ -374,6 +374,7 @@ public class DashboardModel {
         var pick = customVersions.get(selectionKey(update));
         if (pick != null) return new Update(
                 update.dependency().with(pick.target()),
+                pick.target(),
                 update.latestVersion(),
                 update.availableVersions(),
                 pick.type(),
@@ -383,6 +384,7 @@ public class DashboardModel {
         if (type == update.updateType()) return update;
         return new Update(
                 update.dependency(),
+                update.currentVersion(),
                 update.latestVersion(),
                 update.availableVersions(),
                 type,

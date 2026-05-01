@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.Update;
+import com.github.t1.mavendep.domain.Version;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
@@ -41,7 +42,7 @@ class DependencyTablePanel {
         tableState.select(visualIndex);
 
         var table = Table.builder()
-                .header(Row.from("", "Group:Artifact", "", "Scope", "Committed", "Current", "Latest", "Type")
+                .header(Row.from("", "Group:Artifact", "", "Scope", "Committed", "Effective", "Latest", "Type")
                         .style(Style.EMPTY.bold()))
                 .rows(rows)
                 .widths(
@@ -117,14 +118,14 @@ class DependencyTablePanel {
                     case INFO -> "";
                 })
                 .orElse("");
-        var committed = String.valueOf(model.committedVersion(update));
+        var committed = formatVersion(model.committedVersion(update), "");
         var currentVersion = model.currentVersion(update);
-        var current = String.valueOf(currentVersion);
-        var latest = String.valueOf(update.latestVersion());
+        var current = formatVersion(currentVersion, "<managed>");
+        var latest = formatVersion(update.latestVersion(), "?");
         var committedVer = model.committedVersion(update);
         var downgrade = committedVer != null && currentVersion != null
                         && currentVersion.compareTo(committedVer) < 0;
-        var type = (downgrade ? "-" : "") + effective.updateType().name();
+        var type = formatUpdateType(effective, downgrade);
 
         var style = switch (effective.updateType()) {
             case major -> Style.EMPTY.fg(Color.RED);
@@ -135,5 +136,14 @@ class DependencyTablePanel {
 
         var scope = formatShortScope(update);
         return Row.from(checkbox, coords, icon, scope, committed, current, latest, type).style(style);
+    }
+
+    private static String formatVersion(Version version, String fallback) {
+        return version != null ? version.toString() : fallback;
+    }
+
+    static String formatUpdateType(Update update, boolean downgrade) {
+        if (update.currentVersion() == null) return "";
+        return (downgrade ? "-" : "") + update.updateType().name();
     }
 }

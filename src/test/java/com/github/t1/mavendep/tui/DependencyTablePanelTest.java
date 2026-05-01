@@ -1,7 +1,13 @@
 package com.github.t1.mavendep.tui;
 
+import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Update;
+import com.github.t1.mavendep.domain.UpdateType;
+import com.github.t1.mavendep.domain.Version;
 import org.junit.jupiter.api.Test;
+
+import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
+import static com.github.t1.mavendep.domain.Scope.compile;
 
 import java.nio.file.Path;
 import java.util.List;
@@ -47,6 +53,16 @@ class DependencyTablePanelTest {
         then(DependencyTablePanel.toVisualIndex(0, grouped)).isEqualTo(1);
         then(DependencyTablePanel.toVisualIndex(1, grouped)).isEqualTo(3);
         then(DependencyTablePanel.toVisualIndex(2, grouped)).isEqualTo(5);
+    }
+
+    @Test void shouldSuppressTypeWhenCurrentVersionIsUnknown() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
+                Version.fromString("2.0.0"),
+                List.of(),
+                UpdateType.none);
+
+        then(DependencyTablePanel.formatUpdateType(update, false)).isEmpty();
     }
 
     private static List<Update> mockUpdates(int count) {

@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
+import com.github.t1.mavendep.domain.MavenCommandEffectivePomResolver;
 import com.github.t1.mavendep.domain.MavenRepository;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
 import dev.tamboui.tui.TuiRunner;
@@ -37,7 +38,7 @@ class ScanAction {
     }
 
     private void doScan() {
-        var analyzer = new DependencyAnalyzer(repository, pomFiles, (completed, total, artifact) ->
+        var analyzer = new DependencyAnalyzer(repository, new MavenCommandEffectivePomResolver(), pomFiles, (completed, total, artifact) ->
                 runner.runOnRenderThread(() -> model.updateScanProgress(completed, total, artifact)));
         var reports = analyzer.run();
         runner.runOnRenderThread(() -> {

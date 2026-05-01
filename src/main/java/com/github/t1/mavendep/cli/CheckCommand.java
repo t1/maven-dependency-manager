@@ -1,6 +1,7 @@
 package com.github.t1.mavendep.cli;
 
 import com.github.t1.mavendep.domain.DependencyAnalyzer;
+import com.github.t1.mavendep.domain.MavenCommandEffectivePomResolver;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Mixin;
 
@@ -25,7 +26,7 @@ public class CheckCommand implements Callable<Integer> {
     public Integer call() {
         with(commonOptions.logger()).run(() -> {
             var mavenRepository = repositoryOptions.createMavenRepository();
-            var analyzer = new DependencyAnalyzer(mavenRepository, commonOptions.pomFiles);
+            var analyzer = new DependencyAnalyzer(mavenRepository, new MavenCommandEffectivePomResolver(), commonOptions.pomFiles);
 
             var reports = analyzer.run();
 

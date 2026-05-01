@@ -9,6 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.none;
@@ -517,6 +519,47 @@ class DependencyAnalyzerTest {
         var update = reports.getFirst().dependencyUpdates().getFirst();
         then(update.latestVersion()).isNull();
         then(update.updateType()).isEqualTo(none);
+    }
+
+    @Test
+    void shouldUseEffectiveVersionForManagedDependencies() {
+        var pomContent = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter</artifactId>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+        var pomFile = writePom(pomContent);
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot-starter")))
+                .willReturn(List.of(
+                        Version.fromString("3.1.0"),
+                        Version.fromString("3.2.0")
+                ));
+
+        var reports = new DependencyAnalyzer(
+                mockRepository,
+                _ -> new EffectivePom(
+                        Optional.empty(),
+                        Map.of(new ArtifactRef("org.springframework.boot", "spring-boot-starter"), Version.fromString("3.1.0")),
+                        Map.of()),
+                pomFile).run();
+
+        then(reports).hasSize(1);
+        var update = reports.getFirst().dependencyUpdates().getFirst();
+        then(update.declaredVersion()).isNull();
+        then(update.currentVersion()).isEqualTo(Version.fromString("3.1.0"));
+        then(update.latestVersion()).isEqualTo(Version.fromString("3.2.0"));
+        then(update.updateType()).isEqualTo(UpdateType.minor);
     }
 
     @Test

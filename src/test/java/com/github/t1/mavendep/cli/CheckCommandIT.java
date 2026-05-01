@@ -198,8 +198,8 @@ class CheckCommandIT extends BaseCliIT {
         then(dependency.has("artifactId")).isTrue();
         then(dependency.get("artifactId").asText()).isEqualTo("assertj-core");
         then(dependency.has("scope")).isTrue();
-        then(dependency.has("currentVersion")).isTrue();
-        then(dependency.get("currentVersion").asText()).isEqualTo("3.25.1");
+        then(dependency.has("effectiveVersion")).isTrue();
+        then(dependency.get("effectiveVersion").asText()).isEqualTo("3.25.1");
         then(dependency.has("latestVersion")).isTrue();
         then(dependency.get("latestVersion").asText()).isEqualTo("3.27.7");
         then(dependency.has("updateType")).isTrue();

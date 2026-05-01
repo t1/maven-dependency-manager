@@ -53,6 +53,14 @@ public record Dependency(
             Version latestVersion,
             List<Version> availableVersions,
             UpdateType updateType) {
-        return new Update(this, latestVersion, availableVersions, updateType);
+        return toUpdate(version(), latestVersion, availableVersions, updateType);
+    }
+
+    public Update toUpdate(
+            Version effectiveVersion,
+            Version latestVersion,
+            List<Version> availableVersions,
+            UpdateType updateType) {
+        return new Update(this, effectiveVersion, latestVersion, availableVersions, updateType);
     }
 }

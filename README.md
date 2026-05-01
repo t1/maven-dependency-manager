@@ -21,6 +21,8 @@ using Claude Code and [my plugins](https://github.com/t1/tdder).
   or `artifactId` (resolving partial coordinates from your POM), displayed as a tree grouped by major/minor version
 - **Automatic Updates**: Separate update command to update pom.xml files with the latest versions (supports both direct
   versions and property-based versions, including parent POMs)
+- **Effective Version Detection**: Uses Maven's effective POM to report the currently effective dependency/plugin version,
+  so BOM-managed and parent-managed versions are shown correctly
 - **Parent Property Resolution**: Version properties defined in a parent POM are resolved and updated in the parent
   when the parent is within the working set of POMs (via parameter or module resolution)
 - **Flexible Version Parsing**: Handles standard [semantic versions](https://semver.org) (`1.2.3`), multi-segment versions (`2.13.4.2`),
@@ -182,6 +184,9 @@ mdm update --only org.assertj
 mdm update --only assertj-core
 mdm update --only org.assertj:assertj-core org.junit.jupiter
 
+# Managed dependencies/plugins are overridden locally if they have no local <version>
+mdm update pom.xml --only org.junit.jupiter:junit-jupiter
+
 # Only apply patch updates
 mdm update --patch
 
@@ -208,7 +213,7 @@ mdm update pom.xml --output updates.json
         {
           "groupId": "org.springframework.boot",
           "artifactId": "spring-boot-starter-web",
-          "currentVersion": "3.1.0",
+          "effectiveVersion": "3.1.0",
           "latestVersion": "3.2.1",
           "updateType": "MINOR",
           "availableVersions": ["3.1.1", "3.1.5", "3.2.0", "3.2.1"]
@@ -235,13 +240,13 @@ Maven Dependency Update Report
 Project: /path/to/pom.xml
 
 Outdated Dependencies (3):
-┌─────────┬──────────────────────────┬─────────────────────────┬─────────┬────────┬───────┐
-│ Scope   │ Group ID                 │ Artifact ID             │ Current │ Latest │ Type  │
-├─────────┼──────────────────────────┼─────────────────────────┼─────────┼────────┼───────┤
-│ compile │ org.springframework.boot │ spring-boot-starter-web │ 3.1.0   │ 3.2.1  │ MINOR │
-│ compile │ com.fasterxml.jackson    │ jackson-databind        │ 2.15.0  │ 2.16.1 │ MINOR │
-│ test    │ org.junit.jupiter        │ junit-jupiter           │ 5.10.0  │ 5.10.1 │ PATCH │
-└─────────┴──────────────────────────┴─────────────────────────┴─────────┴────────┴───────┘
+┌─────────┬──────────────────────────┬─────────────────────────┬───────────┬────────┬───────┐
+│ Scope   │ Group ID                 │ Artifact ID             │ Effective │ Latest │ Type  │
+├─────────┼──────────────────────────┼─────────────────────────┼───────────┼────────┼───────┤
+│ compile │ org.springframework.boot │ spring-boot-starter-web │ 3.1.0     │ 3.2.1  │ MINOR │
+│ compile │ com.fasterxml.jackson    │ jackson-databind        │ 2.15.0    │ 2.16.1 │ MINOR │
+│ test    │ org.junit.jupiter        │ junit-jupiter           │ 5.10.0    │ 5.10.1 │ PATCH │
+└─────────┴──────────────────────────┴─────────────────────────┴───────────┴────────┴───────┘
 
 Summary: 3 updates available (0 major, 2 minor, 1 patch)
 ```
@@ -263,6 +268,13 @@ To run a specific integration test class (but no unit test): `mvn verify -Dskip.
 To run a specific integration test method (but no unit test):
 `mvn -Dskip.surefire.tests -Dit.test="CheckCommandIT#shouldHandlePropertyBasedVersions"`
 **IMPORTANT** note the quotes in some of these commands, as this string contains a `#` character!
+
+Managed dependencies and plugins are reported with their Maven-effective current version.
+When the effective current version can't be determined, the update type column is left blank instead of pretending the type is `none`.
+When you update one that has no local `<version>`, the tool adds a local explicit version override to the current `pom.xml`.
+
+At the moment, effective-version detection uses Maven's default profile activation context for the current environment;
+explicit profile selection is not implemented yet.
 
 ### Code Style
 

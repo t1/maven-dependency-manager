@@ -31,6 +31,7 @@ class UpdateTest {
 
         then(update.groupId()).isEqualTo("com.example");
         then(update.artifactId()).isEqualTo("lib");
+        then(update.declaredVersion()).isEqualTo(currentVersion);
         then(update.currentVersion()).isEqualTo(currentVersion);
         then(update.latestVersion()).isEqualTo(latestVersion);
         then(update.updateType()).isEqualTo(major);
@@ -70,6 +71,24 @@ class UpdateTest {
 
         then(update.updateType()).isEqualTo(patch);
         then(update.scope()).isEqualTo(runtime);
+    }
+
+    @Test
+    void shouldStoreEffectiveVersionSeparateFromDeclaredVersion() {
+        var declaredVersion = Version.fromString("1.0.0");
+        var effectiveVersion = Version.fromString("1.5.0");
+        var latestVersion = Version.fromString("2.0.0");
+
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", declaredVersion, compile, null),
+                effectiveVersion,
+                latestVersion,
+                List.of(),
+                major
+        );
+
+        then(update.declaredVersion()).isEqualTo(declaredVersion);
+        then(update.currentVersion()).isEqualTo(effectiveVersion);
     }
 
     @Test

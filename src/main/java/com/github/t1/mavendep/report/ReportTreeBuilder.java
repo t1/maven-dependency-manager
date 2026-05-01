@@ -78,7 +78,7 @@ class ReportTreeBuilder {
         if (update.committedVersion() != null) {
             putVersionField(depNode, "committedVersion", update.committedVersion());
         }
-        putVersionField(depNode, "currentVersion", update.currentVersion());
+        putVersionField(depNode, "effectiveVersion", update.currentVersion());
         putVersionField(depNode, "latestVersion", update.latestVersion());
         depNode.put("updateType", update.updateType().toString());
 

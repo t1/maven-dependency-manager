@@ -36,7 +36,7 @@ class YamlReportWriterTest {
         then(output).contains("projects:");
         then(output).contains("groupId: \"org.junit.jupiter\"");
         then(output).contains("artifactId: \"junit-jupiter\"");
-        then(output).contains("currentVersion: \"5.10.0\"");
+        then(output).contains("effectiveVersion: \"5.10.0\"");
         then(output).contains("latestVersion: \"5.10.1\"");
         then(output).contains("summary:");
     }

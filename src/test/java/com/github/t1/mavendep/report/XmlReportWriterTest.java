@@ -35,7 +35,7 @@ class XmlReportWriterTest {
 
         then(output).contains("<groupId>org.junit.jupiter</groupId>");
         then(output).contains("<artifactId>junit-jupiter</artifactId>");
-        then(output).contains("<currentVersion>5.10.0</currentVersion>");
+        then(output).contains("<effectiveVersion>5.10.0</effectiveVersion>");
         then(output).contains("<latestVersion>5.10.1</latestVersion>");
         then(output).contains("<summary>");
     }

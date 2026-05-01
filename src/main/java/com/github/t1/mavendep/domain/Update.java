@@ -7,13 +7,23 @@ import static java.util.Objects.requireNonNull;
 
 public record Update(
         Dependency dependency,
+        Version effectiveVersion,
         Version latestVersion,
         List<Version> availableVersions,
         UpdateType updateType,
         Version committedVersion
 ) {
     public Update(Dependency dependency, Version latestVersion, List<Version> availableVersions, UpdateType updateType) {
-        this(dependency, latestVersion, availableVersions, updateType, null);
+        this(dependency, dependency.version(), latestVersion, availableVersions, updateType, null);
+    }
+
+    public Update(
+            Dependency dependency,
+            Version effectiveVersion,
+            Version latestVersion,
+            List<Version> availableVersions,
+            UpdateType updateType) {
+        this(dependency, effectiveVersion, latestVersion, availableVersions, updateType, null);
     }
 
     public Update {
@@ -22,7 +32,7 @@ public record Update(
     }
 
     public Update withCommittedVersion(Version committedVersion) {
-        return new Update(dependency, latestVersion, availableVersions, updateType, committedVersion);
+        return new Update(dependency, effectiveVersion, latestVersion, availableVersions, updateType, committedVersion);
     }
 
     public DependencyType type() {return dependency.type();}
@@ -33,7 +43,9 @@ public record Update(
 
     public ArtifactRef artifactRef() {return dependency.artifactRef();}
 
-    public Version currentVersion() {return dependency.version();}
+    public Version declaredVersion() {return dependency.version();}
+
+    public Version currentVersion() {return effectiveVersion;}
 
     public Scope scope() {return dependency.scope();}
 

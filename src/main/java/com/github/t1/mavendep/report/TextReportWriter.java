@@ -64,9 +64,9 @@ public class TextReportWriter implements ReportWriter {
 
         printTableBorder(widths, "┌─", "─┬─", "─┐");
         if (hasCommitted) {
-            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Committed", "Current", "Latest", "Update");
+            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Committed", "Effective", "Latest", "Update");
         } else {
-            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Current", "Latest", "Update");
+            printTableRow(widths, "Scope", "Group ID", "Artifact ID", "Effective", "Latest", "Update");
         }
         printTableBorder(widths, "├─", "─┼─", "─┤");
         printTableRows(updates, widths, hasCommitted);
@@ -78,7 +78,7 @@ public class TextReportWriter implements ReportWriter {
         var groupWidth = "Group ID".length();
         var depWidth = "Artifact ID".length();
         var committedWidth = hasCommitted ? "Committed".length() : 0;
-        var curWidth = "Current".length();
+        var curWidth = "Effective".length();
         var latWidth = "Latest".length();
         var updateWidth = "Update".length();
 
@@ -89,7 +89,7 @@ public class TextReportWriter implements ReportWriter {
             if (hasCommitted) committedWidth = Math.max(committedWidth, formatCommittedVersion(update).length());
             curWidth = Math.max(curWidth, formatCurrentVersion(update).length());
             latWidth = Math.max(latWidth, formatLatestVersion(update).length());
-            updateWidth = Math.max(updateWidth, update.updateType().toString().length());
+            updateWidth = Math.max(updateWidth, formatUpdateType(update).length());
         }
 
         if (hasCommitted) {
@@ -107,14 +107,14 @@ public class TextReportWriter implements ReportWriter {
                         formatCommittedVersion(update),
                         formatCurrentVersion(update),
                         formatLatestVersion(update),
-                        update.updateType().toString());
+                        formatUpdateType(update));
             } else {
                 printTableRow(widths, update.formatScope(),
                         update.groupId(),
                         update.artifactId(),
                         formatCurrentVersion(update),
                         formatLatestVersion(update),
-                        update.updateType().toString());
+                        formatUpdateType(update));
             }
         }
     }
@@ -129,6 +129,10 @@ public class TextReportWriter implements ReportWriter {
 
     private String formatLatestVersion(Update update) {
         return update.latestVersion() != null ? update.latestVersion().toString() : "?";
+    }
+
+    private String formatUpdateType(Update update) {
+        return update.currentVersion() != null ? update.updateType().toString() : "";
     }
 
     private void printTotalSummary() {
