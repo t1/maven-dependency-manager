@@ -27,6 +27,8 @@ import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
 /// Renders the dependency/plugin table with selection checkboxes.
 class DependencyTablePanel {
 
+    static record VisualRow(Row row, boolean header) {}
+
     private static final Style HEADER_STYLE = Style.EMPTY.bold().fg(Color.DARK_GRAY);
     private static final Path CWD = Path.of("").toAbsolutePath();
 
@@ -45,14 +47,15 @@ class DependencyTablePanel {
 
         var grouped = model.activeGroupedUpdates();
         var multiPom = grouped.size() > 1;
-        var rows = buildGroupedRows(grouped, multiPom, model);
+        var visualRows = buildVisualRows(grouped, multiPom, model);
         tableState.select(toVisualIndex(model.cursor(), grouped, multiPom));
+        revealHeadersAboveSelection(tableState, visualRows);
 
         var widths = columnWidths(model);
         var table = Table.builder()
                 .header(Row.from("      Group:Artifact", "", "Declared ", "Update ")
                         .style(Style.EMPTY.bold()))
-                .rows(rows)
+                .rows(visualRows.stream().map(VisualRow::row).toList())
                 .widths(widths)
                 .highlightStyle(Style.EMPTY.bg(Color.DARK_GRAY))
                 .highlightSpacing(Table.HighlightSpacing.NEVER)
@@ -62,16 +65,31 @@ class DependencyTablePanel {
         frame.renderStatefulWidget(table, area, tableState);
     }
 
-    private static List<Row> buildGroupedRows(List<Map.Entry<Path, List<Update>>> grouped, boolean multiPom, DashboardModel model) {
-        var rows = new ArrayList<Row>();
+    static void revealHeadersAboveSelection(TableState tableState, List<VisualRow> rows) {
+        var selected = tableState.selected();
+        if (selected == null || selected <= 0 || selected >= rows.size() || rows.get(selected).header()) return;
+
+        var headerStart = selected;
+        while (headerStart > 0 && rows.get(headerStart - 1).header()) headerStart--;
+        if (headerStart == selected) return;
+
+        var headerOffset = 0;
+        for (var i = 0; i < headerStart; i++) {
+            headerOffset += rows.get(i).row().totalHeight();
+        }
+        if (tableState.offset() > headerOffset) tableState.setOffset(headerOffset);
+    }
+
+    private static List<VisualRow> buildVisualRows(List<Map.Entry<Path, List<Update>>> grouped, boolean multiPom, DashboardModel model) {
+        var rows = new ArrayList<VisualRow>();
         var focusedIndex = model.cursor();
         var dataIndex = 0;
         for (var entry : grouped) {
-            if (multiPom) rows.add(toPomHeaderRow(entry.getKey()));
+            if (multiPom) rows.add(new VisualRow(toPomHeaderRow(entry.getKey()), true));
             for (var scopeGroup : groupByScope(entry.getValue())) {
-                if (scopeGroup.label() != null) rows.add(toScopeHeaderRow(scopeGroup.label(), multiPom));
+                if (scopeGroup.label() != null) rows.add(new VisualRow(toScopeHeaderRow(scopeGroup.label(), multiPom), true));
                 for (var update : scopeGroup.updates()) {
-                    rows.add(toRow(update, model, dataIndex == focusedIndex));
+                    rows.add(new VisualRow(toRow(update, model, dataIndex == focusedIndex), false));
                     dataIndex++;
                 }
             }

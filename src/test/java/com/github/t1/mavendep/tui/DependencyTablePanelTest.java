@@ -4,6 +4,8 @@ import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
+import dev.tamboui.widgets.table.Row;
+import dev.tamboui.widgets.table.TableState;
 import org.junit.jupiter.api.Test;
 
 import java.nio.file.Path;
@@ -19,6 +21,7 @@ import static com.github.t1.mavendep.domain.Scope.compile;
 import static com.github.t1.mavendep.domain.Scope.runtime;
 import static com.github.t1.mavendep.domain.Scope.test;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
 
 class DependencyTablePanelTest {
@@ -105,6 +108,52 @@ class DependencyTablePanelTest {
         then(DependencyTablePanel.toVisualIndex(0, grouped, false)).isEqualTo(1);
     }
 
+    @Test void shouldRevealScopeHeaderWhenScrollingUpToFirstItemInGroup() {
+        var rows = List.of(
+                headerRow("compile"),
+                dataRow("compile-a"),
+                headerRow("test"),
+                dataRow("test-a"));
+        var tableState = new TableState();
+        tableState.select(3);
+        tableState.setOffset(3);
+
+        DependencyTablePanel.revealHeadersAboveSelection(tableState, rows);
+
+        then(tableState.offset()).isEqualTo(2);
+    }
+
+    @Test void shouldRevealPomAndScopeHeadersWhenScrollingUpToFirstItemInPom() {
+        var rows = List.of(
+                headerRow("pom.xml"),
+                headerRow("compile"),
+                dataRow("compile-a"),
+                headerRow("sub/pom.xml"),
+                headerRow("runtime"),
+                dataRow("runtime-a"));
+        var tableState = new TableState();
+        tableState.select(5);
+        tableState.setOffset(5);
+
+        DependencyTablePanel.revealHeadersAboveSelection(tableState, rows);
+
+        then(tableState.offset()).isEqualTo(3);
+    }
+
+    @Test void shouldNotChangeOffsetForNonFirstItemInGroup() {
+        var rows = List.of(
+                headerRow("compile"),
+                dataRow("compile-a"),
+                dataRow("compile-b"));
+        var tableState = new TableState();
+        tableState.select(2);
+        tableState.setOffset(2);
+
+        DependencyTablePanel.revealHeadersAboveSelection(tableState, rows);
+
+        then(tableState.offset()).isEqualTo(2);
+    }
+
     @Test void shouldFormatManagedConsumerWithUpstreamMarker() {
         var update = new Update(
                 new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
@@ -113,8 +162,8 @@ class DependencyTablePanelTest {
                 List.of(),
                 UpdateType.major);
         var model = mock(DashboardModel.class);
-        org.mockito.BDDMockito.given(model.declaredVersion(update)).willReturn(null);
-        org.mockito.BDDMockito.given(model.hasUpstream(update)).willReturn(true);
+        given(model.declaredVersion(update)).willReturn(null);
+        given(model.hasUpstream(update)).willReturn(true);
 
         then(DependencyTablePanel.formatDeclared(update, model)).isEqualTo("<managed ↑> ");
     }
@@ -126,9 +175,17 @@ class DependencyTablePanelTest {
                 List.of(),
                 UpdateType.none);
         var model = mock(DashboardModel.class);
-        org.mockito.BDDMockito.given(model.currentVersion(update)).willReturn(null);
+        given(model.currentVersion(update)).willReturn(null);
 
         then(DependencyTablePanel.formatUpdate(update, model)).isEqualTo("? → 2.0.0 ");
+    }
+
+    private static DependencyTablePanel.VisualRow headerRow(String label) {
+        return new DependencyTablePanel.VisualRow(Row.from(label), true);
+    }
+
+    private static DependencyTablePanel.VisualRow dataRow(String label) {
+        return new DependencyTablePanel.VisualRow(Row.from(label), false);
     }
 
     private static Update update(String artifactId, com.github.t1.mavendep.domain.Scope scope) {
