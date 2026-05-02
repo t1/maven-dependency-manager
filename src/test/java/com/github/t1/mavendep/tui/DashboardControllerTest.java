@@ -71,6 +71,20 @@ class DashboardControllerTest {
         then(model.cursor()).isEqualTo(0);
     }
 
+    @Test void shouldNavigatePageDown() {
+        var result = controller.handle(KeyEvent.ofKey(KeyCode.PAGE_DOWN), runner);
+        then(result).isTrue();
+        then(model.cursor()).isEqualTo(1);
+    }
+
+    @Test void shouldNavigatePageUp() {
+        model.cursorEnd();
+
+        var result = controller.handle(KeyEvent.ofKey(KeyCode.PAGE_UP), runner);
+        then(result).isTrue();
+        then(model.cursor()).isEqualTo(0);
+    }
+
     @Test void shouldToggleSelectionAndAutoApply() {
         var result = controller.handle(KeyEvent.ofChar(' '), runner);
         then(result).isTrue();

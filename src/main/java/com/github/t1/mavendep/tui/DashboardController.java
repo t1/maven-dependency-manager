@@ -24,6 +24,8 @@ import static dev.tamboui.tui.event.KeyCode.ENTER;
 import static dev.tamboui.tui.event.KeyCode.ESCAPE;
 import static dev.tamboui.tui.event.KeyCode.HOME;
 import static dev.tamboui.tui.event.KeyCode.LEFT;
+import static dev.tamboui.tui.event.KeyCode.PAGE_DOWN;
+import static dev.tamboui.tui.event.KeyCode.PAGE_UP;
 import static dev.tamboui.tui.event.KeyCode.RIGHT;
 import static dev.tamboui.tui.event.KeyCode.TAB;
 import static dev.tamboui.tui.event.KeyCode.UNKNOWN;
@@ -118,6 +120,14 @@ public class DashboardController {
                 }),
                 hiddenBinding(key -> key.code() == DOWN, _ -> {
                     model.cursorDown();
+                    return true;
+                }),
+                hiddenBinding(key -> key.code() == PAGE_UP, _ -> {
+                    model.cursorPageUp();
+                    return true;
+                }),
+                hiddenBinding(key -> key.code() == PAGE_DOWN, _ -> {
+                    model.cursorPageDown();
                     return true;
                 }),
                 hiddenBinding(key -> key.code() == HOME, _ -> {

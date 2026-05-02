@@ -31,6 +31,7 @@ import static com.github.t1.mavendep.tui.DashboardModel.Tab.PLUGINS;
 /// Holds all mutable state for the TUI dashboard.
 /// Designed for testability: no TamboUI dependencies, pure state management.
 public class DashboardModel {
+    private static final int PAGE_SIZE = 10;
 
     public enum Phase {SCANNING, READY, APPLYING, BUILDING}
 
@@ -284,6 +285,7 @@ public class DashboardModel {
         return new UpstreamKey(update.type(), update.artifactRef(), update.profile());
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private static boolean isManagedConsumer(Update update) {
         return !update.isManagement() && update.declaredVersion() == null;
     }
@@ -303,6 +305,15 @@ public class DashboardModel {
         var max = activeUpdates().size() - 1;
         var c = cursor();
         if (c < max) setCursor(c + 1);
+    }
+
+    public void cursorPageUp() {
+        setCursor(Math.max(0, cursor() - PAGE_SIZE));
+    }
+
+    public void cursorPageDown() {
+        var max = Math.max(0, activeUpdates().size() - 1);
+        setCursor(Math.min(max, cursor() + PAGE_SIZE));
     }
 
     public void cursorHome() {setCursor(0);}

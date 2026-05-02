@@ -9,6 +9,8 @@ enum Key {
     SHIFT_TAB("\033[Z"),
     ENTER("\r"),
     ESCAPE("\033"),
+    PAGE_UP("\033[5~"),
+    PAGE_DOWN("\033[6~"),
     HOME("\033[H"),
     END("\033[F");
 

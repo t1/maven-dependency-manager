@@ -183,6 +183,19 @@ class TuiDashboardIT {
         tui.awaitText("1 selected");
     }
 
+    @Test void cursorNavigationWithPageKeys() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("0 selected");
+        tui.pressKey(Key.PAGE_DOWN);
+        tui.type(" ");
+        tui.awaitText("1 selected");
+        tui.pressKey(Key.PAGE_UP);
+        tui.type(" ");
+        tui.awaitText("2 selected");
+    }
+
     @Test void versionPickerOpensAndCloses() {
         givenAllVersions();
         startTui();

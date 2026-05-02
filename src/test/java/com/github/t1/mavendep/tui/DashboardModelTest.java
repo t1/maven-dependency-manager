@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import static com.github.t1.mavendep.domain.Dependency.Declaration.dependencyManagement;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
@@ -334,6 +335,21 @@ class DashboardModelTest {
         then(model.focusedUpdate()).isNotNull(); // should not crash
     }
 
+    @Test void shouldCursorPageUp() {
+        setReportsWithTwelveUpdates();
+        model.cursorEnd();
+
+        model.cursorPageUp();
+        then(model.cursor()).isEqualTo(1);
+    }
+
+    @Test void shouldCursorPageDown() {
+        setReportsWithTwelveUpdates();
+
+        model.cursorPageDown();
+        then(model.cursor()).isEqualTo(10);
+    }
+
     @Test void shouldCursorHome() {
         setReportsWithTwoUpdates();
         model.cursorDown();
@@ -606,6 +622,13 @@ class DashboardModelTest {
         model.setActiveTab(Tab.BUILD);
 
         then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ]/◁▷ tabs", "[q/Esc] quit");
+    }
+
+    @Test void shouldNotShowPageNavigationHints() {
+        setReportsWithTwoUpdates();
+        wireBindings();
+
+        then(model.menuText()).doesNotContain("Page Up", "Page Down");
     }
 
     @Test void shouldShowDiffHintOnNonDiffTab() {
@@ -1117,6 +1140,22 @@ class DashboardModelTest {
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
         given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setReportsWithTwelveUpdates() {
+        var updates = IntStream.rangeClosed(1, 12)
+                .mapToObj(i -> new Dependency(dependency, "com.example", "artifact-" + i,
+                        Version.fromString("1.0." + i), DEFAULT, null)
+                        .toUpdate(Version.fromString("1.1." + i),
+                                List.of(Version.fromString("1.0." + i), Version.fromString("1.1." + i)),
+                                UpdateType.minor))
+                .toList();
+
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), updates, List.of(), updates.size());
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
     }
