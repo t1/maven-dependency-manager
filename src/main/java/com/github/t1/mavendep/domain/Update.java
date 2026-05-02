@@ -53,6 +53,10 @@ public record Update(
 
     public String profile() {return dependency.profile();}
 
+    public Dependency.Declaration declaration() {return dependency.declaration();}
+
+    public boolean isManagement() {return dependency.isManagement();}
+
     public String formatScope() {
         var base = (type() == DependencyType.dependency) ? "dependency/" + scope() : type().toString();
         return profile() != null ? base + "@" + profile() : base;

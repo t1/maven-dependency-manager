@@ -48,8 +48,13 @@ class DashboardControllerTest {
         setUpReady();
     }
 
-    @Test void shouldQuit() {
+    @Test void shouldQuitOnQ() {
         controller.handle(KeyEvent.ofChar('q'), runner);
+        verify(runner).quit();
+    }
+
+    @Test void shouldQuitOnEscape() {
+        controller.handle(KeyEvent.ofKey(KeyCode.ESCAPE), runner);
         verify(runner).quit();
     }
 

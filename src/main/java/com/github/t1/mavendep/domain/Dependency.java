@@ -10,15 +10,26 @@ public record Dependency(
         Coordinates coordinates,
         Scope scope,
         String versionProperty,
-        String profile) {
+        String profile,
+        Declaration declaration) {
     public enum DependencyType {
         parent,
         dependency,
         plugin
     }
 
+    public enum Declaration {
+        direct,
+        dependencyManagement,
+        pluginManagement
+    }
+
     public Dependency(DependencyType type, String groupId, String artifactId, Version version, Scope scope, String versionProperty) {
-        this(type, new Coordinates(groupId, artifactId, version), scope, versionProperty, null);
+        this(type, new Coordinates(groupId, artifactId, version), scope, versionProperty, null, Declaration.direct);
+    }
+
+    public Dependency(DependencyType type, Coordinates coordinates, Scope scope, String versionProperty, String profile) {
+        this(type, coordinates, scope, versionProperty, profile, Declaration.direct);
     }
 
     public ArtifactRef artifactRef() {return coordinates.artifactRef();}
@@ -33,6 +44,8 @@ public record Dependency(
 
     public boolean isManaged() {return hasGroupId() && hasArtifactId() && version() == null;}
 
+    public boolean isManagement() {return declaration != Declaration.direct;}
+
     private boolean hasGroupId() {return groupId() != null && !groupId().isEmpty();}
 
     private boolean hasArtifactId() {return artifactId() != null && !artifactId().isEmpty();}
@@ -46,7 +59,7 @@ public record Dependency(
     }
 
     public Dependency with(Version version) {
-        return new Dependency(type, new Coordinates(groupId(), artifactId(), version), scope, versionProperty, profile);
+        return new Dependency(type, new Coordinates(groupId(), artifactId(), version), scope, versionProperty, profile, declaration);
     }
 
     public Update toUpdate(

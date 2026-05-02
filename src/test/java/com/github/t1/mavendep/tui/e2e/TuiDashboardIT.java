@@ -92,7 +92,7 @@ class TuiDashboardIT {
         tui.awaitText("Maven Dependency Manager — TUI E2E Fixture");
         tui.awaitText("Dependencies");
         tui.awaitText("[s]how all");
-        tui.awaitText("[q]uit");
+        tui.awaitText("[q/Esc] quit");
     }
 
     @Test void scanCompletesAndShowsDependencies() {
@@ -116,12 +116,21 @@ class TuiDashboardIT {
         tui.awaitText("Git Diff");
     }
 
-    @Test void quitExitsCleanly() {
+    @Test void quitExitsCleanlyOnQ() {
         givenAllVersions();
         startTui();
 
         tui.awaitText("Maven Dependency Manager — TUI E2E Fixture");
         tui.type("q");
+        assertTrue(tui.waitForExit());
+    }
+
+    @Test void quitExitsCleanlyOnEscape() {
+        givenAllVersions();
+        startTui();
+
+        tui.awaitText("selected");
+        tui.pressKey(Key.ESCAPE);
         assertTrue(tui.waitForExit());
     }
 

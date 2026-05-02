@@ -46,11 +46,20 @@ public class DashboardModel {
     private List<ProjectReport> reports = List.of();
     private List<Path> rootPomFiles = List.of();
     private final Map<Tab, Integer> cursors = new EnumMap<>(Tab.class);
-    private final Set<ArtifactRef> selectedKeys = new HashSet<>();
+    private final Set<SelectionKey> selectedKeys = new HashSet<>();
 
     private record VersionPick(Version target, UpdateType type) {}
 
-    private final Map<ArtifactRef, VersionPick> customVersions = new HashMap<>();
+    private record SelectionKey(com.github.t1.mavendep.domain.Dependency.DependencyType type,
+                                ArtifactRef artifactRef,
+                                String profile,
+                                boolean management) {}
+
+    private record UpstreamKey(com.github.t1.mavendep.domain.Dependency.DependencyType type,
+                               ArtifactRef artifactRef,
+                               String profile) {}
+
+    private final Map<SelectionKey, VersionPick> customVersions = new HashMap<>();
 
     private int scanCompleted;
     private int scanTotal;
@@ -225,9 +234,58 @@ public class DashboardModel {
     private List<Update> filterUpdates(List<Update> updates) {
         if (showAll) return updates;
         return updates.stream()
-                .filter(u -> isChange(u)
+                .filter(u -> shouldShowByDefault(u)
                              || worstLogLevelFor(u.artifactRef()).isPresent())
                 .toList();
+    }
+
+    private boolean shouldShowByDefault(Update update) {
+        if (!isChange(update)) return false;
+        if (!isManagedConsumer(update)) return true;
+        return upstreamFor(update).map(upstream -> !isChange(upstream)).orElse(true);
+    }
+
+    public boolean hasUpstream(Update update) {
+        return upstreamFor(update).isPresent();
+    }
+
+    public boolean focusedUpdateHasUpstream() {
+        var focused = rawFocusedUpdate();
+        return focused != null && hasUpstream(focused);
+    }
+
+    public void focusUpstream() {
+        var focused = rawFocusedUpdate();
+        if (focused == null) return;
+        var upstream = upstreamFor(focused).orElse(null);
+        if (upstream == null) return;
+        showAll = true;
+        var index = activeUpdates().indexOf(upstream);
+        if (index >= 0) setCursor(index);
+    }
+
+    private Optional<Update> upstreamFor(Update update) {
+        if (!isManagedConsumer(update)) return Optional.empty();
+        // TODO Support BOM-based upstream resolution:
+        // The current logic only finds upstream rows by matching the same managed artifact.
+        // That works for dependencyManagement/pluginManagement entries of the same dependency/plugin,
+        // but not for dependencies whose version comes from an imported BOM.
+        // To support `<managed ↑>` and `[u] upstream` for those cases, we need to detect that
+        // the consumer's effective version is provided by a BOM import declared in this POM set,
+        // and then link the consumer to that BOM import row as its upstream source.
+        var key = upstreamKey(update);
+        return allUpdates()
+                .filter(Update::isManagement)
+                .filter(candidate -> Objects.equals(upstreamKey(candidate), key))
+                .findFirst();
+    }
+
+    private static UpstreamKey upstreamKey(Update update) {
+        return new UpstreamKey(update.type(), update.artifactRef(), update.profile());
+    }
+
+    private static boolean isManagedConsumer(Update update) {
+        return !update.isManagement() && update.declaredVersion() == null;
     }
 
     // --- Cursor ---
@@ -347,7 +405,9 @@ public class DashboardModel {
                 pick.type());
     }
 
-    private static ArtifactRef selectionKey(Update u) {return u.artifactRef();}
+    private static SelectionKey selectionKey(Update update) {
+        return new SelectionKey(update.type(), update.artifactRef(), update.profile(), update.isManagement());
+    }
 
     // --- Custom version (version picker) ---
 

@@ -227,6 +227,61 @@ class PomTest {
     }
 
     @Test
+    void shouldParseDependencyManagementDeclaration() {
+        var pomContent = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.junit.jupiter</groupId>
+                                <artifactId>junit-jupiter</artifactId>
+                                <version>5.10.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomContent).orElseThrow();
+
+        then(pom.dependencies().getFirst().declaration()).isEqualTo(Dependency.Declaration.dependencyManagement);
+    }
+
+    @Test
+    void shouldParsePluginManagementDeclaration() {
+        var pomContent = writePom("""
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                
+                    <build>
+                        <pluginManagement>
+                            <plugins>
+                                <plugin>
+                                    <artifactId>maven-compiler-plugin</artifactId>
+                                    <version>3.14.1</version>
+                                </plugin>
+                            </plugins>
+                        </pluginManagement>
+                    </build>
+                </project>
+                """);
+
+        var pom = Pom.parse(pomContent).orElseThrow();
+
+        then(pom.plugins().getFirst().declaration()).isEqualTo(Dependency.Declaration.pluginManagement);
+    }
+
+    @Test
     void shouldParseModules() {
         var pomContent = writePom("""
                 <?xml version="1.0" encoding="UTF-8"?>

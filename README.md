@@ -157,14 +157,15 @@ mdm tui --force-cache-update
 
 The TUI provides a full interactive dashboard where you can:
 
-- Browse dependencies and plugins, grouped by POM and scope in the table; plugins use profile sub-groups only when present. The header shows the root project name(s), falling back to artifactId(s)
+- Browse dependencies and plugins, grouped by POM and scope in the table; plugins use profile sub-groups only when present. Managed consumers inside the scanned POM set are marked as `<managed ↑>` and can jump to their upstream management row with `u`. The header shows the root project name(s), falling back to artifactId(s)
 - Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none) — POM is updated automatically
 - Pick specific target versions (Enter to open version picker), also downgrades — POM is updated on confirm
+- Jump from a managed consumer to its upstream management row with `u`
 - Run a Maven build and see output in a separate tab (`b`)
 - Rescan after manually applying updates (`r`)
 - Switch between tabs (Tab/`]`/Right forward, Shift-Tab/`[`/Left backward, `p` for Plugins, `d` for Diff/Dependencies, `m` for Messages)
 - View scan errors and warnings inline below the dependency table
-- Quit (`q`)
+- Quit (`q` or `Esc`)
 
 ### Updating Dependencies
 

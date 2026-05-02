@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 
+import static com.github.t1.mavendep.domain.Dependency.Declaration.dependencyManagement;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Logger.LogLevel.ERROR;
 import static com.github.t1.mavendep.domain.Logger.LogLevel.INFO;
@@ -604,7 +605,7 @@ class DashboardModelTest {
         wireBindings();
         model.setActiveTab(Tab.BUILD);
 
-        then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ]/◁▷ tabs", "[q]uit");
+        then(model.menuText()).contains("[b]uild", "[r]escan", "Tab/[ ]/◁▷ tabs", "[q/Esc] quit");
     }
 
     @Test void shouldShowDiffHintOnNonDiffTab() {
@@ -870,6 +871,82 @@ class DashboardModelTest {
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2, update3), List.of(), 3);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
+    }
+
+    @Test void shouldHideManagedConsumerWhenEditableUpstreamHasUpdate() {
+        var management = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", "lib", Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement)
+                .toUpdate(Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(management, consumer), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+
+        then(model.activeUpdates()).containsExactly(management);
+        then(model.focusedUpdateHasUpstream()).isFalse();
+    }
+
+    @Test void shouldShowManagedConsumerWhenEditableUpstreamHasNoUpdate() {
+        var management = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", "lib", Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement)
+                .toUpdate(Version.fromString("1.0.0"), List.of(Version.fromString("1.0.0")), UpdateType.none);
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(management, consumer), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+
+        then(model.activeUpdates()).containsExactly(consumer);
+        then(model.focusedUpdateHasUpstream()).isTrue();
+    }
+
+    @Test void shouldShowExternallyManagedConsumerWhenItHasUpdate() {
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(consumer), List.of(), 1);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+
+        then(model.activeUpdates()).containsExactly(consumer);
+        then(model.focusedUpdateHasUpstream()).isFalse();
+    }
+
+    @Test void shouldFocusUpstreamAndRevealIt() {
+        var management = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", "lib", Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement)
+                .toUpdate(Version.fromString("1.0.0"), List.of(Version.fromString("1.0.0")), UpdateType.none);
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(management, consumer), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+
+        model.focusUpstream();
+
+        then(model.showAll()).isTrue();
+        then(model.activeUpdates()).containsExactly(management, consumer);
+        then(model.focusedUpdate()).isEqualTo(management);
     }
 
     @Test void shouldDisplayRootProjectNameInTitle() {

@@ -59,6 +59,10 @@ public class DashboardController {
                     model.toggleShowAll();
                     return true;
                 }),
+                charBinding('u', tab -> DEPENDENCY_TABS.contains(tab) && model.focusedUpdateHasUpstream() ? "[u] upstream" : null, _ -> {
+                    model.focusUpstream();
+                    return true;
+                }),
 
                 // -- Displayed, all tabs --
                 charBinding('b', "[b]uild", ALL_TABS, _ -> {
@@ -83,7 +87,7 @@ public class DashboardController {
 
                 // -- Tab navigation (composite display + hidden physical keys) --
                 displayOnlyBinding("Tab/[ ]/◁▷ tabs", ALL_TABS),
-                displayOnlyBinding("[q]uit", ALL_TABS),
+                displayOnlyBinding("[q/Esc] quit", ALL_TABS),
 
                 // -- Hidden char bindings --
                 charBinding('a', _ -> {
@@ -181,7 +185,7 @@ public class DashboardController {
 
         if (!(event instanceof KeyEvent key)) return false;
 
-        if (key.isQuit()) {
+        if (key.isQuit() || key.code() == ESCAPE && !model.isVersionPickerOpen()) {
             runner.quit();
             return false;
         }

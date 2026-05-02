@@ -10,6 +10,8 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static com.github.t1.mavendep.domain.Dependency.Declaration.dependencyManagement;
+import static com.github.t1.mavendep.domain.Dependency.Declaration.pluginManagement;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.plugin;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
@@ -89,6 +91,34 @@ class DependencyTablePanelTest {
         then(DependencyTablePanel.toVisualIndex(1, grouped, false)).isEqualTo(2);
     }
 
+    @Test void shouldAddDependencyManagementHeaderForManagedDependencyRow() {
+        var grouped = List.of(
+                Map.entry(Path.of("pom.xml"), List.of(dependencyManagementUpdate("managed-lib"))));
+
+        then(DependencyTablePanel.toVisualIndex(0, grouped, false)).isEqualTo(1);
+    }
+
+    @Test void shouldAddPluginManagementHeaderForManagedPluginRow() {
+        var grouped = List.of(
+                Map.entry(Path.of("pom.xml"), List.of(pluginManagementUpdate("compiler", null))));
+
+        then(DependencyTablePanel.toVisualIndex(0, grouped, false)).isEqualTo(1);
+    }
+
+    @Test void shouldFormatManagedConsumerWithUpstreamMarker() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
+                Version.fromString("1.0.0"),
+                Version.fromString("2.0.0"),
+                List.of(),
+                UpdateType.major);
+        var model = mock(DashboardModel.class);
+        org.mockito.BDDMockito.given(model.declaredVersion(update)).willReturn(null);
+        org.mockito.BDDMockito.given(model.hasUpstream(update)).willReturn(true);
+
+        then(DependencyTablePanel.formatDeclared(update, model)).isEqualTo("<managed ↑> ");
+    }
+
     @Test void shouldFormatUnknownEffectiveUpdate() {
         var update = new Update(
                 new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
@@ -112,6 +142,26 @@ class DependencyTablePanelTest {
                 DEFAULT,
                 null,
                 profile);
+        return dep.toUpdate(Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.minor);
+    }
+
+    private static Update dependencyManagementUpdate(String artifactId) {
+        var dep = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", artifactId, Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement);
+        return dep.toUpdate(Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.minor);
+    }
+
+    private static Update pluginManagementUpdate(String artifactId, String profile) {
+        var dep = new Dependency(plugin,
+                new com.github.t1.mavendep.domain.Coordinates("org.apache.maven.plugins", artifactId, Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                profile,
+                pluginManagement);
         return dep.toUpdate(Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.minor);
     }
 }

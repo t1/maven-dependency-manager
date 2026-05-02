@@ -171,13 +171,17 @@ public class Pom {
         return elements;
     }
 
-    private static boolean isInsideProfile(Node node) {
+    private static boolean isInside(Node node, String ancestorName) {
         var parent = node.getParentNode();
         while (parent != null) {
-            if (parent.getNodeName().equals("profile")) return true;
+            if (parent.getNodeName().equals(ancestorName)) return true;
             parent = parent.getParentNode();
         }
         return false;
+    }
+
+    private static boolean isInsideProfile(Node node) {
+        return isInside(node, "profile");
     }
 
     private static List<Dependency> parseElementsFromProfiles(Document doc, DependencyType type, Map<String, String> properties) {
@@ -275,10 +279,23 @@ public class Pom {
                 groupId = DEFAULT_PLUGIN_GROUP_ID;
             }
 
-            var dependency = new Dependency(type, new Coordinates(groupId, artifactId, version), scope, versionProperty, profile);
+            var dependency = new Dependency(type, new Coordinates(groupId, artifactId, version), scope, versionProperty, profile,
+                    declarationOf(depNode));
             if (groupId.isEmpty()) log().warning(dependency.artifactRef(), "missing groupId");
             if (artifactId.isEmpty()) log().warning(dependency.artifactRef(), "missing artifactId");
             return dependency;
+        }
+
+        private Dependency.Declaration declarationOf(Node depNode) {
+            return switch (type) {
+                case dependency -> isInside(depNode, "dependencyManagement")
+                        ? Dependency.Declaration.dependencyManagement
+                        : Dependency.Declaration.direct;
+                case plugin -> isInside(depNode, "pluginManagement")
+                        ? Dependency.Declaration.pluginManagement
+                        : Dependency.Declaration.direct;
+                case parent -> Dependency.Declaration.direct;
+            };
         }
 
         private String resolve(String value) {

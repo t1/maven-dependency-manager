@@ -122,9 +122,15 @@ class DependencyTablePanel {
     }
 
     private static String formatScopeLabel(Update update) {
-        if (update.type() == plugin) {
-            return update.profile();
+        if (update.isManagement()) {
+            var base = switch (update.declaration()) {
+                case dependencyManagement -> "dependencyManagement";
+                case pluginManagement -> "pluginManagement";
+                case direct -> throw new IllegalStateException();
+            };
+            return update.profile() != null ? base + "@" + update.profile() : base;
         }
+        if (update.type() == plugin) return update.profile();
         var base = switch (update.type()) {
             case dependency -> update.scope().toString();
             case parent -> "parent";
@@ -173,7 +179,8 @@ class DependencyTablePanel {
 
     static String formatDeclared(Update update, DashboardModel model) {
         var committed = formatVersion(update.committedVersion(), null);
-        var declared = formatVersion(model.declaredVersion(update), "<managed>");
+        var managedFallback = model.hasUpstream(update) ? "<managed ↑>" : "<managed>";
+        var declared = formatVersion(model.declaredVersion(update), managedFallback);
         var formatted = (committed == null || committed.equals(declared)) ? declared : committed + " → " + declared;
         return formatted + " ";
     }
