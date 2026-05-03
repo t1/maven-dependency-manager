@@ -5,6 +5,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.api.parallel.Execution;
+import org.junit.jupiter.api.parallel.Isolated;
+
+import static org.junit.jupiter.api.parallel.ExecutionMode.SAME_THREAD;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -16,6 +20,8 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.writeString;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+@Isolated
+@Execution(SAME_THREAD)
 class TuiDashboardIT {
     private static final String POM_CONTENT = """
             <?xml version="1.0" encoding="UTF-8"?>
