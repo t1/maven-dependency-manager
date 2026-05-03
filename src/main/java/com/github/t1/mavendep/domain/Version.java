@@ -46,6 +46,12 @@ public final class Version implements Comparable<Version> {
 
     /// Determines if this version represents a release (not a pre-release).
     /// See [ReleaseClassifier] for the classification rules.
+    public boolean isReleased() {
+        return new ReleaseClassifier(null, false).isReleased();
+    }
+
+    /// Determines if this version represents a release (not a pre-release).
+    /// See [ReleaseClassifier] for the classification rules.
     ///
     /// @param artifactContext added to the warning, so the user knows where this happens
     public boolean isReleased(ArtifactRef artifactContext) {
@@ -55,6 +61,11 @@ public final class Version implements Comparable<Version> {
     public Optional<String> qualifier() {
         if (qualifierSegment < 0) return Optional.empty();
         return Optional.of(String.join("-", segments.subList(qualifierSegment, segments.size())));
+    }
+
+    public Version baseVersion() {
+        if (qualifierSegment < 0) return this;
+        return new Version(String.join(".", segments.subList(0, qualifierSegment)));
     }
 
     @Override public int compareTo(Version other) {
@@ -172,8 +183,14 @@ public final class Version implements Comparable<Version> {
     /// - Unknown string qualifiers → warning logged, assumed pre-release
     private class ReleaseClassifier {
         private final ArtifactRef context;
+        private final boolean logUnknownQualifier;
 
-        private ReleaseClassifier(ArtifactRef context) {this.context = context;}
+        private ReleaseClassifier(ArtifactRef context) {this(context, true);}
+
+        private ReleaseClassifier(ArtifactRef context, boolean logUnknownQualifier) {
+            this.context = context;
+            this.logUnknownQualifier = logUnknownQualifier;
+        }
 
         boolean isReleased() {
             return qualifier()
@@ -192,6 +209,7 @@ public final class Version implements Comparable<Version> {
         }
 
         private void logUnknownQualifier(String qualifier) {
+            if (!logUnknownQualifier) return;
             log().warning(context, "unknown version qualifier '" + qualifier + "' in " + Version.this +
                                    "; assuming pre-release");
         }

@@ -80,6 +80,7 @@ class ReportTreeBuilder {
         }
         putVersionField(depNode, "effectiveVersion", update.currentVersion());
         putVersionField(depNode, "latestVersion", update.latestVersion());
+        depNode.put("versionStatus", update.versionStatus().toString());
         depNode.put("updateType", update.updateType().toString());
 
         var versionsArray = mapper.createArrayNode();

@@ -3,6 +3,7 @@ package com.github.t1.mavendep.tui;
 import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
+import com.github.t1.mavendep.domain.VersionStatus;
 import dev.tamboui.layout.Constraint;
 import dev.tamboui.layout.Rect;
 import dev.tamboui.style.Color;
@@ -57,7 +58,7 @@ class DependencyTablePanel {
                         .style(Style.EMPTY.bold()))
                 .rows(visualRows.stream().map(VisualRow::row).toList())
                 .widths(widths)
-                .highlightStyle(Style.EMPTY.bg(Color.DARK_GRAY))
+                .highlightStyle(Style.EMPTY.fg(Color.WHITE).bg(Color.DARK_GRAY))
                 .highlightSpacing(Table.HighlightSpacing.NEVER)
                 .block(Block.builder().borders(Borders.ALL).title(model.activeTab().name()).build())
                 .build();
@@ -159,7 +160,7 @@ class DependencyTablePanel {
 
     private static Row toRow(Update update, DashboardModel model, boolean focused) {
         var selector = focused ? "> " : "  ";
-        var checkbox = !model.isChange(update) ? "    " : model.isSelected(update) ? "[x] " : "[ ] ";
+        var checkbox = formatCheckbox(update, model);
         var coords = selector + checkbox + update.artifactRef();
         var icon = model.worstLogLevelFor(update.artifactRef())
                 .map(level -> switch (level) {
@@ -169,8 +170,7 @@ class DependencyTablePanel {
                 })
                 .orElse("");
         var declared = formatDeclared(update, model);
-        var displayType = UpdateType.between(model.currentVersion(update), update.latestVersion());
-        var style = styleFor(displayType, update.currentVersion() != null);
+        var style = styleFor(update, model);
 
         return Row.from(coords, icon, declared, formatUpdate(update, model)).style(style);
     }
@@ -195,6 +195,11 @@ class DependencyTablePanel {
         return Math.max(headerLength, updates.stream().map(formatter).mapToInt(String::length).max().orElse(0));
     }
 
+    static String formatCheckbox(Update update, DashboardModel model) {
+        if (!model.showsCheckbox(update)) return "    ";
+        return model.isSelected(update) ? "[x] " : "[ ] ";
+    }
+
     static String formatDeclared(Update update, DashboardModel model) {
         var committed = formatVersion(update.committedVersion(), null);
         var managedFallback = model.hasUpstream(update) ? "<managed ↑>" : "<managed>";
@@ -204,19 +209,41 @@ class DependencyTablePanel {
     }
 
     static String formatUpdate(Update update, DashboardModel model) {
-        var effective = formatVersion(model.currentVersion(update), "?");
+        var declaredVersion = model.declaredVersion(update);
+        var effectiveVersion = model.currentVersion(update);
+        var effective = formatVersion(effectiveVersion, "?");
         var latest = formatVersion(update.latestVersion(), "?");
-        var formatted = effective.equals(latest) ? effective : effective + " → " + latest;
+        var formatted = switch (VersionStatus.of(effectiveVersion, update.latestVersion())) {
+            case aheadOfLatestRelease -> effective + " > " + latest;
+            case upToDate -> effective;
+            case upgradeAvailable -> shouldShowOnlyTarget(declaredVersion, effectiveVersion) ? latest
+                    : effective.equals(latest) ? effective : effective + " → " + latest;
+            case unknownCurrentVersion, noReleasedVersionAvailable -> effective.equals(latest) ? effective : effective + " → " + latest;
+        };
         return formatted + " ";
     }
 
-    private static Style styleFor(UpdateType updateType, boolean resolved) {
-        if (!resolved) return Style.EMPTY;
-        return switch (updateType) {
-            case major -> Style.EMPTY.fg(Color.RED);
-            case minor -> Style.EMPTY.fg(Color.GREEN);
-            case patch -> Style.EMPTY.fg(Color.BLUE);
-            case none -> Style.EMPTY;
+    private static boolean shouldShowOnlyTarget(Version declaredVersion, Version effectiveVersion) {
+        return declaredVersion != null && declaredVersion.equals(effectiveVersion);
+    }
+
+    static Style styleFor(Update update, DashboardModel model) {
+        if (!model.isSuggested(update) || update.currentVersion() == null) return Style.EMPTY;
+
+        var currentVersion = model.currentVersion(update);
+        var versionStatus = VersionStatus.of(currentVersion, update.latestVersion());
+        var updateType = versionStatus.isUpdateAvailable()
+                ? UpdateType.between(currentVersion, update.latestVersion())
+                : UpdateType.none;
+        return switch (versionStatus) {
+            case aheadOfLatestRelease -> Style.EMPTY.fg(Color.RED);
+            case upgradeAvailable -> switch (updateType) {
+                case major -> Style.EMPTY.fg(Color.RED);
+                case minor -> Style.EMPTY.fg(Color.GREEN);
+                case patch -> Style.EMPTY.fg(Color.BLUE);
+                case none -> Style.EMPTY;
+            };
+            case unknownCurrentVersion, noReleasedVersionAvailable, upToDate -> Style.EMPTY;
         };
     }
 

@@ -1,17 +1,21 @@
 package com.github.t1.mavendep.domain;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpServer;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.FileTime;
 import java.time.Duration;
-import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.nio.file.Files.createDirectories;
-import static java.nio.file.Files.setLastModifiedTime;
-import static java.nio.file.Files.writeString;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.BDDAssertions.then;
 
 class MavenRepositoryTest {
@@ -19,38 +23,29 @@ class MavenRepositoryTest {
     @TempDir
     Path tempDir;
 
+    private final FakeRepo fakeRepo = new FakeRepo();
+
+    @AfterEach void tearDown() {
+        fakeRepo.close();
+    }
+
     @Test
-    void shouldParseMetadataXml() {
-        writeCache("org.springframework.boot", "spring-boot", """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <metadata>
-                  <groupId>org.springframework.boot</groupId>
-                  <artifactId>spring-boot</artifactId>
-                  <versioning>
-                    <latest>3.2.1</latest>
-                    <release>3.2.1</release>
-                    <versions>
-                      <version>2.0.0</version>
-                      <version>2.1.0</version>
-                      <version>3.0.0</version>
-                      <version>3.2.1</version>
-                    </versions>
-                    <lastUpdated>20231215120000</lastUpdated>
-                  </versioning>
-                </metadata>
-                """);
+    void shouldFetchAvailableVersions() {
+        fakeRepo.givenVersions("org.springframework.boot", "spring-boot", List.of("2.0.0", "2.1.0", "3.0.0", "3.2.1"));
         var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions(new ArtifactRef("org.springframework.boot", "spring-boot"));
 
-        then(versions).hasSize(4);
-        then(versions.get(0)).isEqualTo(Version.fromString("2.0.0"));
-        then(versions.get(3)).isEqualTo(Version.fromString("3.2.1"));
+        then(versions).containsExactly(
+                Version.fromString("2.0.0"),
+                Version.fromString("2.1.0"),
+                Version.fromString("3.0.0"),
+                Version.fromString("3.2.1"));
     }
 
     @Test
     void shouldReturnEmptyListForInvalidMetadata() {
-        writeCache("org.example", "invalid", "<invalid>xml</invalid>");
+        fakeRepo.givenRawMetadata("org.example", "invalid", "<invalid>xml</invalid>");
         var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions(new ArtifactRef("org.example", "invalid"));
@@ -58,125 +53,67 @@ class MavenRepositoryTest {
         then(versions).isEmpty();
     }
 
-    private void writeCache(String groupId, String artifactId, String metadataXml) {
-        var cacheFile = createCacheFile(new ArtifactRef(groupId, artifactId));
-        try {
-            writeString(cacheFile, metadataXml);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     @Test
     void shouldIncludeSnapshotVersionsWhenRequested() {
-        writeCache("org.example", "example", """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <metadata>
-                  <groupId>org.example</groupId>
-                  <artifactId>example</artifactId>
-                  <versioning>
-                    <versions>
-                      <version>1.0.0</version>
-                      <version>1.1.0-SNAPSHOT</version>
-                      <version>1.1.0</version>
-                    </versions>
-                  </versioning>
-                </metadata>
-                """);
+        fakeRepo.givenVersions("org.example", "example", List.of("1.0.0", "1.1.0-SNAPSHOT", "1.1.0"));
         var repository = repositoryWithLocalTempDir();
 
         var versions = repository.getAvailableVersions(new ArtifactRef("org.example", "example"));
 
-        then(versions).hasSize(3);
-        then(versions.get(0)).isEqualTo(Version.fromString("1.0.0"));
-        then(versions.get(1)).isEqualTo(Version.fromString("1.1.0-SNAPSHOT"));
-        then(versions.get(2)).isEqualTo(Version.fromString("1.1.0"));
+        then(versions).containsExactly(
+                Version.fromString("1.0.0"),
+                Version.fromString("1.1.0-SNAPSHOT"),
+                Version.fromString("1.1.0"));
     }
 
     @Test
-    void shouldUseCacheWhenFresh() throws IOException {
-        var cacheFile = createCacheFile(new ArtifactRef("com.example", "some-lib"));
-        writeString(cacheFile, """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <metadata>
-                  <versioning>
-                    <versions>
-                      <version>1.0.0</version>
-                      <version>2.0.0</version>
-                    </versions>
-                  </versioning>
-                </metadata>
-                """);
-        var repository = repositoryWithLocalTempDir();
+    void shouldUseResolverCacheWhenTtlIsLarge() {
+        var artifact = new ArtifactRef("com.example", "some-lib");
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0"));
+        repositoryWithLocalTempDir().getAvailableVersions(artifact);
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0", "2.0.0"));
 
-        var versions = repository.getAvailableVersions(new ArtifactRef("com.example", "some-lib"));
+        var versions = repositoryWithLocalTempDir().getAvailableVersions(artifact);
 
-        then(versions).hasSize(2);
-        then(versions.getFirst()).isEqualTo(Version.fromString("1.0.0"));
-        then(versions.get(1)).isEqualTo(Version.fromString("2.0.0"));
-    }
-
-
-    private Path createCacheFile(ArtifactRef artifact) {
-        var groupPath = artifact.groupId().replace('.', '/');
-        var cacheFile = tempDir.resolve(groupPath).resolve(artifact.artifactId()).resolve("maven-metadata.xml");
-        try {
-            createDirectories(cacheFile.getParent());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return cacheFile;
+        then(versions).containsExactly(Version.fromString("1.0.0"));
+        then(fakeRepo.requestCountFor(artifact)).isEqualTo(1);
     }
 
     @Test
-    void shouldNotUseCacheWhenStale() throws IOException {
-        var cacheFile = createCacheFile(new ArtifactRef("com.example", "old-lib"));
-        writeString(cacheFile, """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <metadata>
-                  <versioning>
-                    <versions>
-                      <version>1.0.0</version>
-                    </versions>
-                  </versioning>
-                </metadata>
-                """);
-        var twoDaysAgo = Instant.now().minus(Duration.ofDays(2));
-        setLastModifiedTime(cacheFile, FileTime.from(twoDaysAgo));
+    void shouldRefreshCacheWhenTtlIsZero() {
+        var artifact = new ArtifactRef("com.example", "fresh-lib");
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0"));
+        repositoryWithLocalTempDir().getAvailableVersions(artifact);
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0", "2.0.0"));
         var repository = MavenRepository.builder()
                 .localRepositoryDir(tempDir)
-                .ttl(Duration.ofHours(24))
-                .mavenCentralUrl("http://localhost:9999")
+                .ttl(Duration.ZERO)
+                .mavenCentralUrl(fakeRepo.baseUrl())
                 .build();
 
-        var versions = repository.getAvailableVersions(new ArtifactRef("com.example", "old-lib"));
+        var versions = repository.getAvailableVersions(artifact);
 
-        then(versions).isEmpty();
+        then(versions).containsExactly(Version.fromString("1.0.0"), Version.fromString("2.0.0"));
+        then(fakeRepo.requestCountFor(artifact)).isEqualTo(2);
     }
 
     @Test
-    void shouldBypassCacheWhenForceCacheUpdateIsEnabled() throws IOException {
-        var cacheFile = createCacheFile(new ArtifactRef("com.example", "cached-lib"));
-        writeString(cacheFile, """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <metadata>
-                  <versioning>
-                    <versions>
-                      <version>1.0.0</version>
-                    </versions>
-                  </versioning>
-                </metadata>
-                """);
+    void shouldBypassCacheWhenForceCacheUpdateIsEnabled() {
+        var artifact = new ArtifactRef("com.example", "cached-lib");
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0"));
+        repositoryWithLocalTempDir().getAvailableVersions(artifact);
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0", "2.0.0"));
         var repository = MavenRepository.builder()
                 .localRepositoryDir(tempDir)
                 .ttl(Duration.ofHours(9999))
-                .mavenCentralUrl("http://localhost:9999")
+                .mavenCentralUrl(fakeRepo.baseUrl())
                 .forceCacheUpdate(true)
                 .build();
 
-        var versions = repository.getAvailableVersions(new ArtifactRef("com.example", "cached-lib"));
+        var versions = repository.getAvailableVersions(artifact);
 
-        then(versions).isEmpty();
+        then(versions).containsExactly(Version.fromString("1.0.0"), Version.fromString("2.0.0"));
+        then(fakeRepo.requestCountFor(artifact)).isEqualTo(2);
     }
 
     @Test
@@ -195,18 +132,113 @@ class MavenRepositoryTest {
     }
 
     @Test
-    void shouldReturnEmptyListForMalformedXml() {
-        writeCache("org.example", "malformed", "not xml at all <");
+    void shouldMergeVersionsFromCentralAndLocalMetadataForPicker() throws IOException {
+        var artifact = new ArtifactRef("org.example", "picker-lib");
+        fakeRepo.givenVersions(artifact.groupId(), artifact.artifactId(), List.of("1.0.0"));
+        var metadataDir = tempDir.resolve("org/example/picker-lib");
+        Files.createDirectories(metadataDir);
+        Files.writeString(metadataDir.resolve("maven-metadata-local.xml"), """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <metadata>
+                  <versioning>
+                    <versions>
+                      <version>2.0.0</version>
+                    </versions>
+                  </versioning>
+                </metadata>
+                """);
         var repository = repositoryWithLocalTempDir();
 
-        var versions = repository.getAvailableVersions(new ArtifactRef("org.example", "malformed"));
+        var versions = repository.getPickableVersions(artifact);
 
-        then(versions).isEmpty();
+        then(versions).containsExactly(
+                new AvailableVersion(Version.fromString("1.0.0"), List.of("central")),
+                new AvailableVersion(Version.fromString("2.0.0"), List.of("local")));
+    }
+
+    @Test
+    void shouldReturnCentralMetadataPath() {
+        var repository = repositoryWithLocalTempDir();
+
+        var path = repository.metadataFilePath(new ArtifactRef("org.example", "test"));
+
+        then(path.toString()).endsWith("org/example/test/maven-metadata-central.xml");
     }
 
     private MavenRepository repositoryWithLocalTempDir() {
         return MavenRepository.builder()
                 .localRepositoryDir(tempDir)
+                .mavenCentralUrl(fakeRepo.baseUrl())
                 .build();
+    }
+
+    private static class FakeRepo implements AutoCloseable {
+        private final HttpServer httpServer;
+        private final ConcurrentHashMap<String, String> responses = new ConcurrentHashMap<>();
+        private final ConcurrentHashMap<String, AtomicInteger> requestCounts = new ConcurrentHashMap<>();
+
+        private FakeRepo() {
+            try {
+                httpServer = HttpServer.create(new InetSocketAddress("localhost", 0), 0);
+                httpServer.createContext("/", this::handle);
+                httpServer.start();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        void givenVersions(String groupId, String artifactId, List<String> versions) {
+            var versionsXml = versions.stream()
+                    .map(version -> "      <version>" + version + "</version>")
+                    .reduce("", (left, right) -> left + right + "\n");
+            givenRawMetadata(groupId, artifactId, """
+                    <?xml version="1.0" encoding="UTF-8"?>
+                    <metadata>
+                      <groupId>%s</groupId>
+                      <artifactId>%s</artifactId>
+                      <versioning>
+                        <versions>
+                    %s\
+                        </versions>
+                      </versioning>
+                    </metadata>
+                    """.formatted(groupId, artifactId, versionsXml));
+        }
+
+        void givenRawMetadata(String groupId, String artifactId, String metadata) {
+            responses.put(pathOf(groupId, artifactId), metadata);
+        }
+
+        int requestCountFor(ArtifactRef artifact) {
+            return requestCounts.getOrDefault(pathOf(artifact.groupId(), artifact.artifactId()), new AtomicInteger()).get();
+        }
+
+        String baseUrl() {return "http://localhost:" + httpServer.getAddress().getPort();}
+
+        @Override public void close() {
+            httpServer.stop(0);
+        }
+
+        private void handle(HttpExchange exchange) {
+            try (exchange) {
+                var path = exchange.getRequestURI().getPath();
+                requestCounts.computeIfAbsent(path, _ -> new AtomicInteger()).incrementAndGet();
+                var response = responses.get(path);
+                if (response == null) {
+                    exchange.sendResponseHeaders(404, -1);
+                    return;
+                }
+                var bytes = response.getBytes(UTF_8);
+                exchange.getResponseHeaders().set("Content-Type", "application/xml");
+                exchange.sendResponseHeaders(200, bytes.length);
+                exchange.getResponseBody().write(bytes);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private static String pathOf(String groupId, String artifactId) {
+            return "/" + groupId.replace('.', '/') + "/" + artifactId + "/maven-metadata.xml";
+        }
     }
 }

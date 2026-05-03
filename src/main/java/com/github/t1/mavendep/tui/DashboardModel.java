@@ -51,10 +51,12 @@ public class DashboardModel {
 
     private record VersionPick(Version target, UpdateType type) {}
 
-    private record SelectionKey(com.github.t1.mavendep.domain.Dependency.DependencyType type,
+    private record SelectionKey(Path pomPath,
+                                com.github.t1.mavendep.domain.Dependency.DependencyType type,
                                 ArtifactRef artifactRef,
+                                com.github.t1.mavendep.domain.Scope scope,
                                 String profile,
-                                boolean management) {}
+                                com.github.t1.mavendep.domain.Dependency.Declaration declaration) {}
 
     private record UpstreamKey(com.github.t1.mavendep.domain.Dependency.DependencyType type,
                                ArtifactRef artifactRef,
@@ -194,19 +196,7 @@ public class DashboardModel {
         cursors.clear();
         selectedKeys.clear();
         customVersions.clear();
-        preselectUncommittedChanges();
         setNeedsRedraw();
-    }
-
-    /// Pre-selects updates where the POM version was already changed from the committed version,
-    /// e.g. from a previous TUI session that wasn't committed.
-    private void preselectUncommittedChanges() {
-        allUpdates()
-                .filter(u -> u.committedVersion() != null && u.currentVersion() != null)
-                .forEach(u -> {
-                    setCustomVersion(u, u.currentVersion());
-                    selectedKeys.add(selectionKey(u));
-                });
     }
 
     /// Returns the flat list of dependency updates for the active tab.
@@ -290,6 +280,19 @@ public class DashboardModel {
         return !update.isManagement() && update.declaredVersion() == null;
     }
 
+    public boolean isSuggested(Update update) {
+        return isChange(update) && !isManagedConsumer(update);
+    }
+
+    public boolean showsCheckbox(Update update) {
+        return isSelected(update) || isSuggested(update);
+    }
+
+    public boolean focusedUpdateShowsCheckbox() {
+        var focused = rawFocusedUpdate();
+        return focused != null && showsCheckbox(focused);
+    }
+
     // --- Cursor ---
 
     public int cursor() {return cursors.getOrDefault(activeTab, 0);}
@@ -333,7 +336,8 @@ public class DashboardModel {
         if (selectedKeys.contains(selectionKey(update))) return true;
         var prop = update.versionProperty();
         if (prop == null) return false;
-        return allUpdates().anyMatch(u -> prop.equals(u.versionProperty())
+        return allUpdates().anyMatch(u -> samePom(u, update)
+                                          && prop.equals(u.versionProperty())
                                           && selectedKeys.contains(selectionKey(u)));
     }
 
@@ -342,7 +346,7 @@ public class DashboardModel {
         var c = cursor();
         if (c < 0 || c >= updates.size()) return;
         var update = updates.get(c);
-        if (!isChange(update)) return;
+        if (!showsCheckbox(update)) return;
         if (isSelected(update)) {
             deselect(propertySiblings(update));
             clampCursor();
@@ -354,14 +358,22 @@ public class DashboardModel {
     private Stream<Update> propertySiblings(Update update) {
         var prop = update.versionProperty();
         if (prop == null) return Stream.of(update);
-        return allUpdates().filter(u -> prop.equals(u.versionProperty()));
+        return allUpdates().filter(u -> samePom(u, update) && prop.equals(u.versionProperty()));
     }
 
     private Stream<Update> allUpdates() {
-        return reports.stream()
-                .flatMap(r -> Stream.concat(
-                        r.dependencyUpdates().stream(),
-                        r.pluginUpdates().stream()));
+        return reports.stream().flatMap(this::allUpdatesOf);
+    }
+
+    Stream<Update> selectedUpdatesOf(ProjectReport report) {
+        return allUpdatesOf(report)
+                .filter(this::isChange)
+                .filter(this::isSelected)
+                .map(this::toPomUpdate);
+    }
+
+    private Stream<Update> allUpdatesOf(ProjectReport report) {
+        return Stream.concat(report.dependencyUpdates().stream(), report.pluginUpdates().stream());
     }
 
     public void toggleSelectAll() {
@@ -370,7 +382,7 @@ public class DashboardModel {
     }
 
     private Stream<Update> selectableUpdates() {
-        return activeUpdates().stream().filter(this::isChange);
+        return activeUpdates().stream().filter(this::showsCheckbox);
     }
 
     private boolean allSelected() {
@@ -382,7 +394,7 @@ public class DashboardModel {
     }
 
     public void selectNone() {
-        deselect(activeUpdates().stream());
+        deselect(selectableUpdates());
     }
 
     private void deselect(Stream<Update> updates) {
@@ -400,10 +412,7 @@ public class DashboardModel {
     /// `declaredVersion` = original version in the POM (what to find or override locally),
     /// `latestVersion` = target version (what to replace it with).
     public Stream<Update> selectedUpdates() {
-        return allUpdates()
-                .filter(this::isChange)
-                .filter(this::isSelected)
-                .map(this::toPomUpdate);
+        return reports.stream().flatMap(this::selectedUpdatesOf);
     }
 
     private Update toPomUpdate(Update update) {
@@ -413,11 +422,12 @@ public class DashboardModel {
                 update.dependency(),
                 pick.target(),
                 update.availableVersions(),
+                update.pickableVersions(),
                 pick.type());
     }
 
-    private static SelectionKey selectionKey(Update update) {
-        return new SelectionKey(update.type(), update.artifactRef(), update.profile(), update.isManagement());
+    private SelectionKey selectionKey(Update update) {
+        return new SelectionKey(pomPathOf(update), update.type(), update.artifactRef(), update.scope(), update.profile(), update.declaration());
     }
 
     // --- Custom version (version picker) ---
@@ -430,10 +440,7 @@ public class DashboardModel {
         }
         propertySiblings(original).forEach(sibling -> {
             var siblingCommitted = committedVersion(sibling);
-            var downgrade = siblingCommitted != null && targetVersion.compareTo(siblingCommitted) < 0;
-            var type = downgrade
-                    ? UpdateType.between(targetVersion, siblingCommitted)
-                    : UpdateType.between(siblingCommitted, targetVersion);
+            var type = UpdateType.between(siblingCommitted, targetVersion);
             customVersions.put(selectionKey(sibling), new VersionPick(targetVersion, type));
         });
     }
@@ -445,15 +452,15 @@ public class DashboardModel {
         return committed != null ? committed : update.currentVersion();
     }
 
-    /// Returns true if the committed version differs from the target version
-    /// (latest, or custom pick if one was set).
+    /// Returns true if this row represents an actionable change:
+    /// either an uncommitted local change, an available upgrade, or a custom pick.
     public boolean isChange(Update update) {
         var committed = committedVersion(update);
         if (committed == null) return false;
         var pick = customVersions.get(selectionKey(update));
         if (pick != null) return pick.target().compareTo(committed) != 0;
-        return update.latestVersion() != null
-               && update.latestVersion().compareTo(committed) != 0;
+        if (update.currentVersion() != null && update.currentVersion().compareTo(committed) != 0) return true;
+        return update.isUpdateAvailable();
     }
 
     public Version declaredVersion(Update update) {
@@ -464,10 +471,14 @@ public class DashboardModel {
 
     /// Returns the version currently effective for this update:
     /// original effective version if not selected, latest or custom pick if selected.
+    /// Managed consumers with an in-scope upstream follow the upstream's effective version
+    /// unless they were explicitly overridden locally.
     public Version currentVersion(Update update) {
-        if (!isSelected(update)) return update.currentVersion();
         var pick = customVersions.get(selectionKey(update));
-        return pick != null ? pick.target() : update.latestVersion();
+        if (pick != null) return pick.target();
+        var upstream = upstreamFor(update).orElse(null);
+        if (upstream != null) return currentVersion(upstream);
+        return isSelected(update) ? update.latestVersion() : update.currentVersion();
     }
 
     public Update effectiveUpdate(Update update) {
@@ -477,6 +488,7 @@ public class DashboardModel {
                 pick.target(),
                 update.latestVersion(),
                 update.availableVersions(),
+                update.pickableVersions(),
                 pick.type(),
                 update.committedVersion());
         var committed = committedVersion(update);
@@ -487,6 +499,7 @@ public class DashboardModel {
                 update.currentVersion(),
                 update.latestVersion(),
                 update.availableVersions(),
+                update.pickableVersions(),
                 type,
                 update.committedVersion());
     }
@@ -579,6 +592,8 @@ public class DashboardModel {
 
     public List<Version> currentVersionPickerVersions() {return versionPicker.availableVersions();}
 
+    public List<VersionPickerModel.Entry> currentVersionPickerEntries() {return versionPicker.entries();}
+
     public void confirmVersionPick() {
         var picked = versionPicker.confirmAndClose();
         if (picked != null) {
@@ -601,5 +616,17 @@ public class DashboardModel {
     private Update rawFocusedUpdate() {
         var updates = activeUpdates();
         return updates.isEmpty() ? null : updates.get(cursor());
+    }
+
+    private boolean samePom(Update left, Update right) {
+        return Objects.equals(pomPathOf(left), pomPathOf(right));
+    }
+
+    private Path pomPathOf(Update update) {
+        return reports.stream()
+                .filter(report -> allUpdatesOf(report).anyMatch(candidate -> candidate == update))
+                .map(report -> report.pom().path())
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("unknown update: " + update));
     }
 }

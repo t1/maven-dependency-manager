@@ -156,8 +156,8 @@ public class DependencyAnalyzer {
             var committedVersions = committedVersions(pom);
             var dependencyUpdates = enrichWithCommittedVersions(await(dependencyUpdatesTasks), committedVersions);
             var pluginUpdates = enrichWithCommittedVersions(await(pluginUpdateTasks), committedVersions);
-            var parentUpdate = await(parentUpdateTask).stream().findAny()
-                    .or(() -> localParentUpdate(pom));
+            var parentUpdate = enrichWithCommittedVersion(await(parentUpdateTask).stream().findAny()
+                    .or(() -> localParentUpdate(pom)), committedVersions);
 
             return new ProjectReport(pom, parentUpdate, dependencyUpdates, pluginUpdates, pom.totalDependencyCount());
         } catch (InterruptedException e) {
@@ -166,23 +166,58 @@ public class DependencyAnalyzer {
         }
     }
 
-    private static Map<ArtifactRef, Version> committedVersions(Pom pom) {
+    private static Map<DependencyKey, Version> committedVersions(Pom pom) {
         return Git.readCommitted(pom.path())
                 .map(content -> Pom.parse(pom.path(), content))
-                .map(committedPom -> Stream.concat(committedPom.dependencies().stream(), committedPom.plugins().stream())
+                .map(committedPom -> Stream.of(
+                                committedPom.parent().stream(),
+                                committedPom.dependencies().stream(),
+                                committedPom.plugins().stream())
+                        .flatMap(stream -> stream)
                         .filter(Dependency::isValid)
-                        .collect(toMap(Dependency::artifactRef, Dependency::version, (a, _) -> a)))
+                        .collect(toMap(DependencyKey::of, Dependency::version, (a, _) -> a)))
                 .orElse(Map.of());
     }
 
     private static List<Update> enrichWithCommittedVersions(
-            List<Update> updates, Map<ArtifactRef, Version> committedVersions) {
+            List<Update> updates, Map<DependencyKey, Version> committedVersions) {
         if (committedVersions.isEmpty()) return updates;
-        return updates.stream().map(update -> {
-            var committed = committedVersions.get(update.artifactRef());
-            if (committed == null || committed.equals(update.declaredVersion())) return update;
-            return update.withCommittedVersion(committed);
-        }).toList();
+        return updates.stream()
+                .map(update -> enrichWithCommittedVersion(update, committedVersions))
+                .toList();
+    }
+
+    private static Optional<Update> enrichWithCommittedVersion(
+            Optional<Update> update, Map<DependencyKey, Version> committedVersions) {
+        return update.map(value -> enrichWithCommittedVersion(value, committedVersions));
+    }
+
+    private static Update enrichWithCommittedVersion(Update update, Map<DependencyKey, Version> committedVersions) {
+        var committed = committedVersions.get(DependencyKey.of(update));
+        if (committed == null || committed.equals(update.declaredVersion())) return update;
+        return update.withCommittedVersion(committed);
+    }
+
+    private record DependencyKey(
+            Dependency.DependencyType type,
+            ArtifactRef artifactRef,
+            Scope scope,
+            String versionProperty,
+            String profile,
+            Dependency.Declaration declaration) {
+        private static DependencyKey of(Dependency dependency) {
+            return new DependencyKey(
+                    dependency.type(),
+                    dependency.artifactRef(),
+                    dependency.scope(),
+                    dependency.versionProperty(),
+                    dependency.profile(),
+                    dependency.declaration());
+        }
+
+        private static DependencyKey of(Update update) {
+            return of(update.dependency());
+        }
     }
 
     private boolean isExternalArtifact(Dependency dep) {
@@ -217,12 +252,15 @@ public class DependencyAnalyzer {
         var artifact = dependency.artifactRef();
         var availableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<Version>of()
                 : repository.getAvailableVersions(artifact);
+        var pickableVersions = (dependency.groupId() == null || dependency.artifactId() == null) ? List.<AvailableVersion>of()
+                : repository.getPickableVersions(artifact);
         var releasedVersions = availableVersions.stream()
                 .filter(version -> version.isReleased(artifact))
                 .toList();
         var latestVersion = (releasedVersions.isEmpty()) ? null : releasedVersions.getLast();
-        var updateType = UpdateType.between(effectiveVersion, latestVersion);
-        var result = dependency.toUpdate(effectiveVersion, latestVersion, availableVersions, updateType);
+        var versionStatus = VersionStatus.of(effectiveVersion, latestVersion);
+        var updateType = versionStatus.isUpdateAvailable() ? UpdateType.between(effectiveVersion, latestVersion) : none;
+        var result = new Update(dependency, effectiveVersion, latestVersion, availableVersions, pickableVersions, updateType, null, versionStatus);
         progressListener.onProgress(analyzedCount.incrementAndGet(), totalDependencyCount, artifact.toString());
         return result;
     }

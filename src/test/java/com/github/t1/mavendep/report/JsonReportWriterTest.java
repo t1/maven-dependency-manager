@@ -54,6 +54,7 @@ class JsonReportWriterTest {
         then(dep.get("artifactId").asText()).isEqualTo("junit-jupiter");
         then(dep.get("effectiveVersion").asText()).isEqualTo("5.10.0");
         then(dep.get("latestVersion").asText()).isEqualTo("5.10.1");
+        then(dep.get("versionStatus").asText()).isEqualTo("upgradeAvailable");
         then(dep.get("updateType").asText()).isEqualTo("patch");
     }
 
@@ -109,6 +110,7 @@ class JsonReportWriterTest {
         then(dep.get("artifactId").asText()).isEqualTo("unknown-artifact");
         then(dep.get("effectiveVersion").asText()).isEqualTo("1.0.0");
         then(dep.get("latestVersion").isNull()).isTrue();
+        then(dep.get("versionStatus").asText()).isEqualTo("noReleasedVersionAvailable");
     }
 
     @Test

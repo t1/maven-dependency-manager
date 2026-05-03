@@ -111,6 +111,24 @@ class DependencySummaryTest {
     }
 
     @Test
+    void shouldNotCountDependenciesAheadOfLatestRelease() {
+        var ahead = createUpdate("com.example", "lib", "2.0.0", "1.0.0", none);
+        var report = new ProjectReport(
+                pom,
+                Optional.empty(),
+                List.of(ahead),
+                List.of(),
+                5);
+
+        var summary = DependencySummary.summarize(report);
+
+        then(summary.outdatedDependencies()).isEqualTo(0);
+        then(summary.majorUpdates()).isEqualTo(0);
+        then(summary.minorUpdates()).isEqualTo(0);
+        then(summary.patchUpdates()).isEqualTo(0);
+    }
+
+    @Test
     void shouldCalculateSummary_whenMultipleReports() {
         var majorUpdate1 = createUpdate("com.example", "lib1", "1.0.0", "2.0.0", major);
         var minorUpdate1 = createUpdate("com.example", "lib2", "1.0.0", "1.1.0", minor);

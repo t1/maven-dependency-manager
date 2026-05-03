@@ -12,6 +12,10 @@ import static com.github.t1.mavendep.domain.UpdateType.major;
 import static com.github.t1.mavendep.domain.UpdateType.minor;
 import static com.github.t1.mavendep.domain.UpdateType.none;
 import static com.github.t1.mavendep.domain.UpdateType.patch;
+import static com.github.t1.mavendep.domain.VersionStatus.aheadOfLatestRelease;
+import static com.github.t1.mavendep.domain.VersionStatus.noReleasedVersionAvailable;
+import static com.github.t1.mavendep.domain.VersionStatus.upToDate;
+import static com.github.t1.mavendep.domain.VersionStatus.upgradeAvailable;
 import static org.assertj.core.api.BDDAssertions.then;
 
 class UpdateTest {
@@ -35,6 +39,7 @@ class UpdateTest {
         then(update.currentVersion()).isEqualTo(currentVersion);
         then(update.latestVersion()).isEqualTo(latestVersion);
         then(update.updateType()).isEqualTo(major);
+        then(update.versionStatus()).isEqualTo(upgradeAvailable);
         then(update.availableVersions()).isEqualTo(availableVersions);
         then(update.scope()).isEqualTo(compile);
     }
@@ -142,15 +147,17 @@ class UpdateTest {
     }
 
     @Test
-    void shouldBeChangeForDowngrade() {
+    void shouldNotBeChangeForAheadOfLatestRelease() {
         var update = new Update(
                 new Dependency(dependency, "com.example", "lib", Version.fromString("2.0.0"), compile, null),
                 Version.fromString("1.0.0"),
                 List.of(),
-                major
+                none
         );
 
-        then(update.isChange()).isTrue();
+        then(update.versionStatus()).isEqualTo(aheadOfLatestRelease);
+        then(update.isChange()).isFalse();
+        then(update.isUpdateAvailable()).isFalse();
     }
 
     @Test
@@ -163,6 +170,33 @@ class UpdateTest {
                 none
         );
 
+        then(update.versionStatus()).isEqualTo(upToDate);
         then(update.isChange()).isFalse();
+    }
+
+    @Test
+    void shouldTreatSnapshotOnReleasedLineAsUpgradeAvailable() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0-SNAPSHOT"), compile, null),
+                Version.fromString("1.0.0"),
+                List.of(),
+                patch
+        );
+
+        then(update.versionStatus()).isEqualTo(upgradeAvailable);
+        then(update.isUpdateAvailable()).isTrue();
+    }
+
+    @Test
+    void shouldDetectMissingReleasedVersion() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0-SNAPSHOT"), compile, null),
+                null,
+                List.of(),
+                none
+        );
+
+        then(update.versionStatus()).isEqualTo(noReleasedVersionAvailable);
+        then(update.isUpdateAvailable()).isFalse();
     }
 }

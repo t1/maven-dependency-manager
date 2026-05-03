@@ -104,9 +104,21 @@ public class TextReportWriter implements ReportWriter {
     }
 
     private String formatUpdate(Update update) {
-        var effective = versionString(update.currentVersion(), "?");
+        var declaredVersion = update.declaredVersion();
+        var effectiveVersion = update.currentVersion();
+        var effective = versionString(effectiveVersion, "?");
         var latest = versionString(update.latestVersion(), "?");
-        return effective.equals(latest) ? effective : effective + " → " + latest;
+        return switch (update.versionStatus()) {
+            case aheadOfLatestRelease -> effective + " > " + latest;
+            case upToDate -> effective;
+            case upgradeAvailable -> shouldShowOnlyTarget(declaredVersion, effectiveVersion) ? latest
+                    : effective.equals(latest) ? effective : effective + " → " + latest;
+            case unknownCurrentVersion, noReleasedVersionAvailable -> effective.equals(latest) ? effective : effective + " → " + latest;
+        };
+    }
+
+    private boolean shouldShowOnlyTarget(Version declaredVersion, Version effectiveVersion) {
+        return declaredVersion != null && declaredVersion.equals(effectiveVersion);
     }
 
     private String versionString(Version version, String fallback) {

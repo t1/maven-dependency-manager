@@ -202,6 +202,8 @@ class CheckCommandIT extends BaseCliIT {
         then(dependency.get("effectiveVersion").asText()).isEqualTo("3.25.1");
         then(dependency.has("latestVersion")).isTrue();
         then(dependency.get("latestVersion").asText()).isEqualTo("3.27.7");
+        then(dependency.has("versionStatus")).isTrue();
+        then(dependency.get("versionStatus").asText()).isEqualTo("upgradeAvailable");
         then(dependency.has("updateType")).isTrue();
         then(dependency.get("updateType").asText()).isEqualTo("minor");
         then(dependency.has("availableVersions")).isTrue();

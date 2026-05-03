@@ -10,8 +10,9 @@ import dev.tamboui.widgets.list.ListState;
 import dev.tamboui.widgets.list.ListWidget;
 import dev.tamboui.widgets.paragraph.Paragraph;
 
-import static dev.tamboui.style.Color.BLUE;
 import static dev.tamboui.style.Color.CYAN;
+import static dev.tamboui.style.Color.DARK_GRAY;
+import static dev.tamboui.style.Color.WHITE;
 import static dev.tamboui.style.Style.EMPTY;
 import static dev.tamboui.widgets.Clear.clear;
 import static dev.tamboui.widgets.block.Borders.ALL;
@@ -28,16 +29,16 @@ class VersionPickerPanel {
         var focused = model.focusedUpdate();
         if (focused == null) return;
 
-        var versions = model.currentVersionPickerVersions();
+        var entries = model.currentVersionPickerEntries();
         listState.select(model.versionPickerCursor());
 
-        var items = versions.stream()
-                .map(v -> ListItem.from(v.toString()))
+        var items = entries.stream()
+                .map(entry -> ListItem.from(entry.label()))
                 .toArray(ListItem[]::new);
 
         var list = ListWidget.builder()
                 .items(items)
-                .highlightStyle(EMPTY.bg(BLUE))
+                .highlightStyle(EMPTY.bold().fg(WHITE).bg(DARK_GRAY))
                 .highlightSymbol("> ")
                 .build();
 
@@ -48,7 +49,7 @@ class VersionPickerPanel {
 
         // Center the overlay on the screen; +2 for borders
         var overlayWidth = Math.min(area.width() - 4, 40);
-        var overlayHeight = Math.min(area.height() - 4, versions.size() + HEADER_LINES + SEPARATOR_LINE + 2);
+        var overlayHeight = Math.min(area.height() - 4, entries.size() + HEADER_LINES + SEPARATOR_LINE + 2);
         var x = area.left() + (area.width() - overlayWidth) / 2;
         var y = area.top() + (area.height() - overlayHeight) / 2;
         var overlayArea = new Rect(x, y, overlayWidth, overlayHeight);

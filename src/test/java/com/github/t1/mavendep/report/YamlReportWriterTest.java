@@ -38,6 +38,7 @@ class YamlReportWriterTest {
         then(output).contains("artifactId: \"junit-jupiter\"");
         then(output).contains("effectiveVersion: \"5.10.0\"");
         then(output).contains("latestVersion: \"5.10.1\"");
+        then(output).contains("versionStatus: \"upgradeAvailable\"");
         then(output).contains("summary:");
     }
 

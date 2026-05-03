@@ -2,6 +2,7 @@ package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
@@ -19,10 +20,13 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.t1.mavendep.domain.Dependency.DependencyType.dependency;
 import static com.github.t1.mavendep.domain.Scope.DEFAULT;
 import static org.assertj.core.api.BDDAssertions.then;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -215,6 +219,7 @@ class DashboardControllerTest {
 
     @Test void shouldAutoApplyOnVersionPickerConfirm() {
         model.openVersionPicker();
+        controller.handle(KeyEvent.ofKey(KeyCode.UP), runner);
         controller.handle(KeyEvent.ofKey(KeyCode.ENTER), runner);
         then(model.isVersionPickerOpen()).isFalse();
         then(updateCalled).isTrue();
@@ -242,5 +247,53 @@ class DashboardControllerTest {
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
         model.clearNeedsRedraw();
+    }
+}
+
+class ApplyUpdatesActionTest {
+    private final DashboardModel model = new DashboardModel();
+
+    @Test void shouldApplyPickedVersionOnlyToSelectedPom() {
+        var firstPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(firstPom.path()).willReturn(Path.of("pom.xml"));
+        var secondPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(secondPom.path()).willReturn(Path.of("sub/pom.xml"));
+
+        var firstUpdate = new Dependency(dependency, "com.example", "managed-lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"),
+                        List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var secondUpdate = new Dependency(dependency, "com.example", "managed-lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"),
+                        List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+
+        model.setReports(List.of(
+                new ProjectReport(firstPom, Optional.empty(), List.of(firstUpdate), List.of(), 1),
+                new ProjectReport(secondPom, Optional.empty(), List.of(secondUpdate), List.of(), 1)));
+        model.setPhase(Phase.READY);
+        model.openVersionPicker();
+        model.versionPickerUp();
+        model.confirmVersionPick();
+
+        var firstApplied = new AtomicReference<List<Update>>();
+        var secondApplied = new AtomicReference<List<Update>>();
+        doAnswer(invocation -> {
+            firstApplied.set(updatesFrom(invocation.getArgument(0)));
+            return null;
+        }).when(firstPom).apply(org.mockito.ArgumentMatchers.any());
+        doAnswer(invocation -> {
+            secondApplied.set(updatesFrom(invocation.getArgument(0)));
+            return null;
+        }).when(secondPom).apply(org.mockito.ArgumentMatchers.any());
+
+        new ApplyUpdatesAction(model).run();
+
+        then(firstApplied.get()).singleElement().extracting(Update::artifactId).isEqualTo("managed-lib");
+        then(firstApplied.get().getFirst().latestVersion()).isEqualTo(Version.fromString("2.0.0"));
+        then(secondApplied.get()).isEmpty();
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<Update> updatesFrom(Object argument) {
+        return ((java.util.stream.Stream<Update>) argument).toList();
     }
 }

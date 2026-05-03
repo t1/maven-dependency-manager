@@ -74,7 +74,7 @@ class TextReportWriterTest {
         then(text).contains("│ Declared");
         then(text).contains("│ Update");
         then(text).contains("│ 5.10.0");
-        then(text).contains("│ 5.10.0 → 5.10.1");
+        then(text).contains("│ 5.10.1");
         then(text).contains("└─");  // Table bottom border
         then(text).contains("  Summary:");
     }
@@ -206,8 +206,25 @@ class TextReportWriterTest {
 
         then(text).contains("│ junit-jupiter");
         then(text).contains("│ spring-core");
-        then(text).contains("│ 6.0.0           │");
+        then(text).contains("│ 6.0.0    │ 6.0.0");
         then(text).contains("Summary: 2 dependencies, 1 updates available");
+    }
+
+    @Test
+    void shouldShowAheadOfLatestReleaseOnlyAsDiagnostic() {
+        var ahead = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("2.0.0"), compile, null),
+                Version.fromString("1.0.0"),
+                List.of(),
+                none
+        );
+        var report = new ProjectReport(DUMMY_POM, Optional.empty(), List.of(ahead), List.of(), 1);
+
+        var text = writeToString(List.of(report));
+
+        then(text).contains("│ lib");
+        then(text).contains("│ 2.0.0 > 1.0.0");
+        then(text).contains("Summary: 1 dependency, 0 updates available");
     }
 
     @Test
@@ -605,7 +622,7 @@ class TextReportWriterTest {
 
         then(text).contains("│ Declared");
         then(text).contains("│ 5.10.0 → 5.9.0");
-        then(text).contains("│ 5.9.0 → 6.0.3");
+        then(text).contains("│ 6.0.3");
     }
 
     @Test void shouldNotShowCommittedColumnWhenNoCommittedVersions() {

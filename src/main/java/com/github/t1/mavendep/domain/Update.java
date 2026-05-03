@@ -10,11 +10,22 @@ public record Update(
         Version effectiveVersion,
         Version latestVersion,
         List<Version> availableVersions,
+        List<AvailableVersion> pickableVersions,
         UpdateType updateType,
-        Version committedVersion
+        Version committedVersion,
+        VersionStatus versionStatus
 ) {
     public Update(Dependency dependency, Version latestVersion, List<Version> availableVersions, UpdateType updateType) {
-        this(dependency, dependency.version(), latestVersion, availableVersions, updateType, null);
+        this(dependency, dependency.version(), latestVersion, availableVersions, defaultPickableVersions(availableVersions), updateType, null);
+    }
+
+    public Update(
+            Dependency dependency,
+            Version latestVersion,
+            List<Version> availableVersions,
+            List<AvailableVersion> pickableVersions,
+            UpdateType updateType) {
+        this(dependency, dependency.version(), latestVersion, availableVersions, pickableVersions, updateType, null);
     }
 
     public Update(
@@ -23,16 +34,55 @@ public record Update(
             Version latestVersion,
             List<Version> availableVersions,
             UpdateType updateType) {
-        this(dependency, effectiveVersion, latestVersion, availableVersions, updateType, null);
+        this(dependency, effectiveVersion, latestVersion, availableVersions, defaultPickableVersions(availableVersions), updateType, null);
+    }
+
+    public Update(
+            Dependency dependency,
+            Version effectiveVersion,
+            Version latestVersion,
+            List<Version> availableVersions,
+            List<AvailableVersion> pickableVersions,
+            UpdateType updateType) {
+        this(dependency, effectiveVersion, latestVersion, availableVersions, pickableVersions, updateType, null);
+    }
+
+    public Update(
+            Dependency dependency,
+            Version effectiveVersion,
+            Version latestVersion,
+            List<Version> availableVersions,
+            UpdateType updateType,
+            Version committedVersion) {
+        this(dependency, effectiveVersion, latestVersion, availableVersions, defaultPickableVersions(availableVersions), updateType, committedVersion,
+                VersionStatus.of(effectiveVersion, latestVersion));
+    }
+
+    public Update(
+            Dependency dependency,
+            Version effectiveVersion,
+            Version latestVersion,
+            List<Version> availableVersions,
+            List<AvailableVersion> pickableVersions,
+            UpdateType updateType,
+            Version committedVersion) {
+        this(dependency, effectiveVersion, latestVersion, availableVersions, pickableVersions, updateType, committedVersion,
+                VersionStatus.of(effectiveVersion, latestVersion));
     }
 
     public Update {
         requireNonNull(dependency);
         requireNonNull(updateType);
+        requireNonNull(pickableVersions);
+        requireNonNull(versionStatus);
+    }
+
+    private static List<AvailableVersion> defaultPickableVersions(List<Version> availableVersions) {
+        return availableVersions.stream().map(version -> new AvailableVersion(version, List.of())).toList();
     }
 
     public Update withCommittedVersion(Version committedVersion) {
-        return new Update(dependency, effectiveVersion, latestVersion, availableVersions, updateType, committedVersion);
+        return new Update(dependency, effectiveVersion, latestVersion, availableVersions, pickableVersions, updateType, committedVersion, versionStatus);
     }
 
     public DependencyType type() {return dependency.type();}
@@ -62,7 +112,7 @@ public record Update(
         return profile() != null ? base + "@" + profile() : base;
     }
 
-    public boolean isChange() {
-        return currentVersion() != null && latestVersion() != null && latestVersion().compareTo(currentVersion()) != 0;
-    }
+    public boolean isUpdateAvailable() {return versionStatus.isUpdateAvailable();}
+
+    public boolean isChange() {return isUpdateAvailable();}
 }

@@ -48,7 +48,7 @@ public record DependencySummary(
             totalDependencies += report.totalDependencies();
             var allUpdates = getAllUpdates(report);
             for (var update : allUpdates) {
-                if (update.isChange()) {
+                if (update.isUpdateAvailable()) {
                     outdatedDependencies++;
                     switch (update.updateType()) {
                         case major -> majorUpdates++;

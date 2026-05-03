@@ -48,7 +48,7 @@ public class DashboardController {
         this.onDiff = onDiff;
         this.bindings = List.of(
                 // -- Displayed, dependency tabs --
-                charBinding(' ', "[Space] toggle", DEPENDENCY_TABS, _ -> {
+                charBinding(' ', tab -> DEPENDENCY_TABS.contains(tab) && model.focusedUpdateShowsCheckbox() ? "[Space] toggle" : null, _ -> {
                     model.toggleSelection();
                     onUpdate.run();
                     return true;

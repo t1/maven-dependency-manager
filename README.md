@@ -12,7 +12,7 @@ using Claude Code and [my plugins](https://github.com/t1/tdder).
 - **Dependency Version Checking**: Queries Maven Central for the latest versions of your dependencies
 - **Plugin Version Checking**: Also checks and updates plugin versions
 - **Parent POM Version Checking**: Also checks and updates parent POM versions
-- **Smart Caching**: Leverages the local Maven repository (~/.m2) to minimize network requests, with
+- **Smart Caching**: Leverages the local Maven repository (~/.m2) via Maven Resolver to minimize network requests, with
   `--force-cache-update` to bypass the cache. The local repo path can be overridden via the `maven.repo.local` system
   property or the `--local-repo` CLI option.
 - **Multi-Project Support**: Scan single or multiple Maven projects at once, automatically recognize Maven modules
@@ -29,6 +29,8 @@ using Claude Code and [my plugins](https://github.com/t1/tdder).
   qualifier suffixes (`1.0-RC1`, `5.1.5.Final`), and timestamp-based build numbers (`0.7.7.201606060606`).
   Qualifiers are classified as pre-release (`SNAPSHOT`, `alpha`, `beta`, `RC`, `M`, ...) or
   release (`Final`, `GA`, `RELEASE`, `SP`) to filter out unstable versions.
+  Dependencies already ahead of the latest released version — for example local `-SNAPSHOT` versions on a newer release line — are shown only in `--show-all` mode and are not counted as updates.
+  A `-SNAPSHOT` on the same release line as the latest release is still treated as an upgrade to that release.
   Note that this is not 100% compatible to Maven's version handling.
 - **Robust Error Handling**: Network failures and malformed metadata are logged but don't halt execution
 
@@ -112,7 +114,7 @@ mdm check pom.xml --output updates.json
 ### Advanced Options
 
 ```bash
-# Show all dependencies (including up-to-date ones)
+# Show all dependencies (including up-to-date ones and ones ahead of the latest release)
 mdm check pom.xml --show-all
 
 # Force refresh of all cached Maven metadata
@@ -157,9 +159,9 @@ mdm tui --force-cache-update
 
 The TUI provides a full interactive dashboard where you can:
 
-- Browse dependencies and plugins, grouped by POM and scope in the table; navigate with arrows, Home/End, and Page Up/Page Down. Plugins use profile sub-groups only when present. When you move back up to the first item of a group, its POM/scope header scrolls back into view. Managed consumers inside the scanned POM set are marked as `<managed ↑>` and can jump to their upstream management row with `u`. The header shows the root project name(s), falling back to artifactId(s)
-- Select/deselect updates with checkboxes (Space to toggle, `a` for all, `n` for none) — POM is updated automatically
-- Pick specific target versions (Enter to open version picker), also downgrades — POM is updated on confirm
+- Browse dependencies and plugins, grouped by POM and scope in the table; navigate with arrows, Home/End, and Page Up/Page Down. Plugins use profile sub-groups only when present. When you move back up to the first item of a group, its POM/scope header scrolls back into view. Managed consumers are marked as `<managed>` (or `<managed ↑>` when their upstream management row is also in the scan) and can jump to that upstream row with `u`. These managed consumer rows are informational by default: they are shown without suggested-update checkbox/color, but you can still pick a version explicitly to add a local override. When the upstream management row changes, their effective `Update` "from" value follows that upstream version. The header shows the root project name(s), falling back to artifactId(s)
+- Select/deselect suggested updates with checkboxes (`Space` toggles the focused row when it has a checkbox; `a` for all, `n` for none) — POM is updated automatically
+- Pick specific target versions (Enter to open version picker), also downgrades — including managed consumer rows, where confirming a version adds a local `<version>` override instead of changing an existing one. A picked version applies only to the focused row in its POM, except when several rows in that same POM intentionally share one version property. The picker keeps current, committed, and locally known versions, preselects the current version, and shows their sources (e.g. `central`, `local`) — POM is updated on confirm
 - Jump from a managed consumer to its upstream management row with `u`
 - Run a Maven build and see output in a separate tab (`b`)
 - Rescan after manually applying updates (`r`)
@@ -216,7 +218,8 @@ mdm update pom.xml --output updates.json
           "artifactId": "spring-boot-starter-web",
           "effectiveVersion": "3.1.0",
           "latestVersion": "3.2.1",
-          "updateType": "MINOR",
+          "versionStatus": "upgradeAvailable",
+          "updateType": "minor",
           "availableVersions": ["3.1.1", "3.1.5", "3.2.0", "3.2.1"]
         }
       ]
@@ -271,7 +274,8 @@ To run a specific integration test method (but no unit test):
 **IMPORTANT** note the quotes in some of these commands, as this string contains a `#` character!
 
 Managed dependencies and plugins are reported with their Maven-effective current version.
-Human-readable outputs merge local git/POM state into a `Declared` column and merge effective/latest information into an `Update` column.
+Human-readable outputs and the TUI merge local git/POM state into a `Declared` column and merge effective/latest information into an `Update` column.
+When declared and effective versions are the same, `Update` shows only the target version; otherwise it shows `current → target`.
 When you update one that has no local `<version>`, the tool adds a local explicit version override to the current `pom.xml`.
 
 At the moment, effective-version detection uses Maven's default profile activation context for the current environment;

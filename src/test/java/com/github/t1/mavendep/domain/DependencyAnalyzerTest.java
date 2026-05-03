@@ -12,8 +12,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.github.t1.mavendep.domain.Dependency.Declaration.dependencyManagement;
+import static com.github.t1.mavendep.domain.Dependency.Declaration.direct;
 import static com.github.t1.mavendep.domain.Scope.test;
 import static com.github.t1.mavendep.domain.UpdateType.none;
+import static com.github.t1.mavendep.domain.VersionStatus.noReleasedVersionAvailable;
+import static com.github.t1.mavendep.domain.VersionStatus.unknownCurrentVersion;
+import static com.github.t1.mavendep.domain.VersionStatus.upgradeAvailable;
 import static java.nio.file.Files.createDirectories;
 import static java.nio.file.Files.readString;
 import static java.nio.file.Files.writeString;
@@ -69,6 +74,7 @@ class DependencyAnalyzerTest {
         then(update.artifactId()).isEqualTo("junit-jupiter");
         then(update.currentVersion()).isEqualTo(Version.fromString("5.10.0"));
         then(update.latestVersion()).isEqualTo(Version.fromString("5.11.0"));
+        then(update.versionStatus()).isEqualTo(upgradeAvailable);
         then(update.updateType()).isEqualTo(UpdateType.minor);
     }
 
@@ -482,6 +488,7 @@ class DependencyAnalyzerTest {
         then(update.artifactId()).isEqualTo("junit-jupiter");
         then(update.currentVersion()).isEqualTo(Version.fromString("5.10.0"));
         then(update.latestVersion()).isNull();
+        then(update.versionStatus()).isEqualTo(noReleasedVersionAvailable);
         then(update.updateType()).isEqualTo(none);
     }
 
@@ -518,6 +525,7 @@ class DependencyAnalyzerTest {
         then(reports.getFirst().dependencyUpdates()).hasSize(1);
         var update = reports.getFirst().dependencyUpdates().getFirst();
         then(update.latestVersion()).isNull();
+        then(update.versionStatus()).isEqualTo(noReleasedVersionAvailable);
         then(update.updateType()).isEqualTo(none);
     }
 
@@ -597,6 +605,7 @@ class DependencyAnalyzerTest {
         then(update.artifactId()).isEqualTo("spring-boot-starter");
         then(update.currentVersion()).isNull();
         then(update.latestVersion()).isEqualTo(Version.fromString("3.2.0"));
+        then(update.versionStatus()).isEqualTo(unknownCurrentVersion);
         then(update.updateType()).isEqualTo(none);
     }
 
@@ -1315,6 +1324,143 @@ class DependencyAnalyzerTest {
         var update = reports.getFirst().dependencyUpdates().getFirst();
         then(update.currentVersion()).isEqualTo(Version.fromString("5.9.0"));
         then(update.committedVersion()).isEqualTo(Version.fromString("5.10.0"));
+    }
+
+    @Test void shouldDetectUncommittedVersionChangeInModulePom() throws Exception {
+        var committedPom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>module-a</artifactId>
+                    <version>1.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.10.0</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+        var moduleDir = createDirectories(tempDir.resolve("module-a"));
+        var pomFile = moduleDir.resolve("pom.xml");
+        writeString(pomFile, committedPom);
+        git("init");
+        git("add", "module-a/pom.xml");
+        git("commit", "-m", "initial");
+
+        var modifiedPom = committedPom.replace("5.10.0", "5.9.0");
+        writeString(pomFile, modifiedPom);
+
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
+                .willReturn(List.of(Version.fromString("5.9.0"), Version.fromString("5.10.0"), Version.fromString("6.0.3")));
+
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
+
+        then(reports).hasSize(1);
+        var update = reports.getFirst().dependencyUpdates().getFirst();
+        then(update.currentVersion()).isEqualTo(Version.fromString("5.9.0"));
+        then(update.committedVersion()).isEqualTo(Version.fromString("5.10.0"));
+    }
+
+    @Test void shouldMatchCommittedVersionByDeclaration() throws Exception {
+        var committedPom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                    <dependencyManagement>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.junit.jupiter</groupId>
+                                <artifactId>junit-jupiter</artifactId>
+                                <version>5.0.0</version>
+                            </dependency>
+                        </dependencies>
+                    </dependencyManagement>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>6.0.1</version>
+                        </dependency>
+                    </dependencies>
+                </project>
+                """;
+        var pomFile = writePom(committedPom);
+        git("init");
+        git("add", "pom.xml");
+        git("commit", "-m", "initial");
+
+        var modifiedPom = committedPom.replace("6.0.1", "6.0.2");
+        writeString(pomFile, modifiedPom);
+
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
+                .willReturn(List.of(Version.fromString("5.0.0"), Version.fromString("6.0.1"), Version.fromString("6.0.2"), Version.fromString("6.0.3")));
+
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
+
+        then(reports).hasSize(1);
+        var updates = reports.getFirst().dependencyUpdates();
+        var managed = updates.stream().filter(update -> update.declaration() == dependencyManagement).findFirst().orElseThrow();
+        var directDependency = updates.stream().filter(update -> update.declaration() == direct).findFirst().orElseThrow();
+        then(managed.committedVersion()).isNull();
+        then(directDependency.currentVersion()).isEqualTo(Version.fromString("6.0.2"));
+        then(directDependency.committedVersion()).isEqualTo(Version.fromString("6.0.1"));
+    }
+
+    @Test void shouldMatchCommittedVersionByProfile() throws Exception {
+        var committedPom = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <project xmlns="http://maven.apache.org/POM/4.0.0">
+                    <modelVersion>4.0.0</modelVersion>
+                    <groupId>com.example</groupId>
+                    <artifactId>test-project</artifactId>
+                    <version>1.0.0</version>
+                    <dependencies>
+                        <dependency>
+                            <groupId>org.junit.jupiter</groupId>
+                            <artifactId>junit-jupiter</artifactId>
+                            <version>5.0.0</version>
+                        </dependency>
+                    </dependencies>
+                    <profiles>
+                        <profile>
+                            <id>native</id>
+                            <dependencies>
+                                <dependency>
+                                    <groupId>org.junit.jupiter</groupId>
+                                    <artifactId>junit-jupiter</artifactId>
+                                    <version>6.0.1</version>
+                                </dependency>
+                            </dependencies>
+                        </profile>
+                    </profiles>
+                </project>
+                """;
+        var pomFile = writePom(committedPom);
+        git("init");
+        git("add", "pom.xml");
+        git("commit", "-m", "initial");
+
+        var modifiedPom = committedPom.replace("6.0.1", "6.0.2");
+        writeString(pomFile, modifiedPom);
+
+        given(mockRepository.getAvailableVersions(new ArtifactRef("org.junit.jupiter", "junit-jupiter")))
+                .willReturn(List.of(Version.fromString("5.0.0"), Version.fromString("6.0.1"), Version.fromString("6.0.2"), Version.fromString("6.0.3")));
+
+        var reports = new DependencyAnalyzer(mockRepository, pomFile).run();
+
+        then(reports).hasSize(1);
+        var updates = reports.getFirst().dependencyUpdates();
+        var base = updates.stream().filter(update -> update.profile() == null).findFirst().orElseThrow();
+        var profiled = updates.stream().filter(update -> "native".equals(update.profile())).findFirst().orElseThrow();
+        then(base.committedVersion()).isNull();
+        then(profiled.currentVersion()).isEqualTo(Version.fromString("6.0.2"));
+        then(profiled.committedVersion()).isEqualTo(Version.fromString("6.0.1"));
     }
 
     @Test void shouldNotSetCommittedVersionWhenUnchanged() throws Exception {

@@ -1,8 +1,10 @@
 package com.github.t1.mavendep.tui;
 
 import com.github.t1.mavendep.domain.ArtifactRef;
+import com.github.t1.mavendep.domain.AvailableVersion;
 import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.ProjectReport;
+import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
 import com.github.t1.mavendep.tui.DashboardModel.Phase;
@@ -162,6 +164,35 @@ class DashboardModelTest {
         then(model.isVersionPickerOpen()).isFalse();
     }
 
+    @Test void shouldIncludeCommittedAndLocalVersionsInPicker() {
+        var dep = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("5.10.0"), DEFAULT, null);
+        var update = new Update(
+                dep,
+                Version.fromString("5.10.0"),
+                Version.fromString("6.0.3"),
+                List.of(Version.fromString("5.10.0"), Version.fromString("6.0.3")),
+                List.of(
+                        new AvailableVersion(Version.fromString("6.0.3"), List.of("central")),
+                        new AvailableVersion(Version.fromString("5.8.0"), List.of("local"))),
+                UpdateType.major,
+                Version.fromString("5.9.0"));
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        model.setReports(List.of(new ProjectReport(pom, Optional.empty(), List.of(update), List.of(), 1)));
+        model.setPhase(Phase.READY);
+
+        model.openVersionPicker();
+
+        then(model.currentVersionPickerEntries()).extracting(VersionPickerModel.Entry::label)
+                .containsExactly(
+                        "6.0.3 [central]",
+                        "5.10.0 [current]",
+                        "5.9.0 [committed]",
+                        "5.8.0 [local]");
+        then(model.versionPickerCursor()).isEqualTo(1);
+    }
+
     @Test void shouldSetCustomVersionAsCurrent() {
         setReportsWithTwoUpdates();
         var updates = model.activeUpdates();
@@ -175,14 +206,14 @@ class DashboardModelTest {
         then(effective.latestVersion()).isEqualTo(original.latestVersion());
     }
 
-    @Test void shouldComputeDowngradeTypeFromCommittedVersion() {
+    @Test void shouldNotTreatDowngradeAsUpdateType() {
         setReportsWithTwoUpdates();
         var original = model.activeUpdates().getFirst(); // 5.10.0 → 6.0.3
 
         model.setCustomVersion(original, Version.fromString("5.9.0"));
 
         var effective = model.effectiveUpdate(original);
-        then(effective.updateType()).isEqualTo(UpdateType.minor); // 5.10.0 → 5.9.0
+        then(effective.updateType()).isEqualTo(UpdateType.none);
     }
 
     @Test void shouldReturnPomCompatibleUpdateForCustomVersion() {
@@ -257,8 +288,7 @@ class DashboardModelTest {
 
         var effective = model.effectiveUpdate(update);
 
-        // type is minor (5.9.0 → 5.10.0) because the POM change is pre-selected as custom pick
-        then(effective.updateType()).isEqualTo(UpdateType.minor);
+        then(effective.updateType()).isEqualTo(UpdateType.major);
     }
 
     @Test void shouldDetectChangeFromCommittedVersion() {
@@ -268,12 +298,37 @@ class DashboardModelTest {
         then(model.isChange(update)).isTrue();
     }
 
-    @Test void shouldPreselectUncommittedPomChanges() {
+    @Test void shouldNotPreselectUncommittedPomChanges() {
         setReportsWithCommittedVersion(); // committed 5.9.0, current 5.10.0, latest 6.0.3
         var update = model.activeUpdates().getFirst();
 
-        then(model.isSelected(update)).isTrue();
+        then(model.isSelected(update)).isFalse();
         then(model.currentVersion(update)).isEqualTo(Version.fromString("5.10.0"));
+    }
+
+    @Test void shouldToggleSuggestedUpdateOnTopOfLocalDowngrade() {
+        var dep = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
+                Version.fromString("1.0.0"), DEFAULT, null);
+        var update = dep.toUpdate(Version.fromString("3.0.0"),
+                        List.of(Version.fromString("1.0.0"), Version.fromString("3.0.0")), UpdateType.major)
+                .withCommittedVersion(Version.fromString("2.0.0"));
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        model.setReports(List.of(new ProjectReport(pom, Optional.empty(), List.of(update), List.of(), 1)));
+        model.setPhase(Phase.READY);
+
+        then(model.isSelected(update)).isFalse();
+        then(model.currentVersion(update)).isEqualTo(Version.fromString("1.0.0"));
+
+        model.toggleSelection();
+
+        then(model.isSelected(update)).isTrue();
+        then(model.currentVersion(update)).isEqualTo(Version.fromString("3.0.0"));
+
+        model.toggleSelection();
+
+        then(model.isSelected(update)).isFalse();
+        then(model.currentVersion(update)).isEqualTo(Version.fromString("1.0.0"));
     }
 
     @Test void shouldRevertCurrentToOriginalOnDeselect() {
@@ -299,6 +354,7 @@ class DashboardModelTest {
     @Test void shouldAutoSelectOnVersionPick() {
         setReportsWithTwoUpdates();
         model.openVersionPicker();
+        model.versionPickerUp();
 
         model.confirmVersionPick();
 
@@ -315,6 +371,24 @@ class DashboardModelTest {
         model.setCustomVersion(upToDate, picked);
 
         then(model.isChange(upToDate)).isTrue();
+    }
+
+    @Test void shouldNotTreatAheadOfLatestReleaseAsChangeByDefault() {
+        setReportsWithAheadOfLatestRelease();
+        model.setShowAll(true);
+        var ahead = model.activeUpdates().getFirst();
+
+        then(model.isChange(ahead)).isFalse();
+    }
+
+    @Test void shouldOnlyShowAheadOfLatestReleaseInShowAllMode() {
+        setReportsWithAheadOfLatestRelease();
+
+        model.setShowAll(false);
+        then(model.activeUpdates()).isEmpty();
+
+        model.setShowAll(true);
+        then(model.activeUpdates()).hasSize(1);
     }
 
     @Test void shouldClampCursorWhenDeselectingCustomPickedDepWithShowAllOff() {
@@ -597,6 +671,36 @@ class DashboardModelTest {
         then(model.menuText()).contains("[Space] toggle", "[Enter] pick version", "[s]how all", "[p]lugins");
     }
 
+    @Test void shouldHideSpaceToggleWhenFocusedRowHasNoCheckbox() {
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        model.setReports(List.of(new ProjectReport(pom, Optional.empty(), List.of(consumer), List.of(), 1)));
+        model.setPhase(Phase.READY);
+        wireBindings();
+
+        then(model.menuText())
+                .doesNotContain("[Space] toggle")
+                .contains("[Enter] pick version", "[s]how all");
+    }
+
+    @Test void shouldShowSpaceToggleForManagedConsumerAfterExplicitPick() {
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        model.setReports(List.of(new ProjectReport(pom, Optional.empty(), List.of(consumer), List.of(), 1)));
+        model.setPhase(Phase.READY);
+        wireBindings();
+
+        model.openVersionPicker();
+        model.versionPickerUp();
+        model.confirmVersionPick();
+
+        then(model.menuText()).contains("[Space] toggle");
+    }
+
     @Test void shouldHidePluginsHintOnPluginsTab() {
         setReportsWithDependenciesAndPlugins();
         wireBindings();
@@ -795,7 +899,7 @@ class DashboardModelTest {
         model.setCustomVersion(updates.get(0), picked);
 
         var effective = model.effectiveUpdate(updates.get(1));
-        then(effective.updateType()).isEqualTo(UpdateType.major); // 1.0.0 → 0.5.0 downgrade
+        then(effective.updateType()).isEqualTo(UpdateType.none);
     }
 
     @Test void shouldReturnCorrectPomUpdateForSiblingWithSharedProperty() {
@@ -934,6 +1038,8 @@ class DashboardModelTest {
 
         then(model.activeUpdates()).containsExactly(consumer);
         then(model.focusedUpdateHasUpstream()).isTrue();
+        then(model.isSuggested(consumer)).isFalse();
+        then(model.showsCheckbox(consumer)).isFalse();
     }
 
     @Test void shouldShowExternallyManagedConsumerWhenItHasUpdate() {
@@ -947,6 +1053,38 @@ class DashboardModelTest {
 
         then(model.activeUpdates()).containsExactly(consumer);
         then(model.focusedUpdateHasUpstream()).isFalse();
+        then(model.isSuggested(consumer)).isFalse();
+        then(model.showsCheckbox(consumer)).isFalse();
+    }
+
+    @Test void shouldNotToggleUnselectedManagedConsumer() {
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(consumer), List.of(), 1);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+
+        model.toggleSelection();
+
+        then(model.isSelected(consumer)).isFalse();
+        then(model.selectedCount()).isZero();
+    }
+
+    @Test void shouldIgnoreManagedConsumersWhenSelectingAll() {
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(consumer), List.of(), 1);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+
+        model.selectAll();
+
+        then(model.isSelected(consumer)).isFalse();
+        then(model.selectedCount()).isZero();
     }
 
     @Test void shouldFocusUpstreamAndRevealIt() {
@@ -970,6 +1108,73 @@ class DashboardModelTest {
         then(model.showAll()).isTrue();
         then(model.activeUpdates()).containsExactly(management, consumer);
         then(model.focusedUpdate()).isEqualTo(management);
+    }
+
+    @Test void shouldFindUpstreamManagedDependencyInAnotherPom() {
+        var parentPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(parentPom.path()).willReturn(Path.of("parent/pom.xml"));
+        var childPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(childPom.path()).willReturn(Path.of("child/pom.xml"));
+
+        var management = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", "lib", Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement)
+                .toUpdate(Version.fromString("1.0.0"), List.of(Version.fromString("1.0.0")), UpdateType.none);
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"),
+                        List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+
+        model.setReports(List.of(
+                new ProjectReport(parentPom, Optional.empty(), List.of(management), List.of(), 1),
+                new ProjectReport(childPom, Optional.empty(), List.of(consumer), List.of(), 1)));
+        model.setPhase(Phase.READY);
+
+        then(model.activeUpdates()).containsExactly(consumer);
+        then(model.hasUpstream(consumer)).isTrue();
+    }
+
+    @Test void shouldFollowSelectedUpstreamVersionInManagedConsumerCurrentVersion() {
+        var management = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", "lib", Version.fromString("1.0.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement)
+                .toUpdate(Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        model.setReports(List.of(new ProjectReport(pom, Optional.empty(), List.of(management, consumer), List.of(), 2)));
+        model.setPhase(Phase.READY);
+        model.setShowAll(true);
+
+        model.toggleSelection();
+
+        then(model.currentVersion(consumer)).isEqualTo(Version.fromString("2.0.0"));
+    }
+
+    @Test void shouldFollowLocallyChangedUpstreamVersionInManagedConsumerCurrentVersion() {
+        var management = new Dependency(dependency,
+                new com.github.t1.mavendep.domain.Coordinates("com.example", "lib", Version.fromString("1.5.0")),
+                DEFAULT,
+                null,
+                null,
+                dependencyManagement)
+                .toUpdate(Version.fromString("2.0.0"), List.of(Version.fromString("1.5.0"), Version.fromString("2.0.0")), UpdateType.minor)
+                .withCommittedVersion(Version.fromString("1.0.0"));
+        var consumer = new Dependency(dependency, "com.example", "lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"), List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        model.setReports(List.of(new ProjectReport(pom, Optional.empty(), List.of(management, consumer), List.of(), 2)));
+        model.setPhase(Phase.READY);
+        model.setShowAll(true);
+
+        then(model.currentVersion(consumer)).isEqualTo(Version.fromString("1.5.0"));
     }
 
     @Test void shouldDisplayRootProjectNameInTitle() {
@@ -1050,6 +1255,28 @@ class DashboardModelTest {
         then(grouped).hasSize(2);
     }
 
+    @Test void shouldNotSelectSameManagedDependencyInAnotherPomWhenPickingVersion() {
+        setReportsWithSameManagedDependencyInTwoPoms();
+        var firstPomUpdate = model.activeUpdates().getFirst();
+        var secondPomUpdate = model.activeUpdates().get(1);
+
+        model.openVersionPicker();
+        model.versionPickerUp();
+        model.confirmVersionPick();
+
+        then(model.isSelected(firstPomUpdate)).isTrue();
+        then(model.currentVersion(firstPomUpdate)).isEqualTo(Version.fromString("2.0.0"));
+        then(model.isSelected(secondPomUpdate)).isFalse();
+        then(model.currentVersion(secondPomUpdate)).isEqualTo(Version.fromString("1.0.0"));
+        then(model.selectedUpdates().toList())
+                .singleElement()
+                .satisfies(update -> {
+                    then(update.artifactId()).isEqualTo("managed-lib");
+                    then(update.currentVersion()).isNull();
+                    then(update.latestVersion()).isEqualTo(Version.fromString("2.0.0"));
+                });
+    }
+
     @Test void shouldReturnSingleGroupForSinglePom() {
         setReportsWithTwoUpdates();
 
@@ -1109,6 +1336,25 @@ class DashboardModelTest {
         model.setPhase(Phase.READY);
     }
 
+    private void setReportsWithSameManagedDependencyInTwoPoms() {
+        var firstPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(firstPom.path()).willReturn(Path.of("pom.xml"));
+        var secondPom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(secondPom.path()).willReturn(Path.of("sub/pom.xml"));
+
+        var firstUpdate = new Dependency(dependency, "com.example", "managed-lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"),
+                        List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+        var secondUpdate = new Dependency(dependency, "com.example", "managed-lib", null, DEFAULT, null)
+                .toUpdate(Version.fromString("1.0.0"), Version.fromString("2.0.0"),
+                        List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0")), UpdateType.major);
+
+        model.setReports(List.of(
+                new ProjectReport(firstPom, Optional.empty(), List.of(firstUpdate), List.of(), 1),
+                new ProjectReport(secondPom, Optional.empty(), List.of(secondUpdate), List.of(), 1)));
+        model.setPhase(Phase.READY);
+    }
+
     private void setReportsWithCommittedVersion() {
         var dep = new Dependency(dependency, "org.junit.jupiter", "junit-jupiter",
                 Version.fromString("5.10.0"), DEFAULT, null);
@@ -1140,6 +1386,19 @@ class DashboardModelTest {
         var pom = mock(com.github.t1.mavendep.domain.Pom.class);
         given(pom.path()).willReturn(java.nio.file.Path.of("pom.xml"));
         var report = new ProjectReport(pom, Optional.empty(), List.of(update1, update2), List.of(), 2);
+        model.setReports(List.of(report));
+        model.setPhase(Phase.READY);
+    }
+
+    private void setReportsWithAheadOfLatestRelease() {
+        var dep = new Dependency(dependency, "com.example", "local-module",
+                Version.fromString("2.0.0-SNAPSHOT"), DEFAULT, null);
+        var update = dep.toUpdate(Version.fromString("1.0.0"),
+                List.of(Version.fromString("1.0.0"), Version.fromString("2.0.0-SNAPSHOT")), UpdateType.none);
+
+        var pom = mock(com.github.t1.mavendep.domain.Pom.class);
+        given(pom.path()).willReturn(Path.of("pom.xml"));
+        var report = new ProjectReport(pom, Optional.empty(), List.of(update), List.of(), 1);
         model.setReports(List.of(report));
         model.setPhase(Phase.READY);
     }

@@ -26,6 +26,20 @@ class GitTest {
         then(committed).hasValue("committed content");
     }
 
+    @Test void shouldReadCommittedContentFromNestedFile() throws Exception {
+        var dir = Files.createDirectories(tempDir.resolve("module"));
+        var file = dir.resolve("pom.xml");
+        Files.writeString(file, "committed content");
+        git("init");
+        git("add", "module/pom.xml");
+        git("commit", "-m", "initial");
+        Files.writeString(file, "modified content");
+
+        var committed = Git.readCommitted(file);
+
+        then(committed).hasValue("committed content");
+    }
+
     @Test void shouldReturnEmptyForUntrackedFile() throws Exception {
         git("init");
         var file = tempDir.resolve("untracked.txt");

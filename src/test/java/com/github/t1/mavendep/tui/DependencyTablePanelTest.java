@@ -4,6 +4,8 @@ import com.github.t1.mavendep.domain.Dependency;
 import com.github.t1.mavendep.domain.Update;
 import com.github.t1.mavendep.domain.UpdateType;
 import com.github.t1.mavendep.domain.Version;
+import dev.tamboui.style.Color;
+import dev.tamboui.style.Style;
 import dev.tamboui.widgets.table.Row;
 import dev.tamboui.widgets.table.TableState;
 import org.junit.jupiter.api.Test;
@@ -168,6 +170,59 @@ class DependencyTablePanelTest {
         then(DependencyTablePanel.formatDeclared(update, model)).isEqualTo("<managed ↑> ");
     }
 
+    @Test void shouldHideCheckboxForManagedConsumerWithUpstream() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
+                Version.fromString("1.0.0"),
+                Version.fromString("2.0.0"),
+                List.of(),
+                UpdateType.major);
+        var model = mock(DashboardModel.class);
+        given(model.showsCheckbox(update)).willReturn(false);
+
+        then(DependencyTablePanel.formatCheckbox(update, model)).isEqualTo("    ");
+    }
+
+    @Test void shouldHideCheckboxForExternallyManagedConsumer() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
+                Version.fromString("1.0.0"),
+                Version.fromString("2.0.0"),
+                List.of(),
+                UpdateType.major);
+        var model = mock(DashboardModel.class);
+        given(model.showsCheckbox(update)).willReturn(false);
+
+        then(DependencyTablePanel.formatCheckbox(update, model)).isEqualTo("    ");
+    }
+
+    @Test void shouldFormatCommittedAndLocalDeclaredVersion() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("6.0.2"), compile, null),
+                Version.fromString("6.0.2"),
+                Version.fromString("6.0.3"),
+                List.of(),
+                UpdateType.patch,
+                Version.fromString("6.0.1"));
+        var model = mock(DashboardModel.class);
+        given(model.declaredVersion(update)).willReturn(Version.fromString("6.0.2"));
+
+        then(DependencyTablePanel.formatDeclared(update, model)).isEqualTo("6.0.1 → 6.0.2 ");
+    }
+
+    @Test void shouldFormatTargetOnlyWhenDeclaredMatchesEffective() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
+                Version.fromString("2.0.0"),
+                List.of(),
+                UpdateType.major);
+        var model = mock(DashboardModel.class);
+        given(model.declaredVersion(update)).willReturn(Version.fromString("1.0.0"));
+        given(model.currentVersion(update)).willReturn(Version.fromString("1.0.0"));
+
+        then(DependencyTablePanel.formatUpdate(update, model)).isEqualTo("2.0.0 ");
+    }
+
     @Test void shouldFormatUnknownEffectiveUpdate() {
         var update = new Update(
                 new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
@@ -175,9 +230,50 @@ class DependencyTablePanelTest {
                 List.of(),
                 UpdateType.none);
         var model = mock(DashboardModel.class);
+        given(model.declaredVersion(update)).willReturn(null);
         given(model.currentVersion(update)).willReturn(null);
 
         then(DependencyTablePanel.formatUpdate(update, model)).isEqualTo("? → 2.0.0 ");
+    }
+
+    @Test void shouldFormatAheadOfLatestRelease() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("2.0.0"), compile, null),
+                Version.fromString("1.0.0"),
+                List.of(),
+                UpdateType.none);
+        var model = mock(DashboardModel.class);
+        given(model.declaredVersion(update)).willReturn(Version.fromString("2.0.0"));
+        given(model.currentVersion(update)).willReturn(Version.fromString("2.0.0"));
+
+        then(DependencyTablePanel.formatUpdate(update, model)).isEqualTo("2.0.0 > 1.0.0 ");
+    }
+
+    @Test void shouldStyleManagedConsumerNeutrally() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "managed-artifact", null, compile, null),
+                Version.fromString("1.0.0"),
+                Version.fromString("2.0.0"),
+                List.of(),
+                UpdateType.major);
+        var model = mock(DashboardModel.class);
+        given(model.isSuggested(update)).willReturn(false);
+
+        then(DependencyTablePanel.styleFor(update, model)).isEqualTo(Style.EMPTY);
+    }
+
+    @Test void shouldKeepUpdateStyleForSuggestedDependency() {
+        var update = new Update(
+                new Dependency(dependency, "com.example", "lib", Version.fromString("1.0.0"), compile, null),
+                Version.fromString("1.0.0"),
+                Version.fromString("1.0.1"),
+                List.of(),
+                UpdateType.patch);
+        var model = mock(DashboardModel.class);
+        given(model.isSuggested(update)).willReturn(true);
+        given(model.currentVersion(update)).willReturn(Version.fromString("1.0.0"));
+
+        then(DependencyTablePanel.styleFor(update, model)).isEqualTo(Style.EMPTY.fg(Color.BLUE));
     }
 
     private static DependencyTablePanel.VisualRow headerRow(String label) {
