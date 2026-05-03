@@ -26,12 +26,16 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
     private final OutputStream stdin;
     private final TerminalTextBuffer textBuffer;
     private final Thread readerThread;
+    // Keep a volatile snapshot so test assertions don't read the mutable terminal buffer concurrently.
+    private volatile String screenLines;
+    private volatile Throwable readerFailure;
 
     Pty4jTuiTestDriver(Path pomFile, String mavenCentralUrl, Path localRepo) {
         var styleState = new StyleState();
         textBuffer = new TerminalTextBuffer(COLUMNS, ROWS, styleState, 1000);
         var display = new NoOpTerminalDisplay();
         var terminal = new JediTerminal(display, textBuffer, styleState);
+        screenLines = textBuffer.getScreenLines();
 
         var jarPath = Path.of("target/maven-dep-manager.jar").toAbsolutePath().toString();
         var env = new HashMap<>(System.getenv());
@@ -63,15 +67,18 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
         var dataStream = new TtyBasedArrayDataStream(ttyConnector);
         var emulator = new JediEmulator(dataStream, terminal);
 
-        readerThread = Thread.ofVirtual().name("pty-reader").start(() -> {
+        readerThread = Thread.ofPlatform().name("pty-reader").start(() -> {
             try {
                 while (emulator.hasNext()) {
                     emulator.next();
+                    screenLines = textBuffer.getScreenLines();
                 }
             } catch (IOException e) {
-                if (!e.getMessage().contains("closed")) {
-                    throw new RuntimeException("PTY reader error", e);
+                if (!String.valueOf(e.getMessage()).contains("closed")) {
+                    readerFailure = new RuntimeException("PTY reader error", e);
                 }
+            } catch (Throwable t) {
+                readerFailure = t;
             }
         });
     }
@@ -95,33 +102,32 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
     }
 
     @Override public boolean hasText(String text) {
-        return textBuffer.getScreenLines().contains(text);
+        return screenLines.contains(text);
     }
 
     @Override public void awaitText(String text) {
         awaitAnyText(text);
     }
 
-    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
     @Override public void awaitAnyText(String... texts) {
         awaitCondition(
                 () -> Arrays.stream(texts).anyMatch(this::hasText),
                 "Timed out after " + TIMEOUT + " waiting for any of: " +
-                Arrays.toString(texts) + "\nScreen content:\n" + textBuffer.getScreenLines());
+                Arrays.toString(texts) + "\nScreen content:\n" + screenLines);
     }
 
-    @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
     @Override public void awaitNoText(String text) {
         awaitCondition(
                 () -> !hasText(text),
                 "Timed out after " + TIMEOUT + " waiting for absence of: [" + text + "]\nScreen content:\n" +
-                textBuffer.getScreenLines());
+                screenLines);
     }
 
     @SuppressWarnings("BusyWait") // polling is appropriate for terminal output
     private void awaitCondition(BooleanSupplier condition, String timeoutMessage) {
         var deadline = System.currentTimeMillis() + TIMEOUT.toMillis();
         while (System.currentTimeMillis() < deadline) {
+            if (readerFailure != null) throw new AssertionError("PTY reader failed", readerFailure);
             if (condition.getAsBoolean()) return;
             try {
                 Thread.sleep(50);
@@ -130,6 +136,7 @@ class Pty4jTuiTestDriver implements TuiTestDriver {
                 throw new RuntimeException("Interrupted while waiting for terminal state", e);
             }
         }
+        if (readerFailure != null) throw new AssertionError("PTY reader failed", readerFailure);
         throw new AssertionError(timeoutMessage);
     }
 
