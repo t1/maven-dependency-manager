@@ -21,7 +21,7 @@
         <!--suppress XmlUnresolvedReference -->
         <skip.surefire.tests>${skipTests}</skip.surefire.tests>
 
-        <jackson.version>2.21.3</jackson.version>
+        <jackson.version>2.21.4</jackson.version>
         <maven.version>3.9.16</maven.version>
         <maven.resolver.version>1.9.27</maven.resolver.version>
         <tamboui-tui.version>0.3.0</tamboui-tui.version>
